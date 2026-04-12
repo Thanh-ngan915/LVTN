@@ -1,0 +1,32 @@
+### Test Google OAuth Flow
+### Sử dụng với REST Client extension trong VS Code
+
+### 1. Test Normal Login (để so sánh)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+### 2. Test Google OAuth Callback
+### Lưu ý: Thay YOUR_AUTHORIZATION_CODE bằng code thực từ Google
+POST http://localhost:8080/api/auth/google/callback
+Content-Type: application/json
+
+{
+  "code": "YOUR_AUTHORIZATION_CODE",
+  "redirectUri": "http://localhost:3000/auth/google/callback"
+}
+
+### 3. Test với JWT Token (sau khi login)
+### Thay YOUR_JWT_TOKEN bằng token nhận được
+GET http://localhost:8080/api/user/profile
+Authorization: Bearer YOUR_JWT_TOKEN
+
+### 4. Health Check - UserService
+GET http://localhost:8085/actuator/health
+
+### 5. Health Check - API Gateway
+GET http://localhost:8080/actuator/health

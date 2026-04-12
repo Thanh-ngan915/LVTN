@@ -2,9 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('registerForm');
     const submitBtn = document.getElementById('submitBtn');
     const alertBox = document.getElementById('alert-box');
+    const googleLoginBtn = document.getElementById('googleLoginBtn');
     
     // Gateway endpoint
     const API_URL = 'http://localhost:8080/api/auth/register';
+    const GOOGLE_CLIENT_ID = '262862647958-7g338hg8pm0e617d0dk4c67jqumhr2nu.apps.googleusercontent.com';
+    const REDIRECT_URI = 'http://localhost:3000/auth/google/callback';
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -78,5 +81,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function hideAlert() {
         alertBox.className = 'alert hidden';
+    }
+
+    // Google Login Handler
+    if (googleLoginBtn) {
+        googleLoginBtn.addEventListener('click', () => {
+            const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${GOOGLE_CLIENT_ID}&` +
+                `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+                `response_type=code&` +
+                `scope=openid%20email%20profile&` +
+                `access_type=online`;
+            
+            window.location.href = googleAuthUrl;
+        });
     }
 });
