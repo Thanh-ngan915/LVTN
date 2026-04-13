@@ -22,7 +22,7 @@ public class CorsConfig {
             "http://localhost:3000",
             "http://localhost:3001",
             "http://localhost:8080",
-            "http://localhost:8086",
+            "http://localhost:8086", "http://localhost:8081",
             "http://192.168.147.1:3000",
             "http://192.168.147.1:3001"
         ));
