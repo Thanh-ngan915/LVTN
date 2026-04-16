@@ -15,7 +15,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  const API_URL = "http://localhost:8080/api/auth/register";
+    const API_URL = "/api/auth/register";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -31,7 +31,10 @@ export default function RegisterPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
+        mode: "cors",
+        credentials: "include",
         body: JSON.stringify({
           username: formData.username.trim(),
           password: formData.password.trim(),
@@ -41,23 +44,28 @@ export default function RegisterPage() {
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok || response.status === 201) {
-        setMessage({ text: `Đăng ký thành công! Chào mừng ${data.fullName}`, type: "success" });
-        setFormData({ username: "", password: "", fullName: "", email: "", address: "" });
-      } else {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Lỗi không xác định" }));
         let errorMsg = "Có lỗi xảy ra, vui lòng thử lại!";
-        if (data.message) {
-          errorMsg = data.message;
-        } else if (data.messages) {
-          errorMsg = Object.values(data.messages).join(" | ");
+        if (errorData.message) {
+          errorMsg = errorData.message;
+        } else if (errorData.messages) {
+          errorMsg = Object.values(errorData.messages).join(" | ");
         }
         setMessage({ text: errorMsg, type: "error" });
+        return;
       }
+
+      const data = await response.json();
+      setMessage({ text: `Đăng ký thành công! Chào mừng ${data.fullName}`, type: "success" });
+      setFormData({ username: "", password: "", fullName: "", email: "", address: "" });
     } catch (error) {
       console.error("Fetch error:", error);
-      setMessage({ text: "Lỗi kết nối. Hãy chắc chắn API Gateway (8080) đang hoạt động.", type: "error" });
+      const errorMessage = error instanceof Error ? error.message : "Lỗi không xác định";
+      setMessage({ 
+        text: `Lỗi kết nối đến API Gateway (${API_URL}). Vui lòng kiểm tra:\n1. API Gateway đang chạy ở port 8080\n2. User Service đang chạy ở port 8085\n3. CORS đã được cấu hình đúng\n\nChi tiết: ${errorMessage}`, 
+        type: "error" 
+      });
     } finally {
       setLoading(false);
     }

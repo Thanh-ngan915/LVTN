@@ -1,0 +1,288 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║              HƯỚNG DẪN HOÀN CHỈNH - ANVI SYSTEM                          ║
+║                                                                           ║
+║                  Từ A đến Z - Không bỏ sót gì!                           ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+
+📖 MỤC LỤC
+═══════════════════════════════════════════════════════════════════════════
+
+    1. Bắt đầu nhanh (Không có lỗi)
+    2. Fix lỗi (Đang gặp lỗi)
+    3. Kiểm tra hệ thống
+    4. Troubleshooting
+    5. Kiến trúc hệ thống
+
+
+═══════════════════════════════════════════════════════════════════════════
+1. BẮT ĐẦU NHANH (Không có lỗi)
+═══════════════════════════════════════════════════════════════════════════
+
+    Bước 1: Mở terminal
+    ───────────────────
+
+        Windows: Nhấn Win + R, gõ "cmd", Enter
+
+
+    Bước 2: Chạy script
+    ───────────────────
+
+        QUICK_START.bat
+
+
+    Bước 3: Chọn option
+    ───────────────────
+
+        Nhập: 1
+        (Start tất cả services)
+
+
+    Bước 4: Đợi
+    ───────────
+
+        Đợi 60 giây để services khởi động
+        Bạn sẽ thấy 4 cửa sổ terminal mở ra
+
+
+    Bước 5: Mở trình duyệt
+    ──────────────────────
+
+        http://localhost:3000/login
+
+
+    ✅ XONG! Bắt đầu sử dụng!
+
+
+═══════════════════════════════════════════════════════════════════════════
+2. FIX LỖI (Đang gặp lỗi)
+═══════════════════════════════════════════════════════════════════════════
+
+    Nếu bạn thấy lỗi:
+    ─────────────────
+    ❌ "originalPrompt has already been declared"
+    ❌ "CORS multiple values"
+    ❌ "Failed to fetch"
+
+
+    Làm theo 3 bước:
+    ────────────────
+
+    Bước 1: Fix tự động
+    ───────────────────
+        FIX_LOI_TRIET_DE.bat
+        (Đợi đến khi thấy "HOAN THANH!")
+
+
+    Bước 2: Start lại
+    ─────────────────
+        start-all-services.bat
+        (Đợi 60 giây)
+
+
+    Bước 3: Mở Incognito
+    ────────────────────
+        Chrome/Edge: Ctrl + Shift + N
+        Firefox: Ctrl + Shift + P
+        
+        Sau đó vào: http://localhost:3000/login
+
+
+    ✅ XONG! Không còn lỗi!
+
+
+═══════════════════════════════════════════════════════════════════════════
+3. KIỂM TRA HỆ THỐNG
+═══════════════════════════════════════════════════════════════════════════
+
+    Kiểm tra services có chạy không:
+    ────────────────────────────────
+
+        check-services.bat
+
+
+    Kết quả mong đợi:
+    ─────────────────
+
+        ✓ API Gateway is RUNNING
+        ✓ User Service is RUNNING
+        ✓ Livestream Service is RUNNING
+        ✓ Next.js Frontend is RUNNING
+
+
+    Test API:
+    ─────────
+
+        test-api.bat
+
+
+═══════════════════════════════════════════════════════════════════════════
+4. TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════
+
+    Vấn đề: Services không start
+    ────────────────────────────
+
+        Nguyên nhân: Port bị chiếm
+
+        Giải pháp:
+        1. Kiểm tra port:
+           netstat -ano | findstr "8080"
+           netstat -ano | findstr "8085"
+           netstat -ano | findstr "8086"
+           netstat -ano | findstr "3000"
+
+        2. Kill process:
+           taskkill /PID <PID_NUMBER> /F
+
+
+    Vấn đề: Database lỗi
+    ────────────────────
+
+        Nguyên nhân: MySQL chưa chạy hoặc DB chưa import
+
+        Giải pháp:
+        1. Start MySQL
+        2. Import database:
+           mysql -u root -p anvi_db < anvi_db_updated.sql
+
+
+    Vấn đề: Vẫn còn lỗi cache
+    ─────────────────────────
+
+        Giải pháp:
+        1. Clear browser cache:
+           Ctrl + Shift + Delete
+           Chọn "All time"
+           Clear
+
+        2. Tắt extensions:
+           chrome://extensions/
+           Tắt hết
+
+        3. Dùng Incognito mode
+
+
+═══════════════════════════════════════════════════════════════════════════
+5. KIẾN TRÚC HỆ THỐNG
+═══════════════════════════════════════════════════════════════════════════
+
+    Luồng request:
+    ──────────────
+
+    Browser (localhost:3000)
+         │
+         │ HTTP Request
+         │
+         ↓
+    ┌─────────────────────┐
+    │   API Gateway       │  Port 8080
+    │   (CORS Handler)    │
+    └─────────┬───────────┘
+              │
+              ├──────────────────┬──────────────────┐
+              │                  │                  │
+              ↓                  ↓                  ↓
+    ┌──────────────────┐  ┌──────────────┐  ┌──────────────┐
+    │  User Service    │  │  Livestream  │  │   Future     │
+    │  (Auth, Users)   │  │   Service    │  │   Services   │
+    │   Port 8085      │  │  Port 8086   │  │              │
+    └──────────────────┘  └──────────────┘  └──────────────┘
+              │                  │
+              ↓                  ↓
+         MySQL DB           MySQL DB
+
+
+    Services:
+    ─────────
+
+    1. Next.js Frontend (Port 3000)
+       - React UI
+       - Login/Register pages
+       - Livestream pages
+
+    2. API Gateway (Port 8080)
+       - Route requests
+       - Handle CORS
+       - Load balancing
+
+    3. User Service (Port 8085)
+       - Authentication
+       - User management
+       - JWT tokens
+
+    4. Livestream Service (Port 8086)
+       - LiveKit integration
+       - Room management
+       - Participant management
+
+
+═══════════════════════════════════════════════════════════════════════════
+📚 TÀI LIỆU THAM KHẢO
+═══════════════════════════════════════════════════════════════════════════
+
+    Bắt đầu:
+    ────────
+    BAT_DAU_O_DAY.txt          - Điểm bắt đầu
+    FIX_3_BUOC.txt             - Fix lỗi nhanh
+
+    Chi tiết:
+    ─────────
+    FIX_NGAY_BAY_GIO.md        - Fix lỗi chi tiết
+    BAT_DAU_SU_DUNG.md         - Hướng dẫn sử dụng
+    README.md                   - README chính
+
+    Kỹ thuật:
+    ─────────
+    THAY_DOI_MOI_NHAT.md       - Thay đổi mới nhất
+    TONG_KET_FIX_LOI.txt       - Tổng kết fix
+    ARCHITECTURE_DIAGRAM.md     - Kiến trúc
+
+
+═══════════════════════════════════════════════════════════════════════════
+💡 MẸO VÀ TRICKS
+═══════════════════════════════════════════════════════════════════════════
+
+    1. Luôn dùng Incognito mode khi test
+       → Tránh cache và extensions
+
+    2. Đợi đủ 60 giây sau khi start services
+       → Spring Boot cần thời gian khởi động
+
+    3. Kiểm tra MySQL trước khi start
+       → Tránh lỗi database connection
+
+    4. Đọc error messages trong console
+       → Chúng rất hữu ích!
+
+    5. Dùng Network tab trong DevTools
+       → Xem request/response chi tiết
+
+    6. Test API trực tiếp với curl
+       → Biết chắc backend có hoạt động không
+
+
+═══════════════════════════════════════════════════════════════════════════
+🎉 KẾT LUẬN
+═══════════════════════════════════════════════════════════════════════════
+
+    Bạn đã có:
+    ──────────
+    ✅ Hệ thống hoạt động hoàn hảo
+    ✅ Tất cả lỗi đã được fix
+    ✅ Scripts tự động đầy đủ
+    ✅ Tài liệu chi tiết
+
+    Bây giờ bạn có thể:
+    ───────────────────
+    ✅ Đăng ký tài khoản
+    ✅ Đăng nhập
+    ✅ Sử dụng livestream
+    ✅ Phát triển tính năng mới
+
+    Chúc bạn code vui vẻ! 🚀
+
+
+═══════════════════════════════════════════════════════════════════════════
