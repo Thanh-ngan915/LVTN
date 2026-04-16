@@ -1,4 +1,24 @@
+-- Fix encoding
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+SET character_set_connection=utf8mb4;
+
+-- Set database charset
+ALTER DATABASE product_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 USE product_db;
+
+-- Fix table charsets
+ALTER TABLE category CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE product CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE product_image CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE product_variant CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Xóa data cũ bị lỗi encoding
+DELETE FROM product_variant;
+DELETE FROM product_image;
+DELETE FROM product;
+DELETE FROM category;
 
 -- ========================
 -- 1. Categories
@@ -9,8 +29,7 @@ INSERT INTO category (shortname, name, description) VALUES
 ('dam', 'Đầm & Váy', 'Đầm dự tiệc, váy công sở, áo dài'),
 ('giay', 'Giày & Dép', 'Giày thể thao, dép sandal'),
 ('tui', 'Túi & Balo', 'Túi xách, balo thời trang'),
-('phu_kien', 'Phụ kiện', 'Thắt lưng, mũ nón, kính mát')
-ON DUPLICATE KEY UPDATE name=VALUES(name);
+('phu_kien', 'Phụ kiện', 'Thắt lưng, mũ nón, kính mát');
 
 -- ========================
 -- 2. Products
@@ -50,7 +69,7 @@ INSERT INTO product (name, price_before, price_after, init_quantity, current_qua
 ('Thắt Lưng Da Bò Thật Nam Khóa Pin', 420000, 310000, 80, 76, 4, 'Thắt lưng da bò thật 100%, khóa pin mạ vàng sang trọng. Bền bỉ, không bong tróc.', 'active', 'phu_kien', 'store_006', 4.8, 0, 'admin', NOW());
 
 -- ========================
--- 3. Product Images (public image URLs)
+-- 3. Product Images
 -- ========================
 INSERT INTO product_image (id, product_id, url, created_by, created_at) VALUES
 ('img-001', 1, 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500', 'admin', NOW()),
@@ -79,32 +98,25 @@ INSERT INTO product_image (id, product_id, url, created_by, created_at) VALUES
 -- 4. Product Variants
 -- ========================
 INSERT INTO product_variant (product_id, size, color, price_before, price_after, init_quantity, current_quantity, sold, sku) VALUES
--- Áo Thun Nam (id=1)
 (1, 'S', 'Trắng', 250000, 179000, 30, 28, 2, 'AT-001-S-TRG'),
 (1, 'M', 'Trắng', 250000, 179000, 50, 47, 3, 'AT-001-M-TRG'),
 (1, 'L', 'Trắng', 250000, 179000, 50, 46, 4, 'AT-001-L-TRG'),
 (1, 'M', 'Đen', 250000, 179000, 40, 37, 3, 'AT-001-M-DEN'),
 (1, 'L', 'Đen', 250000, 179000, 30, 27, 3, 'AT-001-L-DEN'),
-
--- Áo Polo (id=2)
 (2, 'M', 'Navy', 450000, 320000, 40, 37, 3, 'AP-002-M-NV'),
 (2, 'L', 'Navy', 450000, 320000, 40, 36, 4, 'AP-002-L-NV'),
 (2, 'M', 'Trắng', 450000, 320000, 35, 32, 3, 'AP-002-M-TRG'),
 (2, 'L', 'Đỏ đô', 450000, 320000, 35, 33, 2, 'AP-002-L-DD'),
-
--- Quần Jean Nam (id=7)
 (7, '30', 'Xanh đậm', 550000, 389000, 30, 27, 3, 'QJ-007-30-XD'),
 (7, '31', 'Xanh đậm', 550000, 389000, 30, 26, 4, 'QJ-007-31-XD'),
 (7, '32', 'Xanh đậm', 550000, 389000, 30, 27, 3, 'QJ-007-32-XD'),
 (7, '32', 'Xanh nhạt', 550000, 389000, 30, 25, 5, 'QJ-007-32-XN'),
-
--- Giày Sneaker (id=14)
 (14, '40', 'Trắng', 850000, 650000, 20, 18, 2, 'GS-014-40-TRG'),
 (14, '41', 'Trắng', 850000, 650000, 20, 18, 2, 'GS-014-41-TRG'),
 (14, '42', 'Trắng', 850000, 650000, 20, 18, 2, 'GS-014-42-TRG'),
 (14, '42', 'Đen', 850000, 650000, 20, 18, 2, 'GS-014-42-DEN');
 
-SELECT CONCAT('✅ Đã insert ', COUNT(*), ' sản phẩm') AS result FROM product;
-SELECT CONCAT('✅ Đã insert ', COUNT(*), ' categories') AS result FROM category;
-SELECT CONCAT('✅ Đã insert ', COUNT(*), ' images') AS result FROM product_image;
-SELECT CONCAT('✅ Đã insert ', COUNT(*), ' variants') AS result FROM product_variant;
+-- Verify
+SELECT CONCAT('Categories: ', COUNT(*)) AS result FROM category;
+SELECT CONCAT('Products: ', COUNT(*)) AS result FROM product;
+SELECT name FROM product LIMIT 3;
