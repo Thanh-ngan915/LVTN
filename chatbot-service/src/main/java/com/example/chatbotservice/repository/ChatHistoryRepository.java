@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface ChatHistoryRepository extends JpaRepository<ChatHistory, Long> {
     List<ChatHistory> findByUserIdOrderByCreatedAtAsc(String userId);
+    List<ChatHistory> findBySessionIdOrderByCreatedAtAsc(String sessionId);
 }
