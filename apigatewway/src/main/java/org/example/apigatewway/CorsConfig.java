@@ -18,8 +18,7 @@ public class CorsConfig {
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public CorsFilter corsFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-<<<<<<< HEAD
-<<<<<<< HEAD
+
         corsConfig.setAllowedOrigins(Arrays.asList(
             "http://localhost:3000",
             "http://localhost:3001",
@@ -28,18 +27,12 @@ public class CorsConfig {
             "http://192.168.147.1:3000",
             "http://192.168.147.1:3001"
         ));
-=======
-=======
->>>>>>> main
         
         // IMPORTANT: Use setAllowedOriginPatterns instead of setAllowedOrigins
         // to avoid duplicate header issues
         corsConfig.setAllowedOriginPatterns(Collections.singletonList("*"));
         
-<<<<<<< HEAD
->>>>>>> main
-=======
->>>>>>> main
+
         corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         corsConfig.setAllowedHeaders(Collections.singletonList("*"));
         corsConfig.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
