@@ -18,9 +18,11 @@ public class ChatHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private String sessionId;
     private String userId;
     @Column(columnDefinition = "TEXT")
     private String content;
-    private String role; //"user"/"bot"
+    private String role;
     private LocalDateTime createdAt = LocalDateTime.now();
 }
