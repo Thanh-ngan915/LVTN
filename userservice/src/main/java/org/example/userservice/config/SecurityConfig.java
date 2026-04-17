@@ -8,6 +8,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
@@ -16,8 +21,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Disable CORS at service level - API Gateway handles it
-                .cors(cors -> cors.disable())
+                // Provide a no-op CORS config so Spring doesn't add any headers
+                .cors(cors -> cors.configurationSource(noOpCorsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -28,6 +33,20 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    /**
+     * Returns a CORS source that allows nothing — effectively disabling CORS headers
+     * at the service level. The API Gateway handles CORS for all external requests.
+     */
+    @Bean
+    public CorsConfigurationSource noOpCorsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        // Empty allowed origins = no CORS headers added by this service
+        config.setAllowedOrigins(Collections.emptyList());
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     @Bean

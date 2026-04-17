@@ -9,7 +9,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
 
 @Configuration
 public class CorsConfig {
@@ -18,16 +18,30 @@ public class CorsConfig {
     @Order(Ordered.HIGHEST_PRECEDENCE)
     public CorsFilter corsFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
+<<<<<<< HEAD
+<<<<<<< HEAD
         corsConfig.setAllowedOrigins(Arrays.asList(
             "http://localhost:3000",
             "http://localhost:3001",
             "http://localhost:8080",
-            "http://localhost:8086", "http://localhost:8081",
+            "http://localhost:8086", "http://localhost:8081", "http://localhost:8089",
             "http://192.168.147.1:3000",
             "http://192.168.147.1:3001"
         ));
+=======
+=======
+>>>>>>> main
+        
+        // IMPORTANT: Use setAllowedOriginPatterns instead of setAllowedOrigins
+        // to avoid duplicate header issues
+        corsConfig.setAllowedOriginPatterns(Collections.singletonList("*"));
+        
+<<<<<<< HEAD
+>>>>>>> main
+=======
+>>>>>>> main
         corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        corsConfig.setAllowedHeaders(List.of("*"));
+        corsConfig.setAllowedHeaders(Collections.singletonList("*"));
         corsConfig.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
         corsConfig.setAllowCredentials(true);
         corsConfig.setMaxAge(3600L);

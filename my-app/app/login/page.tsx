@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const router = useRouter();
 
-  const API_URL = "http://localhost:8080/api/auth/login";
+    const API_URL = "/api/auth/login";  // dùng Next.js proxy
 
   const handleGoogleLogin = () => {
     const params = new URLSearchParams({
@@ -45,38 +45,47 @@ export default function LoginPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
+        mode: "cors",
+        credentials: "include",
         body: JSON.stringify({
           username: formData.username.trim(),
           password: formData.password.trim(),
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok || response.status === 200) {
-        // Save JWT Token
-        if (data.token) {
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("user", JSON.stringify(data));
-        }
-        
-        setMessage({ text: data.message || `Đăng nhập thành công! Chào ${data.fullName}`, type: "success" });
-        
-        // Optional: Redirect to Dashboard after 1.5 seconds
-        // setTimeout(() => router.push("/dashboard"), 1500);
-      } else {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Lỗi không xác định" }));
         let errorMsg = "Tài khoản hoặc mật khẩu không chính xác.";
-        if (data.message) {
-          errorMsg = data.message;
-        } else if (data.messages) {
-          errorMsg = Object.values(data.messages).join(" | ");
+        if (errorData.message) {
+          errorMsg = errorData.message;
+        } else if (errorData.messages) {
+          errorMsg = Object.values(errorData.messages).join(" | ");
         }
         setMessage({ text: errorMsg, type: "error" });
+        return;
       }
+
+      const data = await response.json();
+
+      // Save JWT Token
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data));
+      }
+      
+      setMessage({ text: data.message || `Đăng nhập thành công! Chào ${data.fullName}`, type: "success" });
+      
+      // Optional: Redirect to Dashboard after 1.5 seconds
+      // setTimeout(() => router.push("/dashboard"), 1500);
     } catch (error) {
       console.error("Fetch error:", error);
-      setMessage({ text: "Lỗi kết nối. Hãy chắc chắn API Gateway (8080) đang hoạt động.", type: "error" });
+      const errorMessage = error instanceof Error ? error.message : "Lỗi không xác định";
+      setMessage({ 
+        text: `Lỗi kết nối đến API Gateway (${API_URL}). Vui lòng kiểm tra:\n1. API Gateway đang chạy ở port 8080\n2. User Service đang chạy ở port 8085\n3. CORS đã được cấu hình đúng\n\nChi tiết: ${errorMessage}`, 
+        type: "error" 
+      });
     } finally {
       setLoading(false);
     }

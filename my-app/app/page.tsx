@@ -1,66 +1,121 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import Header from './components/Header';
+import HeroBanner from './components/HeroBanner';
+import CategoryFilter from './components/CategoryFilter';
+import ProductGrid from './components/ProductGrid';
+import {
+  Product,
+  Category,
+  getProducts,
+  getProductsByCategory,
+  getCategories,
+} from './services/productService';
+import styles from './page.module.css';
 
 export default function Home() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  const fetchProducts = useCallback(async (pageNum: number, category: string | null, append: boolean) => {
+    setLoading(true);
+    try {
+      const res = category
+        ? await getProductsByCategory(category, pageNum, 12)
+        : await getProducts(pageNum, 12);
+
+      if (res.success) {
+        setProducts(prev => append ? [...prev, ...res.data] : res.data);
+        setHasMore(pageNum < res.totalPages - 1);
+      }
+    } catch (err) {
+      console.error('Failed to fetch products:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    getCategories()
+      .then((res) => {
+        if (res.success) setCategories(res.data);
+      })
+      .catch((err) => console.error('Failed to fetch categories:', err));
+  }, []);
+
+  useEffect(() => {
+    setPage(0);
+    fetchProducts(0, activeCategory, false);
+  }, [activeCategory, fetchProducts]);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchProducts(nextPage, activeCategory, true);
+  };
+
+  const handleCategoryChange = (category: string | null) => {
+    setActiveCategory(category);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-              style={{ width: 'auto', height: 'auto' }}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+    <div className={styles.page}>
+      <Header />
+      <HeroBanner />
+      <main className={styles.main} id="products">
+        <div className={styles.container}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>
+              <span className={styles.titleIcon}>🔥</span>
+              Sản phẩm nổi bật
+            </h2>
+            <p className={styles.sectionSubtitle}>
+              Khám phá những sản phẩm được yêu thích nhất
+            </p>
+          </div>
+          <CategoryFilter
+            categories={categories}
+            activeCategory={activeCategory}
+            onCategoryChange={handleCategoryChange}
+          />
+          <ProductGrid
+            products={products}
+            loading={loading}
+            hasMore={hasMore}
+            onLoadMore={handleLoadMore}
+          />
         </div>
       </main>
+      <footer className={styles.footer} id="site-footer">
+        <div className={styles.footerInner}>
+          <div className={styles.footerBrand}>
+            <span className={styles.footerLogo}>✦ ANVI SHOP</span>
+            <p className={styles.footerDesc}>
+              Thời trang chất lượng cao, phong cách đa dạng, giá cả hợp lý.
+            </p>
+          </div>
+          <div className={styles.footerLinks}>
+            <h4>Hỗ trợ</h4>
+            <a href="#">Chính sách đổi trả</a>
+            <a href="#">Hướng dẫn mua hàng</a>
+            <a href="#">Liên hệ</a>
+          </div>
+          <div className={styles.footerLinks}>
+            <h4>Theo dõi</h4>
+            <a href="#">Facebook</a>
+            <a href="#">Instagram</a>
+            <a href="#">TikTok</a>
+          </div>
+        </div>
+        <div className={styles.footerBottom}>
+          <span>© 2026 ANVI Shop. All rights reserved.</span>
+        </div>
+      </footer>
     </div>
   );
 }
