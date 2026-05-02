@@ -1,21 +1,21 @@
 package org.example.userservice.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.example.userservice.dto.LoginRequest;
-import org.example.userservice.dto.LoginResponse;
-import org.example.userservice.dto.RegisterRequest;
-import org.example.userservice.dto.RegisterResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.example.userservice.dto.*;
 import org.example.userservice.entity.Account;
 import org.example.userservice.entity.Permission;
 import org.example.userservice.entity.StoreRole;
 import org.example.userservice.entity.User;
 import org.example.userservice.exception.InvalidCredentialsException;
 import org.example.userservice.exception.UsernameAlreadyExistsException;
+import org.example.userservice.kafka.UserSyncProducer;
 import org.example.userservice.repository.AccountRepository;
 import org.example.userservice.repository.PermissionRepository;
 import org.example.userservice.repository.StoreRoleRepository;
 import org.example.userservice.repository.UserRepository;
 import org.example.userservice.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
     private final AccountRepository accountRepository;
@@ -32,6 +32,25 @@ public class AuthServiceImpl implements AuthService {
     private final PermissionRepository permissionRepository;
     private final PasswordEncoder passwordEncoder;
     private final org.example.userservice.config.JwtTokenProvider jwtTokenProvider;
+
+    @Autowired(required = false)
+    private UserSyncProducer userSyncProducer;
+
+    public AuthServiceImpl(
+            AccountRepository accountRepository,
+            UserRepository userRepository,
+            StoreRoleRepository storeRoleRepository,
+            PermissionRepository permissionRepository,
+            PasswordEncoder passwordEncoder,
+            org.example.userservice.config.JwtTokenProvider jwtTokenProvider
+    ) {
+        this.accountRepository = accountRepository;
+        this.userRepository = userRepository;
+        this.storeRoleRepository = storeRoleRepository;
+        this.permissionRepository = permissionRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
 
     @Override
     @Transactional
@@ -98,7 +117,24 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         accountRepository.save(account);
 
-        // 7. Return response
+        // 7. Gửi Kafka sync message (nếu Kafka được bật)
+        if (userSyncProducer != null) {
+            try {
+                userSyncProducer.sendUserSync(UserSyncMessage.builder()
+                        .userId(userId)
+                        .username(account.getUsername())
+                        .fullName(user.getFullName())
+                        .image(user.getImage())
+                        .action("CREATE")
+                        .build());
+            } catch (Exception e) {
+                log.warn("Failed to send user sync on register: {}", e.getMessage());
+            }
+        } else {
+            log.info("Kafka disabled - skipping user sync for register: {}", account.getUsername());
+        }
+
+        // 8. Return response
         return RegisterResponse.builder()
                 .username(account.getUsername())
                 .userId(userId)
@@ -127,7 +163,24 @@ public class AuthServiceImpl implements AuthService {
         // 4. Generate JWT Token
         String token = jwtTokenProvider.generateToken(account.getUsername(), account.getRole());
 
-        // 5. Build Response
+        // 5. Gửi Kafka sync message (nếu Kafka được bật)
+        if (userSyncProducer != null) {
+            try {
+                userSyncProducer.sendUserSync(UserSyncMessage.builder()
+                        .userId(account.getUserId())
+                        .username(account.getUsername())
+                        .fullName(user.getFullName())
+                        .image(user.getImage())
+                        .action("UPDATE")
+                        .build());
+            } catch (Exception e) {
+                log.warn("Failed to send user sync on login: {}", e.getMessage());
+            }
+        } else {
+            log.info("Kafka disabled - skipping user sync for login: {}", account.getUsername());
+        }
+
+        // 6. Build Response
         return LoginResponse.builder()
                 .username(account.getUsername())
                 .userId(account.getUserId())
