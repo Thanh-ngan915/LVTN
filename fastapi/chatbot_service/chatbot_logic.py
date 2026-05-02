@@ -19,10 +19,15 @@ def create_rag_chain(vectorstore):
     # Prompt Template từ file code của bạn
     prompt = ChatPromptTemplate.from_template("""
     Bạn là trợ lý ảo tư vấn sản phẩm Etsy. 
-    Dựa vào dữ liệu sau để trả lời câu hỏi của khách hàng một cách ngắn gọn và chuyên nghiệp.
-    Dựa vào dữ liệu sau để trả lời:
+    Dựa vào lịch sử trò chuyện và dữ liệu sản phẩm dưới đây để trả lời khách hàng.
+
+    Lịch sử trò chuyện:
+    {chat_history}
+
+    Dữ liệu sản phẩm liên quan:
     {context}
-    Câu hỏi: {question}
+
+    Câu hỏi hiện tại: {question}
     """)
 
     # Hàm truy vấn thông minh (Smart Retrieve) từ code Colab
@@ -49,9 +54,13 @@ def create_rag_chain(vectorstore):
 
     # Xây dựng Chain
     rag_chain = (
-        {"context": RunnableLambda(smart_retrieve), "question": RunnablePassthrough()}
-        | prompt
-        | llm
-        | StrOutputParser()
+            {
+                "context": lambda x: smart_retrieve(x["question"]),
+                "question": lambda x: x["question"],
+                "chat_history": lambda x: x["chat_history"]
+            }
+            | prompt
+            | llm
+            | StrOutputParser()
     )
     return rag_chain

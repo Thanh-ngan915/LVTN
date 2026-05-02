@@ -1,60 +1,56 @@
 package com.example.chatbotservice.controller;
 
 import com.example.chatbotservice.model.ChatHistory;
+import com.example.chatbotservice.model.ChatSession;
 import com.example.chatbotservice.repository.ChatHistoryRepository;
+import com.example.chatbotservice.repository.ChatSessionRepository;
+import com.example.chatbotservice.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
 public class ChatHistoryController {
+
+    private final ChatService chatService;
+    private final ChatSessionRepository chatSessionRepository;
     private final ChatHistoryRepository chatHistoryRepository;
-    private final String FASTAPI_URL = "http://127.0.0.1:8000/api/ai/chat";
+
     @PostMapping()
     public ResponseEntity<Map<String, String>> chat(@RequestBody Map<String, String> request) {
         String userId = request.get("userId");
         String userMessage = request.get("message");
+        String sessionId = request.get("sessionId");
 
-        // 1. Lưu tin nhắn của User vào MySQL
-        ChatHistory userChat = new ChatHistory();
-        userChat.setUserId(userId);
-        userChat.setContent(userMessage);
-        userChat.setRole("user");
-        userChat.setCreatedAt(LocalDateTime.now());
-        chatHistoryRepository.save(userChat);
+        // Nếu client không gửi sessionId (Chat mới), tạo một UUID mới
+        if (sessionId == null || sessionId.isEmpty()) {
+            sessionId = UUID.randomUUID().toString();
+        }
 
-        // 2. Gọi sang FastAPI (Python) để lấy câu trả lời từ Gemini
-        RestTemplate restTemplate = new RestTemplate();
-        Map<String, String> fastApiBody = new HashMap<>();
-        fastApiBody.put("message", userMessage);
+        String aiReply = chatService.processChat(userId, sessionId, userMessage);
 
         Map<String, String> response = new HashMap<>();
-        try {
-            // Gửi request sang Python
-            Map<String, Object> fastApiResponse = restTemplate.postForObject(FASTAPI_URL, fastApiBody, Map.class);
-            String aiReply = fastApiResponse.get("reply").toString();
+        response.put("reply", aiReply);
+        response.put("sessionId", sessionId); // Trả về sessionId để Frontend lưu lại cho lượt chat kế tiếp
 
-            // 3. Lưu câu trả lời của AI vào MySQL
-            ChatHistory aiChat = new ChatHistory();
-            aiChat.setUserId(userId);
-            aiChat.setContent(aiReply);
-            aiChat.setRole("assistant");
-            aiChat.setCreatedAt(LocalDateTime.now());
-            chatHistoryRepository.save(aiChat);
+        return ResponseEntity.ok(response);
+    }
+    // Lấy danh sách các cuộc trò chuyện ở Sidebar
+    @GetMapping("/sessions")
+    public ResponseEntity<List<ChatSession>> getSessions(@RequestParam String userId) {
+        return ResponseEntity.ok(chatSessionRepository.findByUserIdOrderByCreatedAtDesc(userId));
+    }
 
-            response.put("reply", aiReply);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            response.put("reply", "Lỗi: Không thể kết nối với bộ não AI (FastAPI)");
-            return ResponseEntity.status(500).body(response);
-        }
+    // Lấy lại tin nhắn khi click vào một session cũ
+    @GetMapping("/sessions/{sessionId}/messages")
+    public ResponseEntity<List<ChatHistory>> getMessages(@PathVariable String sessionId) {
+        return ResponseEntity.ok(chatHistoryRepository.findBySessionIdOrderByCreatedAtAsc(sessionId));
     }
 }
