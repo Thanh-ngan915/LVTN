@@ -76,7 +76,9 @@ export default function LoginPage() {
       }
       
       setMessage({ text: data.message || `Đăng nhập thành công! Chào ${data.fullName}`, type: "success" });
-      
+        setTimeout(() => {
+            router.push("/profile");
+        }, 1000);
       // Optional: Redirect to Dashboard after 1.5 seconds
       // setTimeout(() => router.push("/dashboard"), 1500);
     } catch (error) {
