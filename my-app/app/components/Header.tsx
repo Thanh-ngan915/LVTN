@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import styles from './Header.module.css';
 import { getCartCount } from '../services/cartService';
-
+import {useRouter} from "next/navigation";
+import Link from 'next/link';
 interface HeaderProps {
   onSearch?: (keyword: string) => void;
   cartUpdateTrigger?: number; // Increment this to trigger cart count refresh
@@ -13,6 +14,25 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const router = useRouter();
+  const [username, setUsername] = useState<string | null>(() => {
+     if (typeof window === 'undefined') return null;
+     try {
+         const storedUser = localStorage.getItem('user');
+         if (!storedUser) return null;
+         const user = JSON.parse(storedUser);
+         return user.username || user.name || user.email || 'Tài khoản';
+     } catch {
+         return null;
+     }
+  });
+
+  const handleLogout = () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUsername(null);
+      router.push('/login');
+  };
 
   // Load cart count
   useEffect(() => {
@@ -43,20 +63,33 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
       <div className={styles.topBar}>
         <div className={styles.topBarInner}>
           <span>🚚 Miễn phí vận chuyển cho đơn hàng từ 500.000đ</span>
-          <div className={styles.topBarLinks}>
-            <a href="/login">Đăng nhập</a>
-            <span className={styles.divider}>|</span>
-            <a href="/register">Đăng ký</a>
-          </div>
+            <div className={styles.topBarLinks}>
+                {username ? (
+                    <>
+                        <Link href="/profile">👤 {username}</Link>
+                        <span className={styles.divider}>|</span>
+                        <button onClick={handleLogout} className={styles.logoutBtn}>
+                            Đăng xuất
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <Link
+                            href="/login">Đăng nhập</Link>
+                        <span className={styles.divider}>|</span>
+                        <Link href="/register">Đăng ký</Link>
+                    </>
+                )}
+            </div>
         </div>
       </div>
       <div className={styles.main}>
         <div className={styles.mainInner}>
-          <a href="/" className={styles.logo}>
+          <Link href="/" className={styles.logo}>
             <span className={styles.logoIcon}>✦</span>
             <span className={styles.logoText}>ANVI</span>
             <span className={styles.logoSub}>SHOP</span>
-          </a>
+          </Link>
 
           <div className={styles.searchBar}>
             <svg className={styles.searchIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -117,14 +150,14 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
       </div>
       <nav className={`${styles.nav} ${mobileMenuOpen ? styles.navOpen : ''}`} id="main-nav">
         <div className={styles.navInner}>
-          <a href="/" className={styles.navLink}>Trang chủ</a>
-          <a href="#" className={styles.navLink}>Sản phẩm</a>
-          <a href="#" className={styles.navLink}>Khuyến mãi</a>
-          <a href="#" className={styles.navLink}>Bộ sưu tập</a>
-          <a href="/livestream" className={styles.navLinkLive}>
+          <Link  href="/" className={styles.navLink}>Trang chủ</Link >
+          <Link  href="#" className={styles.navLink}>Sản phẩm</Link>
+          <Link  href="#" className={styles.navLink}>Khuyến mãi</Link >
+          <Link  href="#" className={styles.navLink}>Bộ sưu tập</Link >
+          <Link  href="/livestream" className={styles.navLinkLive}>
             <span className={styles.liveDot}></span>
             Live Stream
-          </a>
+          </Link >
           <a href="#" className={styles.navLink}>Liên hệ</a>
         </div>
       </nav>

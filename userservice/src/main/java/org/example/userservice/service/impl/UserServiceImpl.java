@@ -2,6 +2,7 @@ package org.example.userservice.service.impl;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.userservice.dto.PasswordRequest;
 import org.example.userservice.dto.UserDTO;
 import org.example.userservice.entity.Account;
@@ -9,17 +10,19 @@ import org.example.userservice.entity.User;
 import org.example.userservice.repository.AccountRepository;
 import org.example.userservice.repository.UserRepository;
 import org.example.userservice.service.UserService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor //tự động inject repo qua constructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
+    private final PasswordEncoder passwordEncoder;
     @Override
     public UserDTO getProfile (String userId){
         User user = userRepository.findById(userId)
@@ -54,34 +57,66 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void updatePassword (String userId, PasswordRequest request){
+    public void updatePassword(String userId, PasswordRequest request) {
         Account account = accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        account.setPassword(request.getNewPassword());
-        account.setUpdateAt(LocalDateTime.now());
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        // Verify mật khẩu cũ
+        if (!passwordEncoder.matches(request.getOldPassword(), account.getPassword())) {
+            throw new RuntimeException("Mật khẩu cũ không chính xác");
+        }
+
+        // Kiểm tra confirm password
+        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+            throw new RuntimeException("Mật khẩu mới không khớp");
+        }
+
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
         accountRepository.save(account);
     }
 
     @Override
     @Transactional
-    public void updateUserName (String userId, String newUserName){
-        if(accountRepository.existsByUsername(newUserName)){
+    public void updateUserName(String userId, String newUserName) {
+        if (accountRepository.existsByUsername(newUserName)) {
             throw new RuntimeException("Username already exists");
         }
-        Account account = accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        account.setUsername(newUserName);
-        account.setUpdateAt(LocalDateTime.now());
-        accountRepository.save(account);
+        int updated = accountRepository.updateUsernameByUserId(userId, newUserName, LocalDateTime.now());
+        if (updated == 0) {
+            throw new RuntimeException("Account not found");
+        }
     }
 
     @Override
-    public String updateAvatar (String userId, MultipartFile file){
-        String imgUrl = "https://your-storage.com/avatar/" + userId + ".jpg"; //gia lap
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        user.setImage(imgUrl);
-        userRepository.save(user);
-        return imgUrl;
+    public String updateAvatar(String userId, MultipartFile file) {
+        try {
+            String uploadDir = "uploads/avatars/";
+            java.nio.file.Path uploadPath = java.nio.file.Paths.get(uploadDir);
+            if (!java.nio.file.Files.exists(uploadPath)) {
+                java.nio.file.Files.createDirectories(uploadPath);
+            }
+
+            String originalFilename = file.getOriginalFilename();
+            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String filename = userId + extension;
+
+            java.nio.file.Path filePath = uploadPath.resolve(filename);
+            java.nio.file.Files.copy(file.getInputStream(), filePath,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+            // Dùng relative URL thay vì localhost:8085
+            String imgUrl = "/uploads/avatars/" + filename;
+
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            user.setImage(imgUrl);
+            userRepository.save(user);
+
+            log.info("Avatar saved: {}", filePath.toAbsolutePath());
+            return imgUrl;
+        } catch (Exception e) {
+            log.error("Upload error: {}", e.getMessage(), e);
+            throw new RuntimeException("Không thể upload ảnh: " + e.getMessage());
+        }
     }
 }

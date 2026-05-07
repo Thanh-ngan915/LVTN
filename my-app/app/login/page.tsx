@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const router = useRouter();
 
-    const API_URL = "/api/auth/login";  // dùng Next.js proxy
+  const API_URL = "/api/auth/login";  // dùng Next.js proxy
 
   const handleGoogleLogin = () => {
     const params = new URLSearchParams({
@@ -68,16 +68,24 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
+        console.log(data)
 
       // Save JWT Token
       if (data.token) {
         localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data));
+          if (data.token) {
+              localStorage.setItem("token", data.token);
+              localStorage.setItem("user", JSON.stringify({
+                  username: data.username,
+                  fullName: data.fullName,
+                  userId: data.userId,
+              }));
+          }
       }
       
       setMessage({ text: data.message || `Đăng nhập thành công! Chào ${data.fullName}`, type: "success" });
         setTimeout(() => {
-            router.push("/profile");
+            router.push("/");
         }, 1000);
       // Optional: Redirect to Dashboard after 1.5 seconds
       // setTimeout(() => router.push("/dashboard"), 1500);
