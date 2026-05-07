@@ -31,6 +31,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/users/**").authenticated()
                         .anyRequest().authenticated()
                 );
@@ -46,11 +47,16 @@ public class SecurityConfig {
     public CorsConfigurationSource noOpCorsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         // Empty allowed origins = no CORS headers added by this service
-        config.setAllowedOrigins(Collections.emptyList());
-//        config.setAllowedOrigins(java.util.List.of("http://localhost:3000", "http://localhost:8080"));
-//        config.setAllowedMethods(java.util.List.of("*"));
-//        config.setAllowedHeaders(java.util.List.of("*"));
-//        config.setAllowCredentials(true);
+        config.setAllowedOrigins(java.util.List.of(
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://localhost:8080"
+        ));
+        config.setAllowedMethods(java.util.List.of(
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
+        config.setAllowedHeaders(java.util.List.of("*"));
+        config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
