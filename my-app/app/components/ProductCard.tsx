@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { Product } from '../services/productService';
 import styles from './ProductCard.module.css';
 
@@ -8,6 +9,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const router = useRouter();
+
   const discount = product.priceBefore && product.priceAfter
     ? Math.round(((product.priceBefore - product.priceAfter) / product.priceBefore) * 100)
     : 0;
@@ -39,8 +42,16 @@ export default function ProductCard({ product }: ProductCardProps) {
     return stars;
   };
 
+  const handleCardClick = () => {
+    router.push(`/product/${product.id}`);
+  };
+
+  const stopPropagation = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div className={styles.card} id={`product-card-${product.id}`}>
+    <div className={styles.card} id={`product-card-${product.id}`} onClick={handleCardClick}>
       <div className={styles.imageWrapper}>
         {imageUrl ? (
           <img
@@ -61,8 +72,8 @@ export default function ProductCard({ product }: ProductCardProps) {
         {discount > 0 && (
           <span className={styles.badge}>-{discount}%</span>
         )}
-        <div className={styles.overlay}>
-          <button className={styles.quickView} aria-label="Quick view">
+        <div className={styles.overlay} onClick={stopPropagation}>
+          <button className={styles.quickView} aria-label="Quick view" onClick={() => router.push(`/product/${product.id}`)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
               <circle cx="12" cy="12" r="3"/>

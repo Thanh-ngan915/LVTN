@@ -18,6 +18,16 @@ const nextConfig: NextConfig = {
       {
           source: '/api/users/:path*',
           destination: 'http://localhost:8080/api/users/:path*',
+        source: '/api/ratings/:path*',
+        destination: 'http://localhost:8088/api/ratings/:path*',
+      },
+      {
+        source: '/api/cart/:path*',
+        destination: 'http://localhost:8087/api/cart/:path*',
+      },
+      {
+        source: '/api/cart',
+        destination: 'http://localhost:8087/api/cart',
       },
       {
         source: '/api/:path*',

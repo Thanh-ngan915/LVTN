@@ -1,11 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './Header.module.css';
+import { getCartCount } from '../services/cartService';
 
-export default function Header() {
+interface HeaderProps {
+  onSearch?: (keyword: string) => void;
+  cartUpdateTrigger?: number; // Increment this to trigger cart count refresh
+}
+
+export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+
+  // Load cart count
+  useEffect(() => {
+    getCartCount().then(setCartCount).catch(() => setCartCount(0));
+  }, [cartUpdateTrigger]);
+
+  const handleSearch = () => {
+    if (onSearch) {
+      onSearch(searchQuery.trim());
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleClear = () => {
+    setSearchQuery('');
+    if (onSearch) {
+      onSearch('');
+    }
+  };
 
   return (
     <header className={styles.header} id="site-header">
@@ -36,9 +67,22 @@ export default function Header() {
               placeholder="Tìm kiếm sản phẩm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               className={styles.searchInput}
               id="search-input"
             />
+            {searchQuery && (
+              <button className={styles.clearBtn} onClick={handleClear} aria-label="Clear search" id="search-clear">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            )}
+            <button className={styles.searchBtn} onClick={handleSearch} aria-label="Search" id="search-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            </button>
           </div>
 
           <div className={styles.actions}>
@@ -47,13 +91,13 @@ export default function Header() {
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
               </svg>
             </button>
-            <button className={styles.iconBtn} aria-label="Cart" id="cart-btn">
+            <a href="/cart" className={styles.iconBtn} aria-label="Cart" id="cart-btn">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
               </svg>
-              <span className={styles.cartBadge}>0</span>
-            </button>
+              <span className={styles.cartBadge}>{cartCount}</span>
+            </a>
             <button
               className={styles.mobileToggle}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -87,3 +131,4 @@ export default function Header() {
     </header>
   );
 }
+

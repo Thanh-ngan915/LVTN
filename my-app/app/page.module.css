@@ -41,6 +41,25 @@
   margin-top: 8px;
 }
 
+.clearSearch {
+  background: none;
+  border: none;
+  color: #e74c3c;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #e74c3c;
+  transition: all 0.2s;
+}
+
+.clearSearch:hover {
+  background: #e74c3c;
+  color: #fff;
+}
+
 /* Footer */
 .footer {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);

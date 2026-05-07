@@ -1,0 +1,891 @@
+/* ============================================
+   Product Detail Page - Shopee Inspired Design
+   ============================================ */
+
+.page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.breadcrumb {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 20px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #999;
+}
+
+.breadcrumb a {
+  color: #0055aa;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.breadcrumb a:hover {
+  color: #ee4d2d;
+}
+
+.breadcrumbSep {
+  color: #ccc;
+}
+
+/* === Main Container === */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+}
+
+/* === Product Top Section === */
+.productTop {
+  display: grid;
+  grid-template-columns: 480px 1fr;
+  gap: 28px;
+  background: #fff;
+  border-radius: 4px;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  margin-bottom: 16px;
+}
+
+/* === Image Gallery === */
+.gallery {
+  position: relative;
+}
+
+.mainImage {
+  width: 100%;
+  aspect-ratio: 1/1;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.mainImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.mainImage:hover img {
+  transform: scale(1.05);
+}
+
+.thumbnails {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.thumbnail {
+  width: 76px;
+  height: 76px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  flex-shrink: 0;
+  transition: border-color 0.2s;
+  background: #fafafa;
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnailActive {
+  border-color: #ee4d2d;
+}
+
+.thumbnail:hover {
+  border-color: #ee4d2d;
+}
+
+/* === Product Info === */
+.productInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.favBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ee4d2d;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 2px;
+  margin-bottom: 8px;
+  width: fit-content;
+  letter-spacing: 0.3px;
+}
+
+.productName {
+  font-size: 20px;
+  font-weight: 500;
+  color: #222;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+/* Rating & Sold */
+.ratingRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.ratingScore {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ratingNumber {
+  font-size: 17px;
+  font-weight: 600;
+  color: #ee4d2d;
+  border-bottom: 1px solid #ee4d2d;
+}
+
+.ratingStars {
+  display: flex;
+  gap: 2px;
+  font-size: 16px;
+}
+
+.starFull { color: #ee4d2d; }
+.starHalf { color: #ee4d2d; opacity: 0.5; }
+.starEmpty { color: #d5d5d5; }
+
+.separator {
+  width: 1px;
+  height: 20px;
+  background: #dbdbdb;
+}
+
+.ratingMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #767676;
+}
+
+.metaValue {
+  font-weight: 600;
+  color: #222;
+}
+
+/* === Price Section === */
+.priceSection {
+  background: linear-gradient(135deg, #ffeee8 0%, #fff5f0 100%);
+  padding: 16px 20px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.priceBefore {
+  font-size: 15px;
+  color: #999;
+  text-decoration: line-through;
+}
+
+.priceAfter {
+  font-size: 28px;
+  font-weight: 600;
+  color: #ee4d2d;
+}
+
+.discountTag {
+  background: #ee4d2d;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+/* === Variant Selectors === */
+.variantSection {
+  padding: 16px 0;
+}
+
+.variantLabel {
+  font-size: 14px;
+  color: #757575;
+  margin-bottom: 10px;
+  min-width: 110px;
+  display: flex;
+  align-items: center;
+}
+
+.variantRow {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.variantOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.variantBtn {
+  position: relative;
+  min-width: 50px;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  background: #fff;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.variantBtn:hover {
+  border-color: #ee4d2d;
+  color: #ee4d2d;
+}
+
+.variantBtnActive {
+  border-color: #ee4d2d;
+  color: #ee4d2d;
+  background: rgba(238, 77, 45, 0.04);
+  position: relative;
+}
+
+.variantBtnActive::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 16px 16px;
+  border-color: transparent transparent #ee4d2d transparent;
+}
+
+.variantBtnActive::before {
+  content: '✓';
+  position: absolute;
+  bottom: 0;
+  right: 1px;
+  font-size: 8px;
+  color: #fff;
+  z-index: 1;
+  line-height: 1;
+}
+
+.variantBtnDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #fafafa;
+}
+
+.variantBtnDisabled:hover {
+  border-color: #ccc;
+  color: #333;
+}
+
+.colorIndicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+/* === Quantity === */
+.quantityRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.quantityControl {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.quantityBtn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  transition: background 0.15s;
+}
+
+.quantityBtn:hover {
+  background: #fafafa;
+}
+
+.quantityBtn:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.quantityInput {
+  width: 50px;
+  height: 36px;
+  border: none;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  text-align: center;
+  font-size: 15px;
+  color: #333;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.quantityInput::-webkit-inner-spin-button,
+.quantityInput::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+
+.stockInfo {
+  font-size: 13px;
+  color: #757575;
+}
+
+/* === Action Buttons === */
+.actionRow {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.addToCartBtn {
+  flex: 1;
+  height: 48px;
+  border: 1px solid #ee4d2d;
+  background: rgba(238, 77, 45, 0.08);
+  color: #ee4d2d;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s;
+}
+
+.addToCartBtn:hover {
+  background: rgba(238, 77, 45, 0.15);
+}
+
+.addToCartBtn:active {
+  transform: scale(0.97);
+}
+
+.buyNowBtn {
+  flex: 1;
+  height: 48px;
+  border: none;
+  background: #ee4d2d;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.buyNowBtn:hover {
+  background: #d73211;
+}
+
+.buyNowBtn:active {
+  transform: scale(0.97);
+}
+
+/* === Description Section === */
+.descriptionSection {
+  background: #fff;
+  border-radius: 4px;
+  padding: 24px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  text-transform: uppercase;
+  padding: 12px 20px;
+  background: #fafafa;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.descriptionContent {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #555;
+  white-space: pre-wrap;
+}
+
+/* === Product Details Table === */
+.detailsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.detailsTable tr {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detailsTable td {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.detailsTable td:first-child {
+  color: #999;
+  width: 160px;
+  background: #fafafa;
+}
+
+.detailsTable td:last-child {
+  color: #333;
+}
+
+/* === Comments/Reviews Section === */
+.reviewSection {
+  background: #fff;
+  border-radius: 4px;
+  padding: 24px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  margin-bottom: 16px;
+}
+
+.reviewSummary {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 20px;
+  background: #fef8f4;
+  border: 1px solid #f9ede5;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.reviewScoreBig {
+  text-align: center;
+}
+
+.reviewScoreNum {
+  font-size: 28px;
+  font-weight: 600;
+  color: #ee4d2d;
+}
+
+.reviewScoreMax {
+  font-size: 18px;
+  color: #ee4d2d;
+}
+
+.reviewScoreStars {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.reviewFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filterBtn {
+  padding: 6px 16px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #555;
+}
+
+.filterBtn:hover,
+.filterBtnActive {
+  border-color: #ee4d2d;
+  color: #ee4d2d;
+}
+
+/* Comment Form */
+.commentForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #eee;
+}
+
+.commentFormTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.starSelector {
+  display: flex;
+  gap: 4px;
+}
+
+.starSelect {
+  font-size: 28px;
+  cursor: pointer;
+  color: #ddd;
+  transition: color 0.15s, transform 0.15s;
+  background: none;
+  border: none;
+  padding: 0;
+  line-height: 1;
+}
+
+.starSelect:hover {
+  transform: scale(1.15);
+}
+
+.starSelectActive {
+  color: #ffc107;
+}
+
+.commentTextarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.commentTextarea:focus {
+  border-color: #ee4d2d;
+}
+
+.commentSubmitBtn {
+  align-self: flex-end;
+  padding: 8px 24px;
+  background: #ee4d2d;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.commentSubmitBtn:hover {
+  background: #d73211;
+}
+
+.commentSubmitBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Comment Item */
+.commentList {
+  display: flex;
+  flex-direction: column;
+}
+
+.commentItem {
+  display: flex;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.commentItem:last-child {
+  border-bottom: none;
+}
+
+.commentAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.commentBody {
+  flex: 1;
+}
+
+.commentUser {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.commentStars {
+  display: flex;
+  gap: 1px;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.commentDate {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 6px;
+}
+
+.commentText {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+}
+
+.commentActions {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.commentActionBtn {
+  font-size: 12px;
+  color: #999;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+}
+
+.commentActionBtn:hover {
+  color: #ee4d2d;
+}
+
+.noComments {
+  text-align: center;
+  padding: 32px;
+  color: #999;
+  font-size: 14px;
+}
+
+/* === Toast Notification === */
+.toast {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 9999;
+  animation: slideInRight 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toastContent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  border-left: 4px solid #00bfa5;
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.toastIcon {
+  font-size: 20px;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* === Loading State === */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f0f0f0;
+  border-top-color: #ee4d2d;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loadingText {
+  font-size: 14px;
+  color: #999;
+}
+
+/* === Error State === */
+.error {
+  text-align: center;
+  padding: 60px 20px;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.errorIcon {
+  font-size: 48px;
+}
+
+.errorText {
+  font-size: 16px;
+  color: #666;
+}
+
+.backBtn {
+  padding: 10px 24px;
+  background: #ee4d2d;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.2s;
+}
+
+.backBtn:hover {
+  background: #d73211;
+}
+
+/* === Responsive === */
+@media (max-width: 900px) {
+  .productTop {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .mainImage {
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 640px) {
+  .productName {
+    font-size: 16px;
+  }
+
+  .priceAfter {
+    font-size: 22px;
+  }
+
+  .actionRow {
+    flex-direction: column;
+  }
+
+  .addToCartBtn,
+  .buyNowBtn {
+    width: 100%;
+  }
+
+  .reviewSummary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .breadcrumb {
+    font-size: 12px;
+  }
+
+  .variantRow {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
