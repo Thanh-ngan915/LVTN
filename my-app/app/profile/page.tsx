@@ -69,6 +69,12 @@ export default function ProfilePage() {
 
             <div className={styles.container}>
                 <div className={styles.glassmorphism}>
+                    <button className={styles.btnBackHome} onClick={() => router.push("/")}>
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        <span>Quay lại trang chủ</span>
+                    </button>
                     <div className={styles.profileHeader}>
                         <div className={styles.avatarWrapper}>
                             <img
@@ -103,7 +109,14 @@ export default function ProfilePage() {
                     </div>
 
                     <div className={styles.actions}>
-                        <button className={styles.btnEdit}>Chỉnh sửa trang cá nhân</button>
+                        <button className={styles.btnEdit} onClick={() => router.push("/profile/edit")}>
+                            Chỉnh sửa trang cá nhân</button>
+                        <button className={styles.btnEdit} onClick={() => router.push("/profile/edit-username")}>
+                            Đổi username
+                        </button>
+                        <button className={styles.btnEdit} onClick={() => router.push("/profile/change-password")}>
+                            Đổi mật khẩu
+                        </button>
                         <button className={styles.btnLogout} onClick={handleLogout}>Đăng xuất</button>
                     </div>
                 </div>
