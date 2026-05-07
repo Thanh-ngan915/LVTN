@@ -3,6 +3,7 @@ package org.example.userservice.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Table(name = "user")
@@ -60,4 +61,5 @@ public class User {
     protected void onUpdate() {
         this.updateAt = LocalDateTime.now();
     }
+
 }

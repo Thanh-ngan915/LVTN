@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
         destination: 'http://localhost:8087/api/categories',
       },
       {
+          source: '/api/users/:path*',
+          destination: 'http://localhost:8080/api/users/:path*',
         source: '/api/ratings/:path*',
         destination: 'http://localhost:8088/api/ratings/:path*',
       },

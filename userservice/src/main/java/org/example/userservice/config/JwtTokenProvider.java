@@ -3,6 +3,7 @@ package org.example.userservice.config;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +11,7 @@ import java.security.Key;
 import java.util.Date;
 
 @Component
+@Slf4j
 public class JwtTokenProvider {
 
     @Value("${app.jwt.secret}")
@@ -22,13 +24,16 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .setSubject(username)
                 .claim("role", role)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(key(), SignatureAlgorithm.HS512)
                 .compact();
+        
+        log.debug("Generated token for user: {} with role: {}", username, role);
+        return token;
     }
 
     private Key key() {
@@ -38,9 +43,12 @@ public class JwtTokenProvider {
     public boolean validateToken(String authToken) {
         try {
             Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(authToken);
+            log.debug("Token is valid");
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
-            // Token is invalid, expired, or malformed
+        } catch (JwtException e) {
+            log.warn("JWT validation failed: {}", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            log.warn("JWT illegal argument: {}", e.getMessage());
         }
         return false;
     }
@@ -52,5 +60,15 @@ public class JwtTokenProvider {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+
+    // ✅ THÊM METHOD NÀY
+    public String getRoleFromToken(String token) {
+        return (String) Jwts.parserBuilder()
+                .setSigningKey(key())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("role");
     }
 }
