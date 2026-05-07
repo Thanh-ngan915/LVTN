@@ -39,4 +39,12 @@ public class UserController {
     public ResponseEntity<String> updateAvatar(@PathVariable String userId, @RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(userService.updateAvatar(userId, file));
     }
+
+    @PatchMapping("/{userId}/username")
+    public ResponseEntity<String> updateUsername(
+            @PathVariable String userId,
+            @RequestParam String newUsername) {
+        userService.updateUserName(userId, newUsername);
+        return ResponseEntity.ok("Đổi username thành công!");
+    }
 }
