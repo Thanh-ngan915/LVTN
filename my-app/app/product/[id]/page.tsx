@@ -222,7 +222,26 @@ export default function ProductDetailPage() {
       showToast('Vui lòng chọn kích thước');
       return;
     }
-    showToast('🛒 Đang chuyển đến trang thanh toán...');
+    // Kiểm tra đăng nhập
+    const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    if (!userStr) {
+      showToast('⚠️ Vui lòng đăng nhập để mua hàng');
+      return;
+    }
+    // Điều hướng sang trang checkout với thông tin sản phẩm
+    const params = new URLSearchParams({
+      productId: String(product!.id),
+      productName: product!.name,
+      quantity: String(quantity),
+      storeId: product!.storeId || '',
+      priceBefore: String(displayOrigPrice),
+      priceAfter: String(displayPrice),
+      image: images[0] || '',
+      color: selectedColor || '',
+      size: selectedSize || '',
+      variantId: selectedVariant ? String(selectedVariant.id) : '',
+    });
+    router.push(`/checkout?${params.toString()}`);
   };
 
   const handleSubmitComment = async () => {

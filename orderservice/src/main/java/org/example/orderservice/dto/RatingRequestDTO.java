@@ -9,7 +9,7 @@ import java.util.List;
 @Builder
 public class RatingRequestDTO {
     private Integer orderId;
-    private Integer storeId;
+    private String storeId;
     private Double stars;
     private String comment;
     private List<String> materialUrls;
