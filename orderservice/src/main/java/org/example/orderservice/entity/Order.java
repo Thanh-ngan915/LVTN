@@ -17,11 +17,11 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "user_id", nullable = false)
-    private Integer userId;
+    @Column(name = "user_id", nullable = false, length = 100)
+    private String userId;
 
-    @Column(name = "store_id", nullable = false)
-    private Integer storeId;
+    @Column(name = "store_id", nullable = false, length = 100)
+    private String storeId;
 
     @Column(name = "total", nullable = false)
     private Float total;
@@ -41,6 +41,12 @@ public class Order {
     @Column(name = "status", length = 20, nullable = false)
     private String status;
 
+    @Column(name = "payment_method", length = 20)
+    private String paymentMethod; // COD, VNPAY
+
+    @Column(name = "payment_status", length = 20)
+    private String paymentStatus; // pending, paid
+
     @Column(name = "update_at")
     private LocalDateTime updateAt;
 
@@ -55,6 +61,8 @@ public class Order {
         if (this.total == null) this.total = 0f;
         if (this.discount == null) this.discount = 0f;
         if (this.pay == null) this.pay = 0f;
+        if (this.paymentMethod == null) this.paymentMethod = "COD";
+        if (this.paymentStatus == null) this.paymentStatus = "pending";
     }
 
     @PreUpdate
