@@ -75,6 +75,7 @@ export default function ProfilePage() {
                         </svg>
                         <span>Quay lại trang chủ</span>
                     </button>
+
                     <div className={styles.profileHeader}>
                         <div className={styles.avatarWrapper}>
                             <img
@@ -108,9 +109,32 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
+                    {/* --- MỤC MỚI: GIAO HÀNG & ĐÁNH GIÁ --- */}
+                    <div className={styles.orderSection}>
+                        <h2 className={styles.sectionTitle}>Quản lý mua sắm</h2>
+                        <div className={styles.orderGrid}>
+                            <div className={styles.orderCard} onClick={() => router.push("/orders")}>
+                                <div className={styles.orderIcon}>🚚</div>
+                                <div className={styles.orderInfo}>
+                                    <strong>Đơn hàng</strong>
+                                    <span>Theo dõi vận chuyển</span>
+                                </div>
+                            </div>
+                            <div className={styles.orderCard} onClick={() => router.push("/reviews")}>
+                                <div className={styles.orderIcon}>⭐</div>
+                                <div className={styles.orderInfo}>
+                                    <strong>Đánh giá</strong>
+                                    <span>Viết nhận xét sản phẩm</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* GIỮ NGUYÊN TẤT CẢ CÁC NÚT HÀNH ĐỘNG CỦA BẠN */}
                     <div className={styles.actions}>
                         <button className={styles.btnEdit} onClick={() => router.push("/profile/edit")}>
-                            Chỉnh sửa trang cá nhân</button>
+                            Chỉnh sửa trang cá nhân
+                        </button>
                         <button className={styles.btnEdit} onClick={() => router.push("/profile/edit-username")}>
                             Đổi username
                         </button>
