@@ -8,6 +8,99 @@ export default function ProfilePage() {
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const [uploading, setUploading] = useState(false);
+    // Thêm hàm này trước handleAvatarUpload
+    const compressImage = (file: File, maxSizeMB = 2): Promise<File> => {
+        return new Promise((resolve) => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d")!;
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+
+            img.onload = () => {
+                // Tính toán kích thước mới — giữ tỉ lệ, max 1200px
+                const MAX_PX = 1200;
+                let { width, height } = img;
+                if (width > MAX_PX || height > MAX_PX) {
+                    if (width > height) {
+                        height = Math.round((height * MAX_PX) / width);
+                        width = MAX_PX;
+                    } else {
+                        width = Math.round((width * MAX_PX) / height);
+                        height = MAX_PX;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                URL.revokeObjectURL(url);
+
+                // Nén với quality 0.8, giảm dần nếu vẫn còn quá lớn
+                let quality = 0.8;
+                const tryCompress = () => {
+                    canvas.toBlob((blob) => {
+                        if (!blob) return resolve(file);
+                        if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.2) {
+                            quality -= 0.1;
+                            tryCompress(); // thử lại với quality thấp hơn
+                        } else {
+                            resolve(new File([blob], file.name, { type: "image/jpeg" }));
+                        }
+                    }, "image/jpeg", quality);
+                };
+                tryCompress();
+            };
+
+            img.src = url;
+        });
+    };
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const storedUser = localStorage.getItem("user");
+        const userId = storedUser ? JSON.parse(storedUser).userId : null;
+        if (!userId) { alert("Vui lòng đăng nhập lại"); return; }
+
+        setUploading(true);
+        try {
+            // ✅ Nén ảnh trước khi upload — tự động giảm về dưới 2MB
+            const compressed = await compressImage(file, 2);
+            console.log(`Ảnh gốc: ${(file.size/1024/1024).toFixed(1)}MB → Sau nén: ${(compressed.size/1024/1024).toFixed(1)}MB`);
+
+            const formData = new FormData();
+            formData.append("file", compressed);  // ← dùng file đã nén
+            formData.append("upload_preset", "kltn_user_avatar");
+
+            const cloudRes = await fetch(
+                "https://api.cloudinary.com/v1_1/dqghfi8be/image/upload",
+                { method: "POST", body: formData }
+            );
+            const cloudData = await cloudRes.json();
+            if (!cloudRes.ok) throw new Error("Upload Cloudinary thất bại");
+            const imageUrl = cloudData.secure_url;
+
+            const token = localStorage.getItem("token");
+            const beRes = await fetch(`/api/users/${userId}/avatar`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}`,
+                },
+                body: JSON.stringify({ imageUrl }),
+            });
+            if (!beRes.ok) throw new Error("Lưu avatar thất bại");
+
+            setUser((prev: any) => ({ ...prev, image: imageUrl }));
+
+        } catch (err) {
+            console.error("Upload failed:", err);
+            alert("Upload thất bại, thử lại!");
+        } finally {
+            setUploading(false);
+        }
+    };
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -82,6 +175,16 @@ export default function ProfilePage() {
                                 src={user.image || "https://ui-avatars.com/api/?name=" + user.fullName}
                                 alt="Avatar"
                                 className={styles.avatar}
+                            />
+                            <label htmlFor="avatar-upload" className={styles.avatarOverlay}>
+                                {uploading ? "⏳" : "📷"}
+                            </label>
+                            <input
+                                id="avatar-upload"
+                                type="file"
+                                accept="image/*"
+                                style={{ display: "none" }}
+                                onChange={handleAvatarUpload}
                             />
                         </div>
                         <div className={styles.titleInfo}>
