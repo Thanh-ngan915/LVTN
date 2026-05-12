@@ -30,4 +30,16 @@ public class ProductOrder {
 
     @Column(name = "price_after", nullable = false)
     private Float priceAfter;
+
+    @Column(name = "product_name", length = 500)
+    private String productName;
+
+    @Column(name = "product_image", length = 1000)
+    private String productImage;
+
+    @Column(name = "color", length = 100)
+    private String color;
+
+    @Column(name = "size", length = 50)
+    private String size;
 }

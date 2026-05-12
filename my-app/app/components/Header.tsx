@@ -15,21 +15,27 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const router = useRouter();
-  const [username, setUsername] = useState<string | null>(() => {
-     if (typeof window === 'undefined') return null;
-     try {
-         const storedUser = localStorage.getItem('user');
-         if (!storedUser) return null;
-         const user = JSON.parse(storedUser);
-         return user.username || user.name || user.email || 'Tài khoản';
-     } catch {
-         return null;
-     }
-  });
+  const [mounted, setMounted] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+
+  // Read localStorage only on client after mount to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        setUsername(user.username || user.name || user.email || 'Tài khoản');
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const handleLogout = () => {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('username');
       setUsername(null);
       router.push('/login');
   };
@@ -64,7 +70,7 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
         <div className={styles.topBarInner}>
           <span>🚚 Miễn phí vận chuyển cho đơn hàng từ 500.000đ</span>
             <div className={styles.topBarLinks}>
-                {username ? (
+                {mounted && username ? (
                     <>
                         <Link href="/profile">👤 {username}</Link>
                         <span className={styles.divider}>|</span>

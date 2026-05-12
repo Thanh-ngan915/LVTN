@@ -30,20 +30,24 @@ public class RatingController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) Integer star
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<RatingDTO> ratingsPage = ratingService.getRatingsByProductId(productId, star, pageable);
+        try {
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+            Page<RatingDTO> ratingsPage = ratingService.getRatingsByProductId(productId, star, pageable);
 
-        ApiResponse<List<RatingDTO>> response = ApiResponse.<List<RatingDTO>>builder()
-                .success(true)
-                .message("Ratings retrieved successfully")
-                .data(ratingsPage.getContent())
-                .page(ratingsPage.getNumber())
-                .size(ratingsPage.getSize())
-                .totalElements(ratingsPage.getTotalElements())
-                .totalPages(ratingsPage.getTotalPages())
-                .build();
+            ApiResponse<List<RatingDTO>> response = ApiResponse.<List<RatingDTO>>builder()
+                    .success(true)
+                    .message("Ratings retrieved successfully")
+                    .data(ratingsPage.getContent())
+                    .page(ratingsPage.getNumber())
+                    .size(ratingsPage.getSize())
+                    .totalElements(ratingsPage.getTotalElements())
+                    .totalPages(ratingsPage.getTotalPages())
+                    .build();
 
-        return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ApiResponse.error("Lỗi lấy đánh giá: " + e.getMessage()));
+        }
     }
 
     /**
@@ -54,8 +58,12 @@ public class RatingController {
     public ResponseEntity<ApiResponse<RatingSummaryDTO>> getRatingSummary(
             @PathVariable Integer productId
     ) {
-        RatingSummaryDTO summary = ratingService.getRatingSummary(productId);
-        return ResponseEntity.ok(ApiResponse.success(summary, "Rating summary retrieved"));
+        try {
+            RatingSummaryDTO summary = ratingService.getRatingSummary(productId);
+            return ResponseEntity.ok(ApiResponse.success(summary, "Rating summary retrieved"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ApiResponse.error("Lỗi lấy tóm tắt đánh giá: " + e.getMessage()));
+        }
     }
 
     /**
