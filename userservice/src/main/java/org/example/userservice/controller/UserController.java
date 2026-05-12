@@ -7,7 +7,7 @@ import org.example.userservice.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import java.util.Map;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -46,5 +46,14 @@ public class UserController {
             @RequestParam String newUsername) {
         userService.updateUserName(userId, newUsername);
         return ResponseEntity.ok("Đổi username thành công!");
+    }
+
+    @PatchMapping("/{userId}/avatar")
+    public ResponseEntity<String> updateAvatarUrl(
+            @PathVariable String userId,
+            @RequestBody Map<String, String> body) {
+        String imageUrl = body.get("imageUrl");
+        userService.updateAvatarUrl(userId, imageUrl);
+        return ResponseEntity.ok(imageUrl);
     }
 }

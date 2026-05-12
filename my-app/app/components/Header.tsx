@@ -125,18 +125,30 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
           </div>
 
           <div className={styles.actions}>
+              <Link href="/chatbot" className={styles.iconBtn} aria-label="Trò chuyện với AI" id="chatbot-btn">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      {/* Phần đầu robot */}
+                      <rect x="3" y="11" width="18" height="10" rx="2"></rect>
+                      {/* Hai mắt */}
+                      <circle cx="8" cy="16" r="1"></circle>
+                      <circle cx="16" cy="16" r="1"></circle>
+                      {/* Ăng-ten và miệng */}
+                      <path d="M12 11V7a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2"></path>
+                      <path d="M10 20h4"></path>
+                  </svg>
+              </Link>
             <button className={styles.iconBtn} aria-label="Wishlist" id="wishlist-btn">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
               </svg>
             </button>
-            <a href="/cart" className={styles.iconBtn} aria-label="Cart" id="cart-btn">
+            <Link href="/cart" className={styles.iconBtn} aria-label="Cart" id="cart-btn">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
               </svg>
               <span className={styles.cartBadge}>{cartCount}</span>
-            </a>
+            </Link>
             <button
               className={styles.mobileToggle}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

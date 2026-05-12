@@ -10,4 +10,5 @@ public interface UserService {
     void updatePassword (String userId, PasswordRequest request);
     void updateUserName (String userId, String newUserName);
     String updateAvatar (String userId, MultipartFile file);
+    void updateAvatarUrl(String userId, String imageUrl);
 }

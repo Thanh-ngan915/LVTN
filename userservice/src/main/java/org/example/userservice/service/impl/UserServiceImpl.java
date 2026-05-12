@@ -119,4 +119,13 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Không thể upload ảnh: " + e.getMessage());
         }
     }
+
+    @Override
+    @Transactional
+    public void updateAvatarUrl(String userId, String imageUrl) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setImage(imageUrl);
+        userRepository.save(user);
+    }
 }
