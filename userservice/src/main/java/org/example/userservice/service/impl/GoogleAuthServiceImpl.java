@@ -121,7 +121,13 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
         }
 
         // 4. Generate JWT token
-        String token = jwtTokenProvider.generateToken(account.getUsername(), account.getRole());
+        String token = jwtTokenProvider.generateToken(
+                account.getUsername(), 
+                account.getUserId(), 
+                account.getRole(),
+                user.getFullName(),
+                user.getImage()
+        );
 
         return LoginResponse.builder()
                 .username(account.getUsername())

@@ -20,19 +20,22 @@ public class JwtTokenProvider {
     @Value("${app.jwt.expiration-ms}")
     private int jwtExpirationMs;
 
-    public String generateToken(String username, String role) {
+    public String generateToken(String username, String userId, String role, String fullName, String image) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         String token = Jwts.builder()
                 .setSubject(username)
+                .claim("userId", userId)
                 .claim("role", role)
+                .claim("fullName", fullName)
+                .claim("image", image)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(key(), SignatureAlgorithm.HS512)
                 .compact();
         
-        log.debug("Generated token for user: {} with role: {}", username, role);
+        log.debug("Generated token for user: {} (ID: {})", username, userId);
         return token;
     }
 

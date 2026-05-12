@@ -167,12 +167,34 @@ function CheckoutContent() {
       const res = await createOrder(request);
       if (res.success) {
         if (paymentMethod === 'VNPAY') {
-          // Giả lập redirect VNPay - trong thực tế sẽ gọi VNPay payment gateway
+          // Gọi API tạo URL thanh toán VNPay thực tế
           showToast('🏦 Đang chuyển đến cổng thanh toán VNPay...');
-          setTimeout(() => {
-            setOrderSuccess({ id: res.data.id, pay: res.data.pay });
-          }, 1500);
+          try {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
+            const vnpayRes = await fetch('/api/orders/vnpay-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify({
+                orderId: res.data.id,
+                amount: Math.round(res.data.pay),
+              }),
+            });
+            const vnpayData = await vnpayRes.json();
+            if (vnpayData.success && vnpayData.data?.paymentUrl) {
+              // Redirect đến cổng thanh toán VNPay
+              window.location.href = vnpayData.data.paymentUrl;
+              return;
+            } else {
+              showToast(`❌ Lỗi tạo thanh toán VNPay: ${vnpayData.message || 'Không rõ lỗi'}`);
+            }
+          } catch (vnpayError: any) {
+            showToast(`❌ Lỗi kết nối VNPay: ${vnpayError.message}`);
+          }
         } else {
+          // COD - hiển thị thành công ngay
           setOrderSuccess({ id: res.data.id, pay: res.data.pay });
         }
       }
@@ -182,6 +204,7 @@ function CheckoutContent() {
       setPlacing(false);
     }
   };
+
 
   // Success screen
   if (orderSuccess) {
