@@ -9,7 +9,6 @@ import org.example.userservice.entity.StoreRole;
 import org.example.userservice.entity.User;
 import org.example.userservice.exception.InvalidCredentialsException;
 import org.example.userservice.exception.UsernameAlreadyExistsException;
-import org.example.userservice.kafka.UserSyncProducer;
 import org.example.userservice.repository.AccountRepository;
 import org.example.userservice.repository.PermissionRepository;
 import org.example.userservice.repository.StoreRoleRepository;
@@ -33,8 +32,6 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final org.example.userservice.config.JwtTokenProvider jwtTokenProvider;
 
-    @Autowired(required = false)
-    private UserSyncProducer userSyncProducer;
 
     public AuthServiceImpl(
             AccountRepository accountRepository,
@@ -117,22 +114,6 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         accountRepository.save(account);
 
-        // 7. Gửi Kafka sync message (nếu Kafka được bật)
-        if (userSyncProducer != null) {
-            try {
-                userSyncProducer.sendUserSync(UserSyncMessage.builder()
-                        .userId(userId)
-                        .username(account.getUsername())
-                        .fullName(user.getFullName())
-                        .image(user.getImage())
-                        .action("CREATE")
-                        .build());
-            } catch (Exception e) {
-                log.warn("Failed to send user sync on register: {}", e.getMessage());
-            }
-        } else {
-            log.info("Kafka disabled - skipping user sync for register: {}", account.getUsername());
-        }
 
         // 8. Return response
         return RegisterResponse.builder()
@@ -161,24 +142,14 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // 4. Generate JWT Token
-        String token = jwtTokenProvider.generateToken(account.getUsername(), account.getRole());
+        String token = jwtTokenProvider.generateToken(
+                account.getUsername(), 
+                account.getUserId(), 
+                account.getRole(),
+                user.getFullName(),
+                user.getImage()
+        );
 
-        // 5. Gửi Kafka sync message (nếu Kafka được bật)
-        if (userSyncProducer != null) {
-            try {
-                userSyncProducer.sendUserSync(UserSyncMessage.builder()
-                        .userId(account.getUserId())
-                        .username(account.getUsername())
-                        .fullName(user.getFullName())
-                        .image(user.getImage())
-                        .action("UPDATE")
-                        .build());
-            } catch (Exception e) {
-                log.warn("Failed to send user sync on login: {}", e.getMessage());
-            }
-        } else {
-            log.info("Kafka disabled - skipping user sync for login: {}", account.getUsername());
-        }
 
         // 6. Build Response
         return LoginResponse.builder()

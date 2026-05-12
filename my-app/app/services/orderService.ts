@@ -91,6 +91,11 @@ export interface OrderApiResponse<T> {
   data: T;
 }
 
+function getToken(): string {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('token') || '';
+}
+
 function getUserId(): string {
   if (typeof window === 'undefined') return '';
   try {
@@ -103,6 +108,15 @@ function getUserId(): string {
     console.error('Failed to get userId', e);
   }
   return '';
+}
+
+function getAuthHeaders(): Record<string, string> {
+  const token = getToken();
+  const userId = getUserId();
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (userId) headers['X-User-Id'] = userId;
+  return headers;
 }
 
 /**
@@ -118,7 +132,7 @@ export async function createOrder(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-User-Id': userId,
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(request),
   });
@@ -135,6 +149,7 @@ export async function getVouchersByStore(
   storeId: string
 ): Promise<OrderApiResponse<VoucherDTO[]>> {
   const res = await fetch(`${API_BASE}/api/orders/vouchers/${storeId}`, {
+    headers: { ...getAuthHeaders() },
     cache: 'no-store',
   });
   if (!res.ok) return { success: true, message: '', data: [] };
@@ -149,7 +164,7 @@ export async function getDeliveryByUser(): Promise<OrderApiResponse<DeliveryInfo
   if (!userId) return { success: false, message: 'Chưa đăng nhập', data: [] };
 
   const res = await fetch(`${API_BASE}/api/orders/delivery`, {
-    headers: { 'X-User-Id': userId },
+    headers: { ...getAuthHeaders() },
     cache: 'no-store',
   });
   if (!res.ok) return { success: true, message: '', data: [] };
@@ -163,6 +178,7 @@ export async function getOrderById(
   orderId: number
 ): Promise<OrderApiResponse<OrderResponseDTO>> {
   const res = await fetch(`${API_BASE}/api/orders/${orderId}`, {
+    headers: { ...getAuthHeaders() },
     cache: 'no-store',
   });
   if (!res.ok) throw new Error('Không tìm thấy đơn hàng');
@@ -177,7 +193,7 @@ export async function getOrdersByUser(): Promise<OrderApiResponse<OrderResponseD
   if (!userId) return { success: false, message: 'Chưa đăng nhập', data: [] };
 
   const res = await fetch(`${API_BASE}/api/orders/user`, {
-    headers: { 'X-User-Id': userId },
+    headers: { ...getAuthHeaders() },
     cache: 'no-store',
   });
   if (!res.ok) return { success: true, message: '', data: [] };

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import styles from "./register.module.css";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ export default function RegisterPage() {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const router = useRouter();
 
     const API_URL = "/api/auth/register";
 
@@ -57,8 +59,12 @@ export default function RegisterPage() {
       }
 
       const data = await response.json();
-      setMessage({ text: `Đăng ký thành công! Chào mừng ${data.fullName}`, type: "success" });
+      setMessage({ text: `Đăng ký thành công! Chào mừng ${data.fullName}. Đang chuyển hướng sang trang đăng nhập...`, type: "success" });
       setFormData({ username: "", password: "", fullName: "", email: "", address: "" });
+      
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
     } catch (error) {
       console.error("Fetch error:", error);
       const errorMessage = error instanceof Error ? error.message : "Lỗi không xác định";
