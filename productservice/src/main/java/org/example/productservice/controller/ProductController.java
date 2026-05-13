@@ -123,6 +123,96 @@ public class ProductController {
     }
 
     /**
+     * Lấy sản phẩm theo shop
+     * GET /api/products/store/{storeId}?page=0&size=12
+     */
+    @GetMapping("/products/store/{storeId}")
+    public ResponseEntity<ApiResponse<List<ProductDTO>>> getProductsByStore(
+            @PathVariable String storeId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<ProductDTO> productPage = productService.getProductsByStore(storeId, pageable);
+
+        ApiResponse<List<ProductDTO>> response = ApiResponse.<List<ProductDTO>>builder()
+                .success(true)
+                .message("Products by store retrieved successfully")
+                .data(productPage.getContent())
+                .page(productPage.getNumber())
+                .size(productPage.getSize())
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Lấy sản phẩm theo shop và category
+     * GET /api/products/store/{storeId}/category/{category}?page=0&size=12
+     */
+    @GetMapping("/products/store/{storeId}/category/{category}")
+    public ResponseEntity<ApiResponse<List<ProductDTO>>> getProductsByStoreAndCategory(
+            @PathVariable String storeId,
+            @PathVariable String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<ProductDTO> productPage = productService.getProductsByStoreAndCategory(storeId, category, pageable);
+
+        ApiResponse<List<ProductDTO>> response = ApiResponse.<List<ProductDTO>>builder()
+                .success(true)
+                .message("Products by store and category retrieved successfully")
+                .data(productPage.getContent())
+                .page(productPage.getNumber())
+                .size(productPage.getSize())
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Tìm kiếm sản phẩm trong shop
+     * GET /api/products/store/{storeId}/search?keyword=abc&page=0&size=12
+     */
+    @GetMapping("/products/store/{storeId}/search")
+    public ResponseEntity<ApiResponse<List<ProductDTO>>> searchProductsByStore(
+            @PathVariable String storeId,
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ProductDTO> productPage = productService.searchProductsByStore(storeId, keyword, pageable);
+
+        ApiResponse<List<ProductDTO>> response = ApiResponse.<List<ProductDTO>>builder()
+                .success(true)
+                .message("Search results in store")
+                .data(productPage.getContent())
+                .page(productPage.getNumber())
+                .size(productPage.getSize())
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Lấy tất cả categories
      * GET /api/categories
      */

@@ -96,3 +96,44 @@ export async function getCategories(): Promise<ApiResponse<Category[]>> {
   if (!res.ok) throw new Error('Failed to fetch categories');
   return res.json();
 }
+
+export async function getProductsByStore(
+  storeId: string,
+  page = 0,
+  size = 12
+): Promise<ApiResponse<Product[]>> {
+  const res = await fetch(
+    `${API_BASE}/api/products/store/${storeId}?page=${page}&size=${size}`,
+    { cache: 'no-store' }
+  );
+  if (!res.ok) throw new Error('Failed to fetch products by store');
+  return res.json();
+}
+
+export async function getProductsByStoreAndCategory(
+  storeId: string,
+  category: string,
+  page = 0,
+  size = 12
+): Promise<ApiResponse<Product[]>> {
+  const res = await fetch(
+    `${API_BASE}/api/products/store/${storeId}/category/${category}?page=${page}&size=${size}`,
+    { cache: 'no-store' }
+  );
+  if (!res.ok) throw new Error('Failed to fetch products by store and category');
+  return res.json();
+}
+
+export async function searchProductsByStore(
+  storeId: string,
+  keyword: string,
+  page = 0,
+  size = 12
+): Promise<ApiResponse<Product[]>> {
+  const res = await fetch(
+    `${API_BASE}/api/products/store/${storeId}/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`,
+    { cache: 'no-store' }
+  );
+  if (!res.ok) throw new Error('Failed to search products in store');
+  return res.json();
+}
