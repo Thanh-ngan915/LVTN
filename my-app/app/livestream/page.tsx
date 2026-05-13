@@ -276,22 +276,16 @@ export default function LivestreamPage() {
         audio: isRoomHost,
         video: isRoomHost ? { resolution: { width: 640, height: 480 } } : false,
       };
-
       // Đặt state isRoomHost
       setIsRoomHost(isRoomHost);
 
-      // Nghe sự kiện Track Subscribed cho viewer
-      room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {
-        if (videoRef.current) {
-          track.attach(videoRef.current);
-        }
-      });
-
-      // ✅ NGHE SỰ KIỆN CHAT REALTIME
+      // ✅ NGHE SỰ KIỆN CHAT REALTIME (Đăng ký sớm trước khi connect)
       room.on(RoomEvent.DataReceived, (payload, participant) => {
         const decoder = new TextDecoder();
         const strData = decoder.decode(payload);
-        console.log('Received data from:', participant?.identity, strData);
+        console.log('--- CHAT RECEIVED ---');
+        console.log('From:', participant?.identity);
+        console.log('Data:', strData);
         
         try {
           const data = JSON.parse(strData);
@@ -306,8 +300,40 @@ export default function LivestreamPage() {
         }
       });
 
+
+      // Nghe sự kiện Track Subscribed cho viewer
+      room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+        if (videoRef.current) {
+          track.attach(videoRef.current);
+        }
+      });
+
       // Kết nối đến server
       await room.connect(tokenData.livekitUrl, tokenData.token, connectOptions);
+      console.log('Successfully connected to LiveKit room:', roomName);
+
+      // ✅ CẬP NHẬT DANH SÁCH PARTICIPANTS AN TOÀN
+      const updateParticipantsList = () => {
+        const remoteParticipants = Array.from(room.remoteParticipants.values());
+        setParticipants(remoteParticipants.map(p => {
+          let role = 'VIEWER';
+          try {
+            if (p.metadata) {
+              const meta = JSON.parse(p.metadata);
+              role = meta.role || 'VIEWER';
+            }
+          } catch (e) {
+            // Metadata không phải JSON, bỏ qua
+          }
+          return {
+            id: p.sid,
+            username: p.identity,
+            role: role
+          };
+        }));
+      };
+      
+      updateParticipantsList();
 
       // Lấy local participant
       localParticipantRef.current = room.localParticipant;
@@ -320,7 +346,7 @@ export default function LivestreamPage() {
           setCameraOn(true);
           setMicOn(true);
           
-          // Gắn local video cho host sau khi đã bật camera
+          // Gắn local video cho host
           const videoTrackMap = room.localParticipant.videoTrackPublications;
           if (videoTrackMap && videoTrackMap.size > 0 && videoRef.current) {
             const firstTrack = Array.from(videoTrackMap.values())[0];
@@ -337,14 +363,14 @@ export default function LivestreamPage() {
       }
 
       // Nghe sự kiện thay đổi participants
-      room.on(LiveKit.RoomEvent.ParticipantConnected, () => {
-        const participants = Array.from(room.remoteParticipants.values());
-        setParticipants(participants);
+      room.on(RoomEvent.ParticipantConnected, (participant) => {
+        console.log('Participant connected:', participant.identity);
+        updateParticipantsList();
       });
 
-      room.on(LiveKit.RoomEvent.ParticipantDisconnected, () => {
-        const participants = Array.from(room.remoteParticipants.values());
-        setParticipants(participants);
+      room.on(RoomEvent.ParticipantDisconnected, (participant) => {
+        console.log('Participant disconnected:', participant.identity);
+        updateParticipantsList();
       });
 
       // Fetch participants
@@ -363,6 +389,7 @@ export default function LivestreamPage() {
     if (!chatInput.trim() || !livekitRef.current) return;
 
     try {
+      console.log('Sending chat message:', chatInput.trim());
       const encoder = new TextEncoder();
       const data = JSON.stringify({
         type: 'chat',
