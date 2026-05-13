@@ -427,7 +427,6 @@ export default function MyStorePage() {
                             </div>
                         )
                     )}
-
                     {/* Tab đã xóa */}
                     {activeTab === "deleted" && (
                         deletedProducts.length === 0 ? (
@@ -446,7 +445,7 @@ export default function MyStorePage() {
                                     </thead>
                                     <tbody>
                                     {deletedProducts.map(p => (
-                                        <tr key={p.id} style={{ opacity: 0.6 }}> {/* mờ để biết đã xóa */}
+                                        <tr key={p.id} style={{ opacity: 0.6 }}>
                                             <td>
                                                 {p.imageUrls?.[0]
                                                     ? <img src={p.imageUrls[0]} alt={p.name} className={styles.productThumb} />
@@ -457,10 +456,7 @@ export default function MyStorePage() {
                                             <td className={styles.priceNew}>{p.priceAfter?.toLocaleString("vi-VN")}đ</td>
                                             <td>{p.sold || 0}</td>
                                             <td>
-                                                {/* Chỉ có nút Khôi phục, không có Sửa/Xóa */}
-                                                <button
-                                                    className={styles.btnEdit}
-                                                    onClick={() => handleRestore(p.id)}>
+                                                <button className={styles.btnEdit} onClick={() => handleRestore(p.id)}>
                                                     🔄 Khôi phục
                                                 </button>
                                             </td>
