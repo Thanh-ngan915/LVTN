@@ -33,7 +33,7 @@ public class LivestreamRoomController {
      */
     @PostMapping("/create")
     public ResponseEntity<?> createRoom(
-            @RequestHeader("userId") Long userId,
+            @RequestHeader("userId") String userId,
             @RequestHeader("username") String username,
             @RequestBody CreateRoomRequest request) {
         try {
@@ -53,7 +53,7 @@ public class LivestreamRoomController {
     @PostMapping("/{roomName}/join")
     public ResponseEntity<?> joinRoom(
             @PathVariable String roomName,
-            @RequestHeader("userId") Long userId,
+            @RequestHeader("userId") String userId,
             @RequestHeader("username") String username,
             @RequestBody JoinRoomRequest request) {
         try {
@@ -62,11 +62,15 @@ public class LivestreamRoomController {
             // Lấy thông tin phòng
             Optional<RoomResponse> room = roomService.getRoomByName(roomName);
             if (room.isEmpty()) {
-                return ResponseEntity.badRequest().body("Room not found");
+                log.error("Room not found: {}", roomName);
+                return ResponseEntity.badRequest().body("Error: Room not found with name: " + roomName);
             }
             
             Long roomId = room.get().getId();
-            boolean isHost = room.get().getHostId().equals(userId);
+            String hostId = room.get().getHostId();
+            boolean isHost = hostId != null && hostId.trim().equalsIgnoreCase(userId.trim());
+            
+            log.info("Joining room {} - Role as Host: {}", roomName, isHost);
             
             // Kiểm tra nếu là host thì lấy token chủ phòng, không thì lấy token viewer
             String token;
@@ -91,7 +95,7 @@ public class LivestreamRoomController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("Error joining room: ", e);
-            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error: Failed to join room - " + e.getMessage());
         }
     }
 
@@ -133,7 +137,7 @@ public class LivestreamRoomController {
      * GET /api/livestream/rooms/host/{hostId}
      */
     @GetMapping("/host/{hostId}")
-    public ResponseEntity<?> getHostRooms(@PathVariable Long hostId) {
+    public ResponseEntity<?> getHostRooms(@PathVariable String hostId) {
         try {
             List<RoomResponse> rooms = roomService.getHostRooms(hostId);
             return ResponseEntity.ok(rooms);
@@ -151,7 +155,7 @@ public class LivestreamRoomController {
     @PostMapping("/{roomName}/end")
     public ResponseEntity<?> endRoom(
             @PathVariable String roomName,
-            @RequestHeader("userId") Long userId) {
+            @RequestHeader("userId") String userId) {
         try {
             Optional<RoomResponse> room = roomService.getRoomByName(roomName);
             if (room.isEmpty()) {
@@ -179,7 +183,7 @@ public class LivestreamRoomController {
     @PostMapping("/{roomName}/leave")
     public ResponseEntity<?> leaveRoom(
             @PathVariable String roomName,
-            @RequestHeader("userId") Long userId) {
+            @RequestHeader("userId") String userId) {
         try {
             Optional<RoomResponse> room = roomService.getRoomByName(roomName);
             if (room.isEmpty()) {

@@ -25,7 +25,7 @@ public class LivestreamParticipantService {
     /**
      * Thêm participant vào phòng
      */
-    public LivestreamParticipant addParticipant(Long roomId, Long userId, String username, String role) {
+    public LivestreamParticipant addParticipant(Long roomId, String userId, String username, String role) {
         log.info("Adding participant {} ({}) to room {}", username, userId, roomId);
         
         Optional<LivestreamParticipant> existing = participantRepository.findByRoomIdAndUserId(roomId, userId);
@@ -59,7 +59,7 @@ public class LivestreamParticipantService {
     /**
      * Remove participant khỏi phòng
      */
-    public void removeParticipant(Long roomId, Long userId) {
+    public void removeParticipant(Long roomId, String userId) {
         log.info("Removing participant {} from room {}", userId, roomId);
         
         Optional<LivestreamParticipant> participant = participantRepository.findByRoomIdAndUserId(roomId, userId);
@@ -91,7 +91,7 @@ public class LivestreamParticipantService {
     /**
      * Kiểm tra xem user có phải là host của phòng
      */
-    public boolean isRoomHost(Long roomId, Long userId) {
+    public boolean isRoomHost(Long roomId, String userId) {
         Optional<LivestreamParticipant> participant = participantRepository.findByRoomIdAndUserId(roomId, userId);
         return participant.isPresent() && "HOST".equals(participant.get().getRole());
     }
@@ -99,7 +99,7 @@ public class LivestreamParticipantService {
     /**
      * Kiểm tra xem user đã tham gia phòng
      */
-    public boolean isParticipantInRoom(Long roomId, Long userId) {
+    public boolean isParticipantInRoom(Long roomId, String userId) {
         Optional<LivestreamParticipant> participant = participantRepository.findByRoomIdAndUserId(roomId, userId);
         return participant.isPresent() && "ACTIVE".equals(participant.get().getStatus());
     }
