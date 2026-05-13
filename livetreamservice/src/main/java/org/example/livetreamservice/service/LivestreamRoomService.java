@@ -28,10 +28,10 @@ public class LivestreamRoomService {
     /**
      * Tạo phòng livestream mới
      */
-    public RoomResponse createRoom(Long hostId, String hostName, CreateRoomRequest request) {
+    public RoomResponse createRoom(String hostId, String hostName, CreateRoomRequest request) {
         log.info("Creating room for host: {} ({})", hostName, hostId);
         
-        String roomName = "room_" + hostId + "_" + System.currentTimeMillis();
+        String roomName = "room_" + hostId.replace("-", "") + "_" + System.currentTimeMillis();
         
         LivestreamRoom room = new LivestreamRoom();
         room.setRoomName(roomName);
@@ -87,7 +87,7 @@ public class LivestreamRoomService {
     /**
      * Lấy danh sách phòng của host
      */
-    public List<RoomResponse> getHostRooms(Long hostId) {
+    public List<RoomResponse> getHostRooms(String hostId) {
         return roomRepository.findByHostId(hostId)
                 .stream()
                 .map(this::convertToResponse)

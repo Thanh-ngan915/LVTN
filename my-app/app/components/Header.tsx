@@ -25,7 +25,7 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         const user = JSON.parse(storedUser);
-        setUsername(user.username || user.name || user.email || 'Tài khoản');
+        setUsername(user.fullName || user.username || user.email || 'Tài khoản');
       }
     } catch {
       // ignore

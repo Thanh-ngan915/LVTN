@@ -1,4 +1,4 @@
-package org.example.userservice.config;
+package org.example.orderservice.config;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -65,7 +65,33 @@ public class JwtTokenProvider {
                 .getSubject();
     }
 
-    // ✅ THÊM METHOD NÀY
+    public String getUserIdFromToken(String token) {
+        return (String) Jwts.parserBuilder()
+                .setSigningKey(key())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("userId");
+    }
+
+    public String getFullNameFromToken(String token) {
+        return (String) Jwts.parserBuilder()
+                .setSigningKey(key())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("fullName");
+    }
+
+    public String getImageFromToken(String token) {
+        return (String) Jwts.parserBuilder()
+                .setSigningKey(key())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("image");
+    }
+
     public String getRoleFromToken(String token) {
         return (String) Jwts.parserBuilder()
                 .setSigningKey(key())

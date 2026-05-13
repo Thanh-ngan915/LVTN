@@ -26,7 +26,7 @@ public class LivestreamRoom {
     private String description;
 
     @Column(nullable = false)
-    private Long hostId;
+    private String hostId;
 
     @Column(nullable = false)
     private String hostName;

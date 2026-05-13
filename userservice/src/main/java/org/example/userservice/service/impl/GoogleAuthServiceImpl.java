@@ -71,8 +71,10 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
                 user.setImage(googleUser.getPicture());
                 userRepository.save(user);
             }
-            // Find account linked to this user
-            account = accountRepository.findById("google_" + googleUser.getId())
+            // Find account linked to this user - try email first, then old google_id for backward compatibility
+            String googleEmailAsUsername = googleUser.getEmail();
+            account = accountRepository.findById(googleEmailAsUsername)
+                    .or(() -> accountRepository.findById("google_" + googleUser.getId()))
                     .orElseGet(() -> {
                         // Create a Google account entry if not exists
                         return createGoogleAccount(googleUser, user.getId());
@@ -99,8 +101,8 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
                     .storeRole("DEFAULT")
                     .status("ACTIVE")
                     .role("USER")
-                    .createdBy("google_" + googleUser.getId())
-                    .updatedBy("google_" + googleUser.getId())
+                    .createdBy(googleUser.getEmail())
+                    .updatedBy(googleUser.getEmail())
                     .build();
             storeRoleRepository.save(storeRole);
 
@@ -111,8 +113,8 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
                     .instance("DEFAULT")
                     .permission("READ")
                     .userId(userId)
-                    .createdBy("google_" + googleUser.getId())
-                    .updatedBy("google_" + googleUser.getId())
+                    .createdBy(googleUser.getEmail())
+                    .updatedBy(googleUser.getEmail())
                     .build();
             permissionRepository.save(permission);
 
@@ -121,10 +123,16 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
         }
 
         // 4. Generate JWT token
-        String token = jwtTokenProvider.generateToken(account.getUsername(), account.getRole());
+        String token = jwtTokenProvider.generateToken(
+                account.getUsername(), 
+                account.getUserId(), 
+                account.getRole(),
+                user.getFullName(),
+                user.getImage()
+        );
 
         return LoginResponse.builder()
-                .username(account.getUsername())
+                .username(account.getUsername().startsWith("google_") ? user.getEmail() : account.getUsername())
                 .userId(account.getUserId())
                 .fullName(user.getFullName())
                 .email(user.getEmail())
@@ -135,7 +143,7 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
     }
 
     private Account createGoogleAccount(GoogleUserInfo googleUser, String userId) {
-        String username = "google_" + googleUser.getId();
+        String username = googleUser.getEmail(); // Use email as username instead of google_ID
         // Use a random non-matchable password for Google accounts
         Account account = Account.builder()
                 .username(username)

@@ -38,7 +38,7 @@ public class LivestreamParticipantController {
      * GET /api/livestream/participants/rooms/{roomId}/is-host/{userId}
      */
     @GetMapping("/rooms/{roomId}/is-host/{userId}")
-    public ResponseEntity<?> isRoomHost(@PathVariable Long roomId, @PathVariable Long userId) {
+    public ResponseEntity<?> isRoomHost(@PathVariable Long roomId, @PathVariable String userId) {
         try {
             boolean isHost = participantService.isRoomHost(roomId, userId);
             return ResponseEntity.ok(java.util.Collections.singletonMap("isHost", isHost));
@@ -53,7 +53,7 @@ public class LivestreamParticipantController {
      * GET /api/livestream/participants/rooms/{roomId}/is-participant/{userId}
      */
     @GetMapping("/rooms/{roomId}/is-participant/{userId}")
-    public ResponseEntity<?> isParticipantInRoom(@PathVariable Long roomId, @PathVariable Long userId) {
+    public ResponseEntity<?> isParticipantInRoom(@PathVariable Long roomId, @PathVariable String userId) {
         try {
             boolean isParticipant = participantService.isParticipantInRoom(roomId, userId);
             return ResponseEntity.ok(java.util.Collections.singletonMap("isParticipant", isParticipant));

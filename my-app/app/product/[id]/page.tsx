@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '../../components/Header';
-import { Product, ProductVariant, getProductById } from '../../services/productService';
+import { Product, ProductVariant, getProductById, getProductsByStore } from '../../services/productService';
 import { RatingDTO, RatingSummaryDTO, getRatingsByProduct, getRatingSummary, submitRating } from '../../services/ratingService';
 import { addToCart } from '../../services/cartService';
 import styles from './page.module.css';
@@ -64,6 +64,10 @@ export default function ProductDetailPage() {
   // Cart
   const [cartUpdateTrigger, setCartUpdateTrigger] = useState(0);
   const [addingToCart, setAddingToCart] = useState(false);
+
+  // Shop Info
+  const [shopProfile, setShopProfile] = useState<any>(null);
+  const [shopProductsCount, setShopProductsCount] = useState(0);
 
   // Load ratings
   const loadRatings = useCallback(async (page = 0, star?: number | null) => {
@@ -126,6 +130,20 @@ export default function ProductDetailPage() {
     loadRatings(0);
     loadRatingSummary();
   }, [productId, loadRatings, loadRatingSummary]);
+
+  // Load shop info
+  useEffect(() => {
+    if (product?.storeId) {
+      import('../../services/userService').then(({ getUserProfile }) => {
+        getUserProfile(product.storeId)
+          .then(setShopProfile)
+          .catch(console.error);
+      });
+      getProductsByStore(product.storeId, 0, 1)
+        .then(res => setShopProductsCount(res.totalElements))
+        .catch(console.error);
+    }
+  }, [product?.storeId]);
 
   // Get unique colors and sizes
   const colors = product?.variants
@@ -495,6 +513,64 @@ export default function ProductDetailPage() {
               <button className={styles.buyNowBtn} onClick={handleBuyNow} id="buy-now-btn">
                 Mua Ngay
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Shop Section */}
+        <div className={styles.shopSection}>
+          <div className={styles.shopInfo}>
+            <div className={styles.shopAvatar}>
+              {shopProfile?.image ? (
+                <img src={shopProfile.image} alt={shopProfile.fullName} />
+              ) : (
+                <span style={{ fontSize: 24 }}>🏪</span>
+              )}
+              <span className={styles.shopBadge}>Yêu thích+</span>
+            </div>
+            <div className={styles.shopNameContainer}>
+              <div className={styles.shopName}>{shopProfile?.fullName || product.storeId}</div>
+              <div className={styles.shopStatus}>Online 2 phút trước</div>
+              <div className={styles.shopActions}>
+                <button className={`${styles.shopBtn} ${styles.chatBtn}`}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  Chat Ngay
+                </button>
+                <button
+                  className={`${styles.shopBtn} ${styles.viewShopBtn}`}
+                  onClick={() => router.push(`/shop/${product.storeId}`)}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
+                  Xem Shop
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className={styles.shopMeta}>
+            <div className={styles.metaItem}>
+              <span>Đánh Giá:</span>
+              <span className={styles.metaValueColor}>{ratingSummary?.totalRatings || 0}</span>
+            </div>
+            <div className={styles.metaItem}>
+              <span>Sản Phẩm:</span>
+              <span className={styles.metaValueColor}>{shopProductsCount}</span>
+            </div>
+            <div className={styles.metaItem}>
+              <span>Tỉ Lệ Phản Hồi:</span>
+              <span className={styles.metaValueColor}>98%</span>
+            </div>
+            <div className={styles.metaItem}>
+              <span>Người Theo Dõi:</span>
+              <span className={styles.metaValueColor}>2.5k</span>
+            </div>
+            <div className={styles.metaItem}>
+              <span>Tham Gia:</span>
+              <span className={styles.metaValueColor}>4 năm trước</span>
             </div>
           </div>
         </div>
