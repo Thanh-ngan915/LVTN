@@ -45,13 +45,6 @@ public class LiveKitService {
                 new CanSubscribe(true)
             );
             
-            // ✅ FIX: Set metadata with room info and use a 24-hour expiration
-            String metadata = String.format(
-                "{\"room\":\"%s\",\"canPublish\":%b,\"canPublishData\":%b,\"participantName\":\"%s\"}", 
-                roomName, canPublish, canPublishData, participantName
-            );
-            token.setMetadata(metadata);
-            
             // Set TTL to 24 hours (86400 seconds)
             token.setTtl(86400);  // seconds
 

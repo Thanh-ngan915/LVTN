@@ -11,6 +11,6 @@ import java.util.List;
 public interface LivestreamRoomRepository extends JpaRepository<LivestreamRoom, Long> {
     Optional<LivestreamRoom> findByRoomName(String roomName);
     List<LivestreamRoom> findByStatus(String status);
-    List<LivestreamRoom> findByHostId(Long hostId);
-    Optional<LivestreamRoom> findByRoomNameAndHostId(String roomName, Long hostId);
+    List<LivestreamRoom> findByHostId(String hostId);
+    Optional<LivestreamRoom> findByRoomNameAndHostId(String roomName, String hostId);
 }

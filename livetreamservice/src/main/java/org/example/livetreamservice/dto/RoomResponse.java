@@ -15,7 +15,7 @@ public class RoomResponse {
     private String roomName;
     private String title;
     private String description;
-    private Long hostId;
+    private String hostId;
     private String hostName;
     private String status;
     private Integer currentViewers;

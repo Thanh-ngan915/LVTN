@@ -20,7 +20,7 @@ public class LivestreamParticipant {
     private Long roomId;
 
     @Column(nullable = false)
-    private Long userId;
+    private String userId;
 
     @Column(nullable = false)
     private String username;

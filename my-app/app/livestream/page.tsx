@@ -109,6 +109,17 @@ export default function LivestreamPage() {
     }
   };
 
+  const [chatMessages, setChatMessages] = useState<{ sender: string; text: string }[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const chatMessagesRef = useRef<HTMLDivElement>(null);
+
+  // Auto scroll chat to bottom
+  useEffect(() => {
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
   // HOST: Tạo phòng
   const handleCreateRoom = async () => {
     if (!roomTitle) {
@@ -118,8 +129,12 @@ export default function LivestreamPage() {
 
     setLoading(true);
     try {
-      const userId = '1'; // Lấy từ local storage/context
-      const username = 'host_user'; // Lấy từ local storage/context
+      // Lấy user info từ localStorage (từ phần trước đã sửa)
+      const storedUser = localStorage.getItem('user');
+      const user = storedUser ? JSON.parse(storedUser) : { userId: '1', username: 'host_user' };
+      
+      const userId = user.userId;
+      const username = user.username;
 
       const roomData = {
         title: roomTitle,
@@ -156,8 +171,11 @@ export default function LivestreamPage() {
   };
 
   const handleJoinRoom = async (room: Room) => {
-    const userId = Math.floor(Math.random() * 10000).toString(); // Thay userId ngẫu nhiên cho viewer để tránh trùng 
-    const username = 'viewer_' + userId;
+    const storedUser = localStorage.getItem('user');
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    
+    const userId = user?.userId || Math.floor(Math.random() * 10000).toString();
+    const username = user?.username || 'viewer_' + userId;
 
     setLoading(true);
     try {
@@ -179,6 +197,8 @@ export default function LivestreamPage() {
   ) => {
     try {
       setError(null);
+      setChatMessages([]); // Clear chat when joining new room
+      
       // Lấy token từ API
       const response = await fetch(
         `/api/livestream/rooms/${roomName}/join`,
@@ -218,6 +238,23 @@ export default function LivestreamPage() {
       room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {
         if (videoRef.current) {
           track.attach(videoRef.current);
+        }
+      });
+
+      // ✅ NGHE SỰ KIỆN CHAT REALTIME
+      room.on(LiveKit.RoomEvent.DataReceived, (payload, participant) => {
+        const decoder = new TextDecoder();
+        const strData = decoder.decode(payload);
+        try {
+          const data = JSON.parse(strData);
+          if (data.type === 'chat') {
+            setChatMessages((prev) => [...prev, { 
+              sender: participant?.identity || 'Khách', 
+              text: data.text 
+            }]);
+          }
+        } catch (e) {
+          console.error('Lỗi giải mã tin nhắn:', e);
         }
       });
 
@@ -270,6 +307,32 @@ export default function LivestreamPage() {
       console.error('Error joining room:', error);
       setError('Lỗi tham gia phòng: ' + (error as Error).message);
       alert('Lỗi tham gia phòng');
+    }
+  };
+
+  // ✅ GỬI TIN NHẮN REALTIME
+  const handleSendMessage = async () => {
+    if (!chatInput.trim() || !livekitRef.current) return;
+
+    try {
+      const encoder = new TextEncoder();
+      const data = JSON.stringify({
+        type: 'chat',
+        text: chatInput.trim()
+      });
+      const payload = encoder.encode(data);
+
+      // Gửi cho tất cả mọi người trong phòng
+      await livekitRef.current.localParticipant.publishData(payload, LiveKit.DataPacket_Kind.RELIABLE);
+
+      // Hiển thị tin nhắn của chính mình
+      setChatMessages((prev) => [...prev, { 
+        sender: 'Tôi', 
+        text: chatInput.trim() 
+      }]);
+      setChatInput('');
+    } catch (error) {
+      console.error('Lỗi gửi tin nhắn:', error);
     }
   };
 
@@ -335,7 +398,10 @@ export default function LivestreamPage() {
 
     setLoading(true);
     try {
-      const userId = '1';
+      const storedUser = localStorage.getItem('user');
+      const user = storedUser ? JSON.parse(storedUser) : null;
+      const userId = user?.userId || '1';
+
       const response = await fetch(
         `/api/livestream/rooms/${currentRoom.roomName}/end`,
         {
@@ -355,6 +421,7 @@ export default function LivestreamPage() {
         setRoomTitle('');
         setRoomDescription('');
         setIsRoomHost(false);
+        setChatMessages([]);
         fetchActiveRooms();
       } else {
         alert('Lỗi kết thúc phòng');
@@ -373,7 +440,10 @@ export default function LivestreamPage() {
 
     setLoading(true);
     try {
-      const userId = isRoomHost ? '1' : '2';
+      const storedUser = localStorage.getItem('user');
+      const user = storedUser ? JSON.parse(storedUser) : null;
+      const userId = user?.userId || (isRoomHost ? '1' : '2');
+
       const response = await fetch(
         `/api/livestream/rooms/${currentRoom.roomName}/leave`,
         {
@@ -397,6 +467,7 @@ export default function LivestreamPage() {
         setMicOn(false);
         setIsRoomHost(false);
         setParticipants([]);
+        setChatMessages([]);
         setError(null);
         fetchActiveRooms();
       } else {
@@ -624,18 +695,30 @@ export default function LivestreamPage() {
 
           {/* Sidebar */}
           <div className={styles.sidebar}>
-            {/* Giả lập Chat */}
+            {/* Realtime Chat */}
             <div className={styles.chatBox}>
               <div className={styles.chatHeader}>Trò chuyện trực tiếp</div>
-              <div className={styles.chatMessages}>
+              <div className={styles.chatMessages} ref={chatMessagesRef}>
                 <div className={styles.message}><span className={styles.sender}>Hệ thống:</span> Chào mừng bạn đến với buổi livestream!</div>
-                <div className={styles.message}><span className={styles.sender}>Admin:</span> Nhớ săn voucher 50k nhé mọi người.</div>
-                <div className={styles.message}><span className={styles.sender}>User_99:</span> Sản phẩm này còn màu đỏ không shop?</div>
-                <div className={styles.message}><span className={styles.sender}>Shop:</span> Còn nhé bạn ơi, lát mình lên mẫu cho xem.</div>
+                {chatMessages.map((msg, idx) => (
+                  <div key={idx} className={styles.message}>
+                    <span className={styles.sender}>{msg.sender}:</span> {msg.text}
+                  </div>
+                ))}
               </div>
               <div className={styles.chatInput}>
-                <input type="text" placeholder="Gửi tin nhắn..." disabled />
-                <button className={styles.primaryBtn} style={{ padding: '8px 15px' }}>
+                <input 
+                  type="text" 
+                  placeholder="Gửi tin nhắn..." 
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                />
+                <button 
+                  className={styles.primaryBtn} 
+                  style={{ padding: '8px 15px' }}
+                  onClick={handleSendMessage}
+                >
                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 </button>
               </div>
