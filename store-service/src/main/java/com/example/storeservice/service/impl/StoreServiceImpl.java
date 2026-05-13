@@ -47,6 +47,12 @@ public class StoreServiceImpl implements StoreService {
         return storeRepository.existsByCreatedBy(userId);
     }
 
+    @Override
+    public StoreDTO getStoreById(String storeId) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new RuntimeException("Shop không tồn tại"));
+        return toDTO(store);
+    }
     private StoreDTO toDTO(Store store) {
         return StoreDTO.builder()
                 .id(store.getId())

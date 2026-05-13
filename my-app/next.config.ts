@@ -45,11 +45,11 @@ const nextConfig: NextConfig = {
       },
       {
          source: '/api/stores/:path*',
-         destination: 'http://localhost:8090/api/stores/:path*',  // ← thêm dòng này
+         destination: 'http://localhost:8090/api/stores/:path*',
       },
       {
          source: '/api/stores',
-         destination: 'http://localhost:8090/api/stores',          // ← thêm dòng này
+         destination: 'http://localhost:8090/api/stores',
       },
       {
         source: '/api/:path*',

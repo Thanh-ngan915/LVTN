@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import java.sql.Timestamp;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -104,6 +104,8 @@ public class ProductServiceImpl implements ProductService {
                 .rate(product.getRate())
                 .imageUrls(imageUrls)
                 .variants(variants)
+                .createdBy(product.getCreatedBy())
+                .updatedBy(product.getUpdatedBy())
                 .build();
     }
 
@@ -126,5 +128,102 @@ public class ProductServiceImpl implements ProductService {
                 .name(category.getName())
                 .description(category.getDescription())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public ProductDTO createProduct(ProductDTO productDTO) {
+        Category category = categoryRepository.findById(productDTO.getCategoryShortname())
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        Product product = Product.builder()
+                .name(productDTO.getName())
+                .priceBefore(productDTO.getPriceBefore())
+                .priceAfter(productDTO.getPriceAfter())
+                .initQuantity(productDTO.getInitQuantity())
+                .currentQuantity(productDTO.getInitQuantity())
+                .description(productDTO.getDescription())
+                .storeId(productDTO.getStoreId())
+                .categoryEntity(category)
+                .status("pending")
+                .sold(0)
+                .isDelete(false)
+                .createdBy(productDTO.getCreatedBy())
+                .createdAt(new Timestamp(System.currentTimeMillis()))
+                .updatedBy(productDTO.getCreatedBy())
+                .updateAt(new Timestamp(System.currentTimeMillis()))
+                .build();
+        return toDTO(productRepository.save(product));
+    }
+
+    @Override
+    @Transactional
+    public ProductDTO updateProduct(Integer id, ProductDTO dto) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+        if (dto.getCategoryShortname() != null) {
+            Category category = categoryRepository.findById(dto.getCategoryShortname())
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+            product.setCategoryEntity(category);
+        }
+        product.setName(dto.getName());
+        product.setPriceBefore(dto.getPriceBefore());
+        product.setPriceAfter(dto.getPriceAfter());
+        product.setInitQuantity(dto.getInitQuantity());
+        product.setDescription(dto.getDescription());
+        product.setUpdatedBy(dto.getUpdatedBy());
+        List<String> allowedStatus = List.of("pending", "inactive");
+        if (allowedStatus.contains(dto.getStatus())) {
+            product.setStatus(dto.getStatus());
+        }
+        product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
+        int sold = product.getSold() != null ? product.getSold() : 0;
+        product.setCurrentQuantity(dto.getInitQuantity() - sold);
+        return toDTO(productRepository.save(product));
+    }
+
+    @Override
+    @Transactional
+    public void deleteProduct(Integer id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+        product.setIsDelete(true); // soft delete
+        product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
+        productRepository.save(product);
+    }
+
+    @Override
+    @Transactional
+    public ProductDTO restockProduct(Integer id, Integer additionalQuantity, String updatedBy) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+
+        int currentInit = product.getInitQuantity() != null ? product.getInitQuantity() : 0;
+        int currentSold = product.getSold() != null ? product.getSold() : 0;
+
+        product.setInitQuantity(currentInit + additionalQuantity);  // cộng dồn
+        product.setCurrentQuantity(currentInit + additionalQuantity - currentSold); // tính lại
+        product.setUpdatedBy(updatedBy);
+        product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
+
+        return toDTO(productRepository.save(product));
+    }
+
+    @Override
+    @Transactional
+    public ProductDTO restoreProduct(Integer id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+        if (!Boolean.TRUE.equals(product.getIsDelete())) {
+            throw new RuntimeException("Sản phẩm chưa bị xóa");
+        }
+        product.setIsDelete(false);
+        product.setStatus("pending"); // về pending, chờ admin duyệt lại
+        product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
+        return toDTO(productRepository.save(product));
+    }
+
+    @Override
+    public Page<ProductDTO> getDeletedProductsByStore(String storeId, Pageable pageable) {
+        return productRepository.findAllDeletedByStore(storeId, pageable).map(this::toDTO);
     }
 }

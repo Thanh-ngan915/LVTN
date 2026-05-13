@@ -16,4 +16,10 @@ public interface ProductService {
     Page<ProductDTO> getProductsByStore(String storeId, Pageable pageable);
     Page<ProductDTO> getProductsByStoreAndCategory(String storeId, String category, Pageable pageable);
     Page<ProductDTO> searchProductsByStore(String storeId, String keyword, Pageable pageable);
+    ProductDTO createProduct(ProductDTO dto);
+    ProductDTO updateProduct(Integer id, ProductDTO dto);
+    void deleteProduct(Integer id);
+    ProductDTO restockProduct(Integer id, Integer additionalQuantity, String updatedBy);
+    ProductDTO restoreProduct(Integer id);
+    Page<ProductDTO> getDeletedProductsByStore(String storeId, Pageable pageable);
 }
