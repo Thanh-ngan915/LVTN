@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -45,18 +46,25 @@ public class VNPayConfig {
         vnp_ApiUrl = apiUrl;
     }
 
-    public static String hashAllFields(Map fields) {
-        List fieldNames = new ArrayList(fields.keySet());
+    /**
+     * Hash tất cả fields theo đúng chuẩn VNPay IPN Java demo:
+     * Trong IPN demo, values được URLEncode trước khi đưa vào map.
+     * Trong ReturnUrl demo, values là raw (servlet tự decode).
+     * Để tương thích cả hai, ta hash từ raw values (không encode lại)
+     * vì servlet container đã decode query params.
+     */
+    public static String hashAllFields(Map<String, String> fields) {
+        List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
         StringBuilder sb = new StringBuilder();
-        Iterator itr = fieldNames.iterator();
+        Iterator<String> itr = fieldNames.iterator();
         while (itr.hasNext()) {
-            String fieldName = (String) itr.next();
-            String fieldValue = (String) fields.get(fieldName);
+            String fieldName = itr.next();
+            String fieldValue = fields.get(fieldName);
             if ((fieldValue != null) && (fieldValue.length() > 0)) {
                 sb.append(fieldName);
                 sb.append("=");
-                sb.append(fieldValue);
+                sb.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
             }
             if (itr.hasNext()) {
                 sb.append("&");
@@ -88,16 +96,20 @@ public class VNPayConfig {
     }
 
     public static String getIpAddress(HttpServletRequest request) {
-        String ipAdress;
+        String ipAddress;
         try {
-            ipAdress = request.getHeader("X-FORWARDED-FOR");
-            if (ipAdress == null) {
-                ipAdress = request.getRemoteAddr();
+            ipAddress = request.getHeader("X-FORWARDED-FOR");
+            if (ipAddress == null) {
+                ipAddress = request.getRemoteAddr();
+            }
+            // Normalize IPv6 localhost to IPv4
+            if ("0:0:0:0:0:0:0:1".equals(ipAddress) || "::1".equals(ipAddress)) {
+                ipAddress = "127.0.0.1";
             }
         } catch (Exception e) {
-            ipAdress = "Invalid IP:" + e.getMessage();
+            ipAddress = "127.0.0.1";
         }
-        return ipAdress;
+        return ipAddress;
     }
 
     public static String getRandomNumber(int len) {
