@@ -68,7 +68,7 @@ public class LiveKitService {
      * Tạo access token cho khách (chỉ viewer)
      */
     public String generateViewerToken(String roomName, String participantName) {
-        return generateAccessToken(roomName, participantName, false, false);
+        return generateAccessToken(roomName, participantName, false, true);
     }
 
     /**

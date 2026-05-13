@@ -4,7 +4,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Room as LiveKitRoom, LocalParticipant, RemoteParticipant } from 'livekit-client';
+import { 
+  Room as LiveKitRoom, 
+  LocalParticipant, 
+  RemoteParticipant, 
+  RoomEvent, 
+  DataPacket_Kind 
+} from 'livekit-client';
 import * as LiveKit from 'livekit-client';
 import styles from './livestream.module.css';
 
@@ -282,9 +288,11 @@ export default function LivestreamPage() {
       });
 
       // ✅ NGHE SỰ KIỆN CHAT REALTIME
-      room.on(LiveKit.RoomEvent.DataReceived, (payload, participant) => {
+      room.on(RoomEvent.DataReceived, (payload, participant) => {
         const decoder = new TextDecoder();
         const strData = decoder.decode(payload);
+        console.log('Received data from:', participant?.identity, strData);
+        
         try {
           const data = JSON.parse(strData);
           if (data.type === 'chat') {
@@ -363,7 +371,7 @@ export default function LivestreamPage() {
       const payload = encoder.encode(data);
 
       // Gửi cho tất cả mọi người trong phòng
-      await livekitRef.current.localParticipant.publishData(payload, LiveKit.DataPacket_Kind.RELIABLE);
+      await livekitRef.current.localParticipant.publishData(payload, DataPacket_Kind.RELIABLE);
 
       // Hiển thị tin nhắn của chính mình
       setChatMessages((prev) => [...prev, { 
