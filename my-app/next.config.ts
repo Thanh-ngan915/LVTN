@@ -44,6 +44,14 @@ const nextConfig: NextConfig = {
         destination: 'http://localhost:8088/api/orders',
       },
       {
+         source: '/api/stores/:path*',
+         destination: 'http://localhost:8090/api/stores/:path*',  // ← thêm dòng này
+      },
+      {
+         source: '/api/stores',
+         destination: 'http://localhost:8090/api/stores',          // ← thêm dòng này
+      },
+      {
         source: '/api/:path*',
         destination: 'http://localhost:8086/api/:path*',
       },

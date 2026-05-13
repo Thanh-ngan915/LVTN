@@ -3,13 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./profile.module.css";
+import RegisterShopModal from "../components/RegisterShopModal";
 
 export default function ProfilePage() {
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const [showShopModal, setShowShopModal] = useState(false);
+    const [hasStore, setHasStore] = useState(false);
+    // const token = localStorage.getItem("token");
     const [uploading, setUploading] = useState(false);
-    // Thêm hàm này trước handleAvatarUpload
     const compressImage = (file: File, maxSizeMB = 2): Promise<File> => {
         return new Promise((resolve) => {
             const canvas = document.createElement("canvas");
@@ -63,37 +66,31 @@ export default function ProfilePage() {
         const userId = storedUser ? JSON.parse(storedUser).userId : null;
         if (!userId) { alert("Vui lòng đăng nhập lại"); return; }
 
+        const token = localStorage.getItem("token"); // ✅ khai báo đúng chỗ
+
         setUploading(true);
         try {
-            // ✅ Nén ảnh trước khi upload — tự động giảm về dưới 2MB
             const compressed = await compressImage(file, 2);
-            console.log(`Ảnh gốc: ${(file.size/1024/1024).toFixed(1)}MB → Sau nén: ${(compressed.size/1024/1024).toFixed(1)}MB`);
-
             const formData = new FormData();
-            formData.append("file", compressed);  // ← dùng file đã nén
+            formData.append("file", compressed);
             formData.append("upload_preset", "kltn_user_avatar");
 
-            const cloudRes = await fetch(
-                "https://api.cloudinary.com/v1_1/dqghfi8be/image/upload",
-                { method: "POST", body: formData }
-            );
+            const cloudRes = await fetch("https://api.cloudinary.com/v1_1/dqghfi8be/image/upload",
+                { method: "POST", body: formData });
             const cloudData = await cloudRes.json();
             if (!cloudRes.ok) throw new Error("Upload Cloudinary thất bại");
-            const imageUrl = cloudData.secure_url;
 
-            const token = localStorage.getItem("token");
             const beRes = await fetch(`/api/users/${userId}/avatar`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}`,
                 },
-                body: JSON.stringify({ imageUrl }),
+                body: JSON.stringify({ imageUrl: cloudData.secure_url }),
             });
             if (!beRes.ok) throw new Error("Lưu avatar thất bại");
 
-            setUser((prev: any) => ({ ...prev, image: imageUrl }));
-
+            setUser((prev: any) => ({ ...prev, image: cloudData.secure_url }));
         } catch (err) {
             console.error("Upload failed:", err);
             alert("Upload thất bại, thử lại!");
@@ -136,6 +133,12 @@ export default function ProfilePage() {
                 console.log("Profile data:", data);
                 setUser(data);
                 setLoading(false);
+                fetch(`/api/stores/has-store?userId=${userId}`, {
+                    headers: { Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` }
+                })
+                    .then(r => r.json())
+                    .then(has => setHasStore(has))
+                    .catch(() => {});
             })
             .catch((err) => {
                 console.error("Fetch error:", err);
@@ -244,10 +247,31 @@ export default function ProfilePage() {
                         <button className={styles.btnEdit} onClick={() => router.push("/profile/change-password")}>
                             Đổi mật khẩu
                         </button>
+                        {!hasStore ? (
+                            <button className={styles.btnShop} onClick={() => setShowShopModal(true)}>
+                                🏪 Đăng ký bán hàng
+                            </button>
+                        ) : (
+                            <button className={styles.btnShop} onClick={() => router.push("/my-store")}>
+                                🏪 Quản lý shop
+                            </button>
+                        )}
                         <button className={styles.btnLogout} onClick={handleLogout}>Đăng xuất</button>
+
                     </div>
                 </div>
             </div>
+            {showShopModal && (
+                <RegisterShopModal
+                    userId={JSON.parse(localStorage.getItem("user")!).userId}
+                    onClose={() => setShowShopModal(false)}
+                    onSuccess={() => {
+                        setShowShopModal(false);
+                        setHasStore(true);
+                        alert("🎉 Đăng ký shop thành công! Chờ xét duyệt trong 24 giờ.");
+                    }}
+                />
+            )}
         </div>
     );
 }
