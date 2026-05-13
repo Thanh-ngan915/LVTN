@@ -32,4 +32,10 @@ public class StoreController {
     public ResponseEntity<Boolean> hasStore(@RequestParam String userId) {
         return ResponseEntity.ok(storeService.hasStore(userId));
     }
+
+    // Hiển thị thông tin shop
+    @GetMapping("/{storeId}")
+    public ResponseEntity<StoreDTO> getStoreById(@PathVariable String storeId) {
+        return ResponseEntity.ok(storeService.getStoreById(storeId));
+    }
 }

@@ -29,4 +29,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.storeId = :storeId AND LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Product> searchByStoreAndName(@Param("storeId") String storeId, @Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE p.isDelete = true AND p.storeId = :storeId")
+    Page<Product> findAllDeletedByStore(@Param("storeId") String storeId, Pageable pageable);
 }
