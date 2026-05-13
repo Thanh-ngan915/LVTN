@@ -56,6 +56,25 @@ export default function LivestreamPage() {
     };
   }, []);
 
+  // Restore session on load
+  useEffect(() => {
+    const savedRoom = sessionStorage.getItem('livestream_room');
+    const savedIsHost = sessionStorage.getItem('livestream_is_host') === 'true';
+    
+    if (savedRoom) {
+      const room = JSON.parse(savedRoom);
+      const storedUser = localStorage.getItem('user');
+      const user = storedUser ? JSON.parse(storedUser) : null;
+      
+      if (user) {
+        console.log('Restoring livestream session...', room.roomName);
+        setCurrentRoom(room);
+        setIsRoomHost(savedIsHost);
+        joinRoom(room.roomName, user.userId, user.username, savedIsHost);
+      }
+    }
+  }, []);
+
   // Lấy danh sách phòng hoạt động
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
@@ -63,7 +82,11 @@ export default function LivestreamPage() {
 
     const poll = async () => {
       if (!isMounted) return;
-      await fetchActiveRooms();
+      
+      // Chỉ poll nếu không đang trong phòng
+      if (!sessionStorage.getItem('livestream_room')) {
+        await fetchActiveRooms();
+      }
       
       // Delay mặc định là 5s, nếu lỗi nhiều thì giãn ra 10s để đỡ spam
       let delay = 5000;
@@ -158,6 +181,11 @@ export default function LivestreamPage() {
       if (response.ok) {
         const room = await response.json();
         setCurrentRoom(room);
+        setIsRoomHost(true);
+        // Lưu session
+        sessionStorage.setItem('livestream_room', JSON.stringify(room));
+        sessionStorage.setItem('livestream_is_host', 'true');
+        
         await joinRoom(room.roomName, userId, username, true);
       } else {
         alert('Lỗi tạo phòng');
@@ -180,9 +208,16 @@ export default function LivestreamPage() {
     setLoading(true);
     try {
       setCurrentRoom(room);
+      setIsRoomHost(false);
+      // Lưu session
+      sessionStorage.setItem('livestream_room', JSON.stringify(room));
+      sessionStorage.setItem('livestream_is_host', 'false');
+      
       await joinRoom(room.roomName, userId, username, false);
     } catch (e) {
       setCurrentRoom(null);
+      sessionStorage.removeItem('livestream_room');
+      sessionStorage.removeItem('livestream_is_host');
     } finally {
       setLoading(false);
     }
@@ -214,6 +249,11 @@ export default function LivestreamPage() {
       );
 
       if (!response.ok) {
+        // Nếu không join được (ví dụ phòng đã kết thúc), xóa session
+        sessionStorage.removeItem('livestream_room');
+        sessionStorage.removeItem('livestream_is_host');
+        setCurrentRoom(null);
+        setIsRoomHost(false);
         throw new Error('Failed to get token');
       }
 
@@ -422,6 +462,10 @@ export default function LivestreamPage() {
         setRoomDescription('');
         setIsRoomHost(false);
         setChatMessages([]);
+        // Xóa session
+        sessionStorage.removeItem('livestream_room');
+        sessionStorage.removeItem('livestream_is_host');
+        
         fetchActiveRooms();
       } else {
         alert('Lỗi kết thúc phòng');
@@ -469,6 +513,10 @@ export default function LivestreamPage() {
         setParticipants([]);
         setChatMessages([]);
         setError(null);
+        // Xóa session
+        sessionStorage.removeItem('livestream_room');
+        sessionStorage.removeItem('livestream_is_host');
+        
         fetchActiveRooms();
       } else {
         alert('Lỗi rời phòng');
