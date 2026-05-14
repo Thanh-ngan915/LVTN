@@ -73,10 +73,19 @@ export default function LivestreamPage() {
       const user = storedUser ? JSON.parse(storedUser) : null;
       
       if (user) {
-        console.log('Restoring livestream session...', room.roomName);
-        setCurrentRoom(room);
-        setIsRoomHost(savedIsHost);
-        joinRoom(room.roomName, user.userId, user.username, savedIsHost);
+        // CHỈ tự động kết nối lại nếu là HOST để tránh gián đoạn livestream
+        if (savedIsHost) {
+          console.log('Restoring host session...', room.roomName);
+          setCurrentRoom(room);
+          setIsRoomHost(true);
+          joinRoom(room.roomName, user.userId, user.username, true);
+        } else {
+          // Nếu là Viewer, xóa session cũ để quay về danh sách phòng
+          sessionStorage.removeItem('livestream_room');
+          sessionStorage.removeItem('livestream_is_host');
+          setCurrentRoom(null);
+          setIsRoomHost(false);
+        }
       }
     }
   }, []);

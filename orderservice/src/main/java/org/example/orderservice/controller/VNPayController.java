@@ -26,12 +26,11 @@ public class VNPayController {
     @PostMapping("/vnpay-payment")
     public ResponseEntity<ApiResponse<VNPayPaymentResponseDTO>> createPayment(
             @RequestBody VNPayPaymentRequestDTO request,
-            HttpServletRequest httpRequest
-    ) {
+            HttpServletRequest httpRequest) {
         try {
             String baseUrl = getBaseUrl(httpRequest);
             String orderId = String.valueOf(request.getOrderId());
-            String orderInfo = "Thanh toan don hang #" + orderId;
+            String orderInfo = "Thanh toan don hang " + orderId;
             String paymentUrl = vnPayService.createOrder(request.getAmount(), orderInfo, baseUrl, orderId, httpRequest);
 
             VNPayPaymentResponseDTO response = VNPayPaymentResponseDTO.builder()
@@ -53,13 +52,13 @@ public class VNPayController {
     @PostMapping("/vnpay-wallet-payment")
     public ResponseEntity<ApiResponse<VNPayPaymentResponseDTO>> createWalletPayment(
             @RequestBody VNPayPaymentRequestDTO request,
-            HttpServletRequest httpRequest
-    ) {
+            HttpServletRequest httpRequest) {
         try {
             String baseUrl = getBaseUrl(httpRequest);
             String orderId = String.valueOf(request.getOrderId());
-            String orderInfo = "Thanh toan vi VNPay don hang #" + orderId;
-            String paymentUrl = vnPayService.createOrderWithWallet(request.getAmount(), orderInfo, baseUrl, orderId, httpRequest);
+            String orderInfo = "Thanh toan vi VNPay don hang " + orderId;
+            String paymentUrl = vnPayService.createOrderWithWallet(request.getAmount(), orderInfo, baseUrl, orderId,
+                    httpRequest);
 
             VNPayPaymentResponseDTO response = VNPayPaymentResponseDTO.builder()
                     .paymentUrl(paymentUrl)
@@ -81,31 +80,29 @@ public class VNPayController {
     public ResponseEntity<ApiResponse<String>> vnpayCallback(HttpServletRequest request) {
         int paymentStatus = vnPayService.orderReturn(request);
 
-        String orderInfo      = request.getParameter("vnp_OrderInfo");
-        String transactionNo  = request.getParameter("vnp_TransactionNo");
-        String amountStr      = request.getParameter("vnp_Amount");
-        String responseCode   = request.getParameter("vnp_ResponseCode");
+        String orderInfo = request.getParameter("vnp_OrderInfo");
+        String transactionNo = request.getParameter("vnp_TransactionNo");
+        String amountStr = request.getParameter("vnp_Amount");
+        String responseCode = request.getParameter("vnp_ResponseCode");
 
         if (paymentStatus == 1) {
             // Thanh toán thành công – cập nhật paymentStatus của đơn hàng
             updateOrderPaymentStatus(orderInfo, "paid");
             return ResponseEntity.ok(
-                ApiResponse.success(transactionNo,
-                    "Thanh toán thành công! Mã GD: " + transactionNo)
-            );
+                    ApiResponse.success(transactionNo,
+                            "Thanh toán thành công! Mã GD: " + transactionNo));
         } else if (paymentStatus == 0) {
             // Thanh toán thất bại / bị huỷ
             updateOrderPaymentStatus(orderInfo, "failed");
             return ResponseEntity.ok(
-                ApiResponse.<String>builder()
-                    .success(false)
-                    .message("Thanh toán thất bại hoặc bị huỷ (ResponseCode: " + responseCode + ")")
-                    .build()
-            );
+                    ApiResponse.<String>builder()
+                            .success(false)
+                            .message("Thanh toán thất bại hoặc bị huỷ (ResponseCode: " + responseCode + ")")
+                            .build());
         } else {
             // Sai chữ ký
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("Chữ ký không hợp lệ"));
+                    .body(ApiResponse.error("Chữ ký không hợp lệ"));
         }
     }
 
@@ -118,10 +115,11 @@ public class VNPayController {
      * vnp_OrderInfo format: "Thanh toan don hang #<orderId>"
      */
     private void updateOrderPaymentStatus(String orderInfo, String status) {
-        if (orderInfo == null) return;
+        if (orderInfo == null)
+            return;
         try {
-            // Tách orderId từ chuỗi orderInfo
-            String idStr = orderInfo.replaceAll(".*#(\\d+).*", "$1");
+            // Tách orderId từ chuỗi orderInfo (hỗ trợ cả có # và không có #)
+            String idStr = orderInfo.replaceAll(".*?(\\d+).*", "$1");
             Integer orderId = Integer.parseInt(idStr.trim());
             Optional<Order> orderOpt = orderRepository.findById(orderId);
             orderOpt.ifPresent(order -> {
