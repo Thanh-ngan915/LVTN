@@ -62,12 +62,13 @@ public class VNPayConfig {
             String fieldName = itr.next();
             String fieldValue = fields.get(fieldName);
             if ((fieldValue != null) && (fieldValue.length() > 0)) {
+                if (sb.length() > 0) {
+                    sb.append("&");
+                }
                 sb.append(fieldName);
                 sb.append("=");
-                sb.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-            }
-            if (itr.hasNext()) {
-                sb.append("&");
+                // Sử dụng mặc định của URLEncoder (dấu + cho khoảng trắng) theo hướng dẫn Node/JSP
+                sb.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
             }
         }
         return hmacSHA512(vnp_HashSecret, sb.toString());
