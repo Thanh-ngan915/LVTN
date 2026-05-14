@@ -56,4 +56,13 @@ public class UserController {
         userService.updateAvatarUrl(userId, imageUrl);
         return ResponseEntity.ok(imageUrl);
     }
+
+    // Duyệt shop — tạo StoreRole và gán vào Account
+    @PostMapping("/admin/approve-store")
+    public ResponseEntity<String> approveStore(
+            @RequestParam String userId,
+            @RequestParam String storeId) {
+        userService.approveStore(userId, storeId);
+        return ResponseEntity.ok("Duyệt shop thành công");
+    }
 }
