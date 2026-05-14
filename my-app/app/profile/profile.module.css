@@ -299,6 +299,23 @@
     border-color: #f43f5e;
     box-shadow: 0 8px 20px rgba(244, 63, 94, 0.4);
 }
+.btnShop {
+    flex: 1;
+    min-width: 170px;
+    padding: 14px;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+.btnShop:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5);
+}
 
 /* --- RESPONSIVE --- */
 @media (max-width: 640px) {

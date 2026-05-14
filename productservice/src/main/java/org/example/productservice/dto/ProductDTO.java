@@ -23,6 +23,8 @@ public class ProductDTO {
     private Double rate;
     private List<String> imageUrls;
     private List<VariantDTO> variants;
+    private String createdBy;
+    private String updatedBy;
 
     @Data
     @NoArgsConstructor
