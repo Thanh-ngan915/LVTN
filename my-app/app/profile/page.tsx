@@ -232,7 +232,7 @@ export default function ProfilePage() {
                     <div className={styles.orderSection}>
                         <h2 className={styles.sectionTitle}>Quản lý mua sắm</h2>
                         <div className={styles.orderGrid}>
-                            <div className={styles.orderCard} onClick={() => router.push("/orders")}>
+                            <div className={styles.orderCard} onClick={() => router.push("/order/history")}>
                                 <div className={styles.orderIcon}>🚚</div>
                                 <div className={styles.orderInfo}>
                                     <strong>Đơn hàng</strong>
