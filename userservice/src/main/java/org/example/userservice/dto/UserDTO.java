@@ -23,4 +23,6 @@ public class UserDTO {
     private String address;
     private String status;
     private String rankId;
+    private String storeRoleId;
+    private String role;
 }

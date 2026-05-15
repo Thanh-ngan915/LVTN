@@ -138,6 +138,7 @@ export async function createOrder(
   });
 
   const data = await res.json();
+  console.log("BE response:", data);
   if (!data.success) throw new Error(data.message || 'Đặt hàng thất bại');
   return data;
 }
@@ -198,4 +199,46 @@ export async function getOrdersByUser(): Promise<OrderApiResponse<OrderResponseD
   });
   if (!res.ok) return { success: true, message: '', data: [] };
   return res.json();
+}
+//hủy đơn
+export async function cancelOrder(orderId: number): Promise<OrderApiResponse<OrderResponseDTO>> {
+    const res = await fetch(`${API_BASE}/api/orders/${orderId}/cancel`, {
+        method: 'PUT',
+        headers: { ...getAuthHeaders() },
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Hủy đơn thất bại');
+    return data;
+}
+
+export interface RatingRequestDTO {
+    orderId: number;
+    stars: number;
+    comment: string;
+}
+
+export interface RatingDTO {
+    id: number;
+    orderId: number;
+    productId: number;
+    userId: string;
+    stars: number;
+    comment: string;
+    createdAt: string;
+}
+//đánh giá đơn hàng
+export async function submitRating(
+    request: RatingRequestDTO
+): Promise<OrderApiResponse<RatingDTO>> {
+    const res = await fetch(`/api/orders/ratings`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+        },
+        body: JSON.stringify(request),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Đánh giá thất bại');
+    return data;
 }

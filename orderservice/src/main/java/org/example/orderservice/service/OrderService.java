@@ -162,6 +162,31 @@ public class OrderService {
         return result;
     }
 
+    @Transactional
+    public OrderResponseDTO cancelOrder(Integer orderId, String userId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        // Chỉ được hủy đơn của chính mình
+        if (!order.getUserId().equals(userId)) {
+            throw new RuntimeException("Không có quyền hủy đơn này");
+        }
+
+        // Chỉ được hủy khi đang pending
+        if (!"pending".equals(order.getStatus())) {
+            throw new RuntimeException("Chỉ có thể hủy đơn hàng đang chờ xác nhận");
+        }
+
+        order.setStatus("cancelled");
+        order.setUpdateAt(LocalDateTime.now());
+        orderRepository.save(order);
+
+        DeliveryInformation delivery = deliveryInformationRepository
+                .findById(order.getDeliveryInformationId()).orElse(null);
+        List<ProductOrder> items = productOrderRepository.findByOrderId(orderId);
+        return toOrderResponseDTO(order, delivery, items);
+    }
+
     // ---- Helpers ----
 
     private static final float SHIPPING_FEE = 30000f;

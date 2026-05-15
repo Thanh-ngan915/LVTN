@@ -106,4 +106,21 @@ public class OrderController {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
+
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<OrderResponseDTO>> cancelOrder(
+            @PathVariable Integer id,
+            @RequestHeader(value = "X-User-Id", required = false) String userId) {
+        try {
+            if (userId == null || userId.isBlank()) {
+                return ResponseEntity.status(401).body(ApiResponse.error("Chưa đăng nhập"));
+            }
+            OrderResponseDTO order = orderService.cancelOrder(id, userId);
+            return ResponseEntity.ok(ApiResponse.success(order, "Hủy đơn hàng thành công"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    
 }

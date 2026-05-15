@@ -79,6 +79,8 @@ export default function LoginPage() {
                   username: data.username,
                   fullName: data.fullName,
                   userId: data.userId,
+                  role: data.role,
+                  storeRoleId: data.storeRoleId,
               }));
           }
       }
