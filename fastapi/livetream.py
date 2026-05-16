@@ -1,204 +1,140 @@
-import os
-import re
-import tempfile
+import os, re, tempfile, subprocess
 import whisper
+from openai import OpenAI
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
 import uvicorn
-import assemblyai as aai
-import asyncio
 
-# ================== CONFIG ==================
-MODEL_SIZE = "base"  # tiny / base / small / medium / large
 PORT = 5000
-ASSEMBLY_AI_KEY = "5c222829070c42d5a60b25ea9b00c63c"
+OPENAI_API_KEY = "sk-..."  # OpenAI key của bạn
 
-# ============================================
-aai.settings.api_key = ASSEMBLY_AI_KEY
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
-app = FastAPI(title="Whisper Speech-to-Text Service")
+# Load Whisper large-v3 làm fallback (cần GPU)
+print("🔄 Loading Whisper large-v3...")
+whisper_model = whisper.load_model("large-v3")
+print("✅ Whisper large-v3 ready!")
 
-# CORS
+app = FastAPI(title="STT Service - Vietnamese ID")
+
+# CẦN THIẾT: Thêm lại CORS để Frontend có thể gọi API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8084"],
+    allow_origins=["*"], # Cho phép tất cả các nguồn để test
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Load Whisper model
-print(f"🔄 Loading Whisper model '{MODEL_SIZE}'...")
-model = whisper.load_model(MODEL_SIZE)
-print(f"✅ Whisper model '{MODEL_SIZE}' loaded successfully!")
-
-# ===== ÁNH XẠ CHỮ → SỐ =====
 mapping = {
-    "không": "0", "0": "0",
-    "một": "1", "mốt": "1", "1": "1",
-    "hai": "2", "2": "2",
-    "ba": "3", "3": "3",
-    "bốn": "4", "tư": "4", "4": "4",
-    "năm": "5", "lăm": "5", "5": "5",
-    "sáu": "6", "6": "6",
-    "bảy": "7", "bẩy": "7", "7": "7",
-    "tám": "8", "8": "8",
-    "chín": "9", "9": "9",
+
+    "không": "0", "một": "1", "mốt": "1", "hai": "2",
+    "ba": "3", "bốn": "4", "tư": "4", "năm": "5",
+    "lăm": "5", "sáu": "6", "bảy": "7", "bẩy": "7",
+    "tám": "8", "chín": "9",
 }
 
+ID_PATTERN = r"(?:id|mã|số|ai\s*đ[aâ][ềấy]|ai\s*đi|ây\s*đi|i\.d)[\s:là]*([0-9]+)"
 
-def extract_numbers(text: str) -> list:
-    """Trích xuất số từ text tiếng Việt"""
+def normalize(text: str) -> str:
     text = text.lower()
     for k, v in mapping.items():
-        text = text.replace(k, v)
-    return re.findall(r"\d+", text)
-
+        text = re.sub(rf"\b{k}\b", v, text)
+    text = re.sub(r"(\d)[,\s]+(?=\d)", r"\1", text)
+    return text
 
 def extract_product_id(text: str) -> str | None:
-    """
-    Trích xuất product ID từ text
-    Pattern: "id là 123", "mã 456", "số 789"
-    """
-    text = text.lower()
+    match = re.search(ID_PATTERN, normalize(text))
+    return match.group(1) if match else None
 
-    # Convert chữ sang số
-    for k, v in mapping.items():
-        text = text.replace(k, v)
+def preprocess_audio(path: str) -> str:
+    out = path.replace(".wav", "_clean.wav")
+    subprocess.run([
+        "ffmpeg", "-y", "-i", path,
+        "-ar", "16000", "-ac", "1", "-af", "loudnorm",
+        out
+    ], capture_output=True)
+    return out if os.path.exists(out) else path
 
-    # Pattern tìm số sau "id", "mã", "số"
-    pattern = r"(?:id|mã|số)[\s:là]*([0-9]+)"
-    match = re.search(pattern, text)
+# ===== GPT-4o Transcribe (Cloud, độ chính xác cao nhất) =====
+def transcribe_gpt4o(audio_path: str) -> str:
+    try:
+        with open(audio_path, "rb") as f:
+            result = openai_client.audio.transcriptions.create(
+                model="gpt-4o-transcribe",  # Model tốt nhất hiện tại
+                file=f,
+                language="vi",
+                prompt="Người dùng đọc mã ID sản phẩm gồm các chữ số. Ví dụ: ID 12345",
+            )
+        return result.text.strip()
+    except Exception as e:
+        print(f"⚠️ GPT-4o transcribe error: {e}")
+        return ""
 
-    if match:
-        return match.group(1)
+# ===== Whisper large-v3 (Local fallback) =====
+def transcribe_whisper(audio_path: str) -> str:
+    try:
+        result = whisper_model.transcribe(
+            audio_path,
+            language="vi",
+            initial_prompt="ID sản phẩm. Người dùng đọc mã ID gồm các chữ số.",
+            temperature=0.0,
+            condition_on_previous_text=False,
+        )
+        return result["text"].strip()
+    except Exception as e:
+        print(f"⚠️ Whisper error: {e}")
+        return ""
 
-    return None
-
-
-# ===== RESPONSE MODEL =====
 class TranscriptionResponse(BaseModel):
-    text: str
+    gpt4o_text: str
+    whisper_text: str
+    text: str # Thêm lại trường này để khớp với Frontend
     productId: str | None
-    numbers: list[str]
-    confidence: float | None = None
-
-
-# ================= API ENDPOINTS =================
-@app.get("/")
-def root():
-    return {
-        "service": "Whisper Speech-to-Text",
-        "model": MODEL_SIZE,
-        "status": "running"
-    }
+    source: str  # "gpt4o" | "whisper" | "none"
 
 
 @app.post("/speech-to-text", response_model=TranscriptionResponse)
 async def speech_to_text(audio: UploadFile = File(...)):
-    """
-    Nhận audio file và chuyển đổi thành text
-
-    - **audio**: File audio (wav, mp3, m4a, webm)
-    - Returns: text, productId, numbers
-    """
-
-    # Validate file type (lenient - accept by content_type or file extension)
-    allowed_types = ["audio/wav", "audio/mpeg", "audio/mp3", "audio/webm", "audio/x-m4a", "application/octet-stream"]
-    allowed_extensions = [".wav", ".mp3", ".m4a", ".webm", ".ogg"]
-
-    filename = audio.filename or "recording.webm"
-    file_ext = os.path.splitext(filename)[1].lower()
-    content_type = audio.content_type or "application/octet-stream"
-
-    print(f"📁 Received file: {filename}, content_type: {content_type}")
-
-    # Accept if content_type matches OR file extension matches
-    if content_type not in allowed_types and file_ext not in allowed_extensions:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid audio format. Content-Type: {content_type}, Extension: {file_ext}. Allowed types: {allowed_types}, extensions: {allowed_extensions}"
-        )
-
-    # Save uploaded file to temp
+    tmp_path = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-            content = await audio.read()
-            tmp.write(content)
+            tmp.write(await audio.read())
             tmp_path = tmp.name
 
-        # Transcribe using Whisper (Local)
-        print(f"🎤 Transcribing audio with Whisper: {audio.filename}")
-        whisper_result = model.transcribe(tmp_path, language="vi")
-        whisper_text = whisper_result["text"].strip()
+        clean_path = preprocess_audio(tmp_path)
 
-        # Transcribe using AssemblyAI (Cloud) - Run in background/concurrently if needed
-        # We use a wrapper to make it async-friendly
-        print(f"☁️ Transcribing audio with AssemblyAI...")
-        transcriber = aai.Transcriber()
-        config = aai.TranscriptionConfig(language_code="vi")
-        
-        try:
-            # AssemblyAI process
-            aai_result = transcriber.transcribe(tmp_path, config=config)
-            aai_text = aai_result.text if aai_result.text else ""
-        except Exception as e:
-            print(f"⚠️ AssemblyAI Error: {e}")
-            aai_text = ""
+        # Chạy cả 2 song song (GPT-4o là chính, Whisper là fallback)
+        gpt4o_text = transcribe_gpt4o(clean_path)
+        whisper_text = transcribe_whisper(clean_path)
 
-        print(f"📝 Whisper Transcript: {whisper_text}")
-        print(f"📝 AssemblyAI Transcript: {aai_text}")
+        print(f"📝 GPT-4o: {gpt4o_text}")
+        print(f"📝 Whisper: {whisper_text}")
 
-        # Combine results: Try to extract ID from both
-        product_id = extract_product_id(whisper_text)
-        if not product_id and aai_text:
-            product_id = extract_product_id(aai_text)
-            
-        numbers = list(set(extract_numbers(whisper_text) + extract_numbers(aai_text)))
+        # Ưu tiên GPT-4o, fallback Whisper
+        product_id = extract_product_id(gpt4o_text)
+        source = "gpt4o"
 
-        print(f"📦 Final Product ID: {product_id}")
-        print(f"🔢 Combined Numbers: {numbers}")
+        if not product_id:
+            product_id = extract_product_id(whisper_text)
+            source = "whisper" if product_id else "none"
+
+        print(f"📦 Product ID: {product_id} (from {source})")
 
         return TranscriptionResponse(
-            text=f"Whisper: {whisper_text} | AAI: {aai_text}",
+            gpt4o_text=gpt4o_text,
+            whisper_text=whisper_text,
+            text=gpt4o_text if gpt4o_text else whisper_text, # Gán văn bản nhận diện được vào text
             productId=product_id,
-            numbers=numbers,
-            confidence=whisper_result.get("segments", [{}])[0].get("confidence") if whisper_result.get("segments") else None
+            source=source,
         )
 
-
-    except Exception as e:
-        print(f"❌ Error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
     finally:
-        # Clean up temp file
-        if os.path.exists(tmp_path):
-            os.unlink(tmp_path)
+        for p in [tmp_path]:
+            if p and os.path.exists(p):
+                os.unlink(p)
 
-
-@app.post("/extract-product-id")
-async def extract_product_id_endpoint(text: str):
-    """
-    Trích xuất product ID từ text (không cần audio)
-
-    - **text**: Text cần trích xuất
-    - Returns: productId
-    """
-    product_id = extract_product_id(text)
-    numbers = extract_numbers(text)
-
-    return {
-        "text": text,
-        "productId": product_id,
-        "numbers": numbers
-    }
-
-
-# ================= RUN =================
 if __name__ == "__main__":
-    print(f"🚀 Whisper Speech Service starting on http://localhost:{PORT}")
-    print(f"📚 API Docs: http://localhost:{PORT}/docs")
     uvicorn.run(app, host="0.0.0.0", port=PORT)
-
