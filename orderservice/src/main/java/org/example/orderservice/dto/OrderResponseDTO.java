@@ -24,6 +24,7 @@ public class OrderResponseDTO {
     private DeliveryInformationDTO deliveryInformation;
     private VoucherInfoDTO voucherInfo;
     private List<ProductOrderItemDTO> items;
+    private boolean rated;
 
     @Data
     @NoArgsConstructor

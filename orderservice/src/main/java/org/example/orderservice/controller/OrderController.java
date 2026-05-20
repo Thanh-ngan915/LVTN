@@ -3,6 +3,11 @@ package org.example.orderservice.controller;
 import lombok.RequiredArgsConstructor;
 import org.example.orderservice.dto.*;
 import org.example.orderservice.service.OrderService;
+import org.example.orderservice.service.RatingService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +19,7 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
-
+    private final RatingService ratingService;
     /**
      * Tạo đơn hàng mới (Mua Ngay)
      * POST /api/orders
@@ -122,5 +127,31 @@ public class OrderController {
         }
     }
 
-    
+    @PostMapping("/ratings")
+    public ResponseEntity<ApiResponse<RatingDTO>> createRating(
+            @RequestBody RatingRequestDTO  request,
+            @RequestHeader(value = "X-User-Name", required = false) String username
+    ){
+        try {
+            if (username == null || username.isBlank()) {
+                return ResponseEntity.status(401).body(ApiResponse.error("Chưa đăng nhập"));
+            }
+            RatingDTO rating = ratingService.createRating(request, username);
+            return ResponseEntity.ok(ApiResponse.success(rating, "Đánh giá thành công"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/ratings/product/{productId}")
+    public ResponseEntity<ApiResponse<Page<RatingDTO>>> getRatingsByProduct(
+            @PathVariable Integer productId,
+            @RequestParam(required = false) Integer star,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<RatingDTO> ratings = ratingService.getRatingsByProductId(productId, star, pageable);
+        return ResponseEntity.ok(ApiResponse.success(ratings, "OK"));
+    }
+
 }

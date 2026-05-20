@@ -57,4 +57,7 @@ public interface RatingRepository extends JpaRepository<Rating, Integer> {
     List<Object[]> countByProductIdGroupByStar(@Param("productId") Integer productId);
 
     List<Rating> findByOrderId(Integer orderId);
+
+    List<Rating> findByCreatedBy(String userId);
+
 }

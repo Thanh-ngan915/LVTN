@@ -87,6 +87,15 @@ public class RatingService {
                 .build();
         rating = ratingRepository.save(rating);
 
+        if (request.getComment() != null && !request.getComment().isEmpty()) {
+            RatingMaterial commentMaterial = RatingMaterial.builder()
+                    .url("text:" + request.getComment())  // ← prefix để phân biệt
+                    .ratingId(rating.getId())
+                    .createdBy(username)
+                    .updatedBy(username)
+                    .build();
+            ratingMaterialRepository.save(commentMaterial);
+        }
         // Lưu materials (nếu có)
         if (request.getMaterialUrls() != null && !request.getMaterialUrls().isEmpty()) {
             for (String url : request.getMaterialUrls()) {
