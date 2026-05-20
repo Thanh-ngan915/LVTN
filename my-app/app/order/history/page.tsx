@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '../../components/Header';
 import { getOrdersByUser, OrderResponseDTO, cancelOrder} from '../../services/orderService';
 import styles from './order-history.module.css';
-
+import { useEffect, useState, useCallback } from 'react';
+import ReviewModal from '../../components/ReviewModal';
+import { Order } from '../../services/orderService';
 
 export default function OrderHistoryPage() {
     const router = useRouter();
@@ -15,6 +16,7 @@ export default function OrderHistoryPage() {
     const [cancelId, setCancelId] = useState<number | null>(null);
     const [cancelling, setCancelling] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
+    const [reviewOrder, setReviewOrder] = useState<Order | null>(null);
 
     const handleCancel = async () => {
         if (!cancelId) return;
@@ -30,20 +32,30 @@ export default function OrderHistoryPage() {
                 setToast('✅ Hủy đơn hàng thành công');
                 setTimeout(() => setToast(null), 3000);
             }
-        } catch (e: any) {
-            setToast(`❌ ${e.message || 'Hủy đơn thất bại'}`);
+        } catch (e) {
+            const errMsg = e instanceof Error ? e.message : 'Hủy đơn thất bại';
+            setToast(`❌ ${errMsg}`);
             setTimeout(() => setToast(null), 3000);
-        } finally {
+        }finally {
             setCancelling(false);
         }
     };
-    useEffect(() => {
+    const fetchOrders = useCallback(async () => {
         const userStr = localStorage.getItem('user');
         if (!userStr) { router.push('/login'); return; }
+
+        setLoading(true);
         getOrdersByUser()
             .then(res => { if (res.success) setOrders(res.data || []); })
             .finally(() => setLoading(false));
     }, [router]);
+    useEffect(() => {
+        fetchOrders();
+    }, [fetchOrders]);
+    useEffect(() => {
+        window.addEventListener('focus', fetchOrders);
+        return () => window.removeEventListener('focus', fetchOrders);
+    }, [fetchOrders]);
 
     const formatPrice = (price: number) =>
         new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -167,7 +179,9 @@ export default function OrderHistoryPage() {
                                                 </button>
                                             )}
                                             {order.status === 'delivered' && (
-                                                <button className={styles.btnReview}>
+                                                order.rated
+                                                ? <span className={styles.ratedBadge}> ✓ Đã đánh giá</span>
+                                                : <button className={styles.btnReview} onClick={() => setReviewOrder(order as Order)}>
                                                     Đánh giá
                                                 </button>
                                             )}
@@ -180,6 +194,20 @@ export default function OrderHistoryPage() {
                     </div>
                 )}
             </div>
+            {reviewOrder && (
+                <ReviewModal
+                    order={reviewOrder}
+                    onClose={() => setReviewOrder(null)}
+                    onSuccess={(orderId) => {
+                        setOrders(prev => prev.map(o =>
+                            o.id === orderId ? { ...o, rated: true } : o
+                        ));
+                        setReviewOrder(null);
+                        setToast('✅ Đánh giá thành công');
+                        setTimeout(() => setToast(null), 3000);
+                    }}
+                />
+            )}
             {cancelId !== null && (
                 <div className={styles.overlay} onClick={() => setCancelId(null)}>
                     <div className={styles.confirmBox} onClick={e => e.stopPropagation()}>
