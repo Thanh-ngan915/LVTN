@@ -20,6 +20,7 @@ public class OrderService {
     private final ProductOrderRepository productOrderRepository;
     private final DeliveryInformationRepository deliveryInformationRepository;
     private final VoucherRepository voucherRepository;
+    private final RatingRepository ratingRepository;
 
     /**
      * Tạo đơn hàng mới (Mua ngay)
@@ -223,7 +224,7 @@ public class OrderService {
 
         // Compute shipping fee (free for orders >= 500000)
         float shippingFee = order.getTotal() >= 500000f ? 0f : SHIPPING_FEE;
-
+        boolean rated = !ratingRepository.findByOrderId(order.getId()).isEmpty();
         return OrderResponseDTO.builder()
                 .id(order.getId())
                 .userId(order.getUserId())
@@ -241,6 +242,7 @@ public class OrderService {
                 .deliveryInformation(delivery != null ? toDeliveryDTO(delivery) : null)
                 .voucherInfo(voucherInfo)
                 .items(itemDTOs)
+                .rated(rated)
                 .build();
     }
 

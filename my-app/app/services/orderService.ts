@@ -65,6 +65,7 @@ export interface OrderResponseDTO {
   paymentStatus: string;
   createdAt: string;
   deliveryInformation: DeliveryInformationDTO | null;
+  rated?: boolean;
   voucherInfo: {
     id: number;
     code: string;
@@ -89,6 +90,39 @@ export interface OrderApiResponse<T> {
   success: boolean;
   message: string;
   data: T;
+}
+
+export interface OrderItem {
+    productId: number;
+    productName: string;
+    productImage: string;
+    color: string;
+    size: string;
+    quantity: number;
+    priceAfter: number;
+}
+
+export interface Order {
+    id: number;
+    storeId: string;
+    status: string;
+    createdAt: string;
+    items: OrderItem[];
+    rated?: boolean;
+}
+
+export interface RatingForm {
+    orderId: number;
+    storeId: string;
+    stars: number;
+    comment: string;
+    materialUrls: string[];
+}
+
+export interface ReviewModalProps {
+    order: Order;
+    onClose: () => void;
+    onSuccess: (orderId: number) => void;
 }
 
 function getToken(): string {

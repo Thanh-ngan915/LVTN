@@ -358,3 +358,15 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     white-space: nowrap;
 }
+.ratedBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
