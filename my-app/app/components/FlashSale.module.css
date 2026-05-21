@@ -1,0 +1,324 @@
+.flashSaleSection {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  margin: 32px 0;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(238, 90, 36, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Optional subtle background graphic */
+.flashSaleSection::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(255, 71, 87, 0.05) 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  padding-bottom: 16px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.titleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lightningIcon {
+  font-size: 28px;
+  color: #ffd32a;
+  animation: flicker 1.5s infinite alternate;
+  display: inline-block;
+  filter: drop-shadow(0 2px 8px rgba(255, 211, 42, 0.6));
+}
+
+.flashSaleTitle {
+  font-size: 26px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ff4757 0%, #ee5a24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+  font-style: italic;
+}
+
+.timerContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timerLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #777;
+  letter-spacing: 0.5px;
+}
+
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timeBox {
+  background: #1e272e;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.35);
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.colon {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1e272e;
+  animation: pulse 1s infinite;
+}
+
+.headerRight {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ee5a24;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.2s;
+}
+
+.headerRight:hover {
+  opacity: 0.85;
+}
+
+.arrowIcon {
+  font-size: 11px;
+  font-weight: bold;
+}
+
+/* Slider */
+.sliderWrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.scrollContainer {
+  display: flex;
+  overflow-x: auto;
+  gap: 20px;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  padding: 10px 4px 20px;
+}
+
+.scrollContainer::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+.productWrapper {
+  flex: 0 0 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.productWrapper:hover {
+  transform: translateY(-4px);
+}
+
+/* Shopee-style Sales Progress Bar */
+.progressBarContainer {
+  position: relative;
+  height: 18px;
+  background: #ffe5e5;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid rgba(255, 71, 87, 0.1);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.progressBarFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #ff7f50 0%, #ff4757 100%);
+  box-shadow: 0 1px 4px rgba(255, 71, 87, 0.25);
+  transition: width 0.8s ease-in-out;
+}
+
+.progressBarText {
+  position: relative;
+  z-index: 2;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  /* Fallback text color if bar is empty */
+  mix-blend-mode: difference;
+}
+
+.hotSaleIcon {
+  position: absolute;
+  right: 6px;
+  font-size: 11px;
+  z-index: 3;
+  animation: bounce 0.8s infinite alternate;
+}
+
+/* Nav Buttons */
+.navButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 10;
+  font-size: 14px;
+  color: #444;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.navButton:hover {
+  background: #ee5a24;
+  color: #ffffff;
+  border-color: #ee5a24;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 20px rgba(238, 90, 36, 0.3);
+}
+
+.prevButton {
+  left: -22px;
+}
+
+.nextButton {
+  right: -22px;
+}
+
+/* Animations */
+@keyframes flicker {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(0.92) rotate(-5deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes bounce {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .productWrapper {
+    flex: 0 0 190px;
+  }
+  .prevButton {
+    left: -10px;
+  }
+  .nextButton {
+    right: -10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .flashSaleSection {
+    padding: 16px;
+    margin: 20px 0;
+    border-radius: 12px;
+  }
+  .flashSaleTitle {
+    font-size: 22px;
+  }
+  .headerLeft {
+    gap: 12px;
+  }
+  .timerContainer {
+    gap: 8px;
+  }
+  .navButton {
+    display: none; /* Hide navigation buttons on mobile touch screen */
+  }
+  .scrollContainer {
+    gap: 14px;
+    padding-bottom: 10px;
+  }
+  .productWrapper {
+    flex: 0 0 170px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .headerRight {
+    align-self: flex-end;
+  }
+}
