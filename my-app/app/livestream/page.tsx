@@ -13,6 +13,9 @@ import {
 } from 'livekit-client';
 import * as LiveKit from 'livekit-client';
 import styles from './livestream.module.css';
+import { getProductById, Product } from '../services/productService';
+import { useRouter } from 'next/navigation';
+
 
 interface Room {
   id: number;
@@ -30,6 +33,7 @@ interface TokenData {
 }
 
 export default function LivestreamPage() {
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<'host' | 'viewer'>('viewer');
   const [isRoomHost, setIsRoomHost] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -48,6 +52,16 @@ export default function LivestreamPage() {
   const localParticipantRef = useRef<LocalParticipant | null>(null);
   const retryCountRef = useRef(0);
   const maxRetriesRef = useRef(3); // Stop polling after 3 consecutive failures
+
+  // Voice Recognition State
+  const [isVoiceRecording, setIsVoiceRecording] = useState(false);
+  const [recognizedNumber, setRecognizedNumber] = useState<string | null>(null);
+  const [recognizedText, setRecognizedText] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+
 
   // Cleanup LiveKit connection khi rời phòng
   useEffect(() => {
@@ -573,6 +587,149 @@ export default function LivestreamPage() {
     }
   };
 
+  const handleBuyNow = () => {
+    if (!selectedProduct) return;
+
+    // Kiểm tra đăng nhập
+    const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    if (!userStr) {
+      alert('⚠️ Vui lòng đăng nhập để mua hàng');
+      return;
+    }
+
+    // Mặc định chọn biến thể đầu tiên nếu có để thanh toán
+    const firstVariant = selectedProduct.variants && selectedProduct.variants.length > 0 
+      ? selectedProduct.variants[0] 
+      : null;
+
+    const displayOrigPrice = firstVariant ? firstVariant.priceBefore : selectedProduct.priceBefore;
+    const displayPrice = firstVariant ? firstVariant.priceAfter : selectedProduct.priceAfter;
+    const color = firstVariant ? firstVariant.color : '';
+    const size = firstVariant ? firstVariant.size : '';
+    const variantId = firstVariant ? String(firstVariant.id) : '';
+
+    const params = new URLSearchParams({
+      productId: String(selectedProduct.id),
+      productName: selectedProduct.name,
+      quantity: '1',
+      storeId: selectedProduct.storeId || '',
+      priceBefore: String(displayOrigPrice || 0),
+      priceAfter: String(displayPrice || 0),
+      image: selectedProduct.imageUrls?.[0] || '',
+      color: color || '',
+      size: size || '',
+      variantId: variantId || '',
+    });
+
+    router.push(`/checkout?${params.toString()}`);
+  };
+
+  // ================= VOICE RECOGNITION LOGIC =================
+  const toggleVoiceRecognition = async () => {
+    if (isVoiceRecording) {
+      stopRecording();
+    } else {
+      await startRecording();
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await sendAudioToBackend(audioBlob);
+        
+        // Stop all tracks in the stream
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsVoiceRecording(true);
+      setRecognizedNumber(null);
+      setRecognizedText(null);
+    } catch (err) {
+      console.error('Error starting voice recording:', err);
+      setError('Không thể truy cập microphone để nhận diện giọng nói');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isVoiceRecording) {
+      mediaRecorderRef.current.stop();
+      setIsVoiceRecording(false);
+    }
+  };
+
+  const sendAudioToBackend = async (blob: Blob) => {
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('audio', blob, 'recording.webm');
+
+      // Call FastAPI (assuming it runs on 127.0.0.1:5000)
+      const response = await fetch('http://127.0.0.1:5000/speech-to-text', {
+        method: 'POST',
+        body: formData,
+      });
+
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Voice recognition result:', data);
+        
+        if (data.productId) {
+          const id = data.productId;
+          setRecognizedNumber(id);
+          
+          // Fetch product info
+          console.log(`🔍 Fetching product details for ID: ${id}...`);
+          try {
+            const productRes = await getProductById(parseInt(id));
+            console.log('📦 Product API Response:', productRes);
+            
+            if (productRes && productRes.success && productRes.data) {
+              setSelectedProduct(productRes.data);
+              console.log('✅ Product set successfully:', productRes.data.name);
+            } else {
+              console.warn('⚠️ Product not found or success is false');
+              setError(`Không tìm thấy sản phẩm có ID: ${id}`);
+              setSelectedProduct(null);
+            }
+          } catch (fetchErr) {
+            console.error('❌ Error fetching product:', fetchErr);
+            setError(`Lỗi kết nối khi lấy sản phẩm ID ${id}. Kiểm tra Product Service.`);
+          }
+
+
+          // Tự động tắt overlay sau 5 giây
+          setTimeout(() => setRecognizedNumber(null), 5000);
+        }
+
+        
+        setRecognizedText(data.text);
+
+      } else {
+        console.error('FastAPI error:', response.statusText);
+      }
+    } catch (err) {
+      console.error('Error sending audio to FastAPI:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <div className={styles.container}>
       <h1>Livestream Commerce</h1>
@@ -709,7 +866,33 @@ export default function LivestreamPage() {
                 className={styles.videoElement}
               />
               
+              {/* Voice Recognition Overlay */}
+              {isVoiceRecording && (
+                <div className={styles.voiceOverlay}>
+                  <div className={styles.recordingPulse}></div>
+                  <div className={styles.voiceLabel}>Đang lắng nghe...</div>
+                </div>
+              )}
+
+              {recognizedNumber && selectedProduct && (
+                <div className={styles.productFloatingCard}>
+                  <div className={styles.floatingCardLabel}>SẢN PHẨM ĐƯỢC CHỌN</div>
+                  <div className={styles.floatingCardContent}>
+                    <img 
+                      src={selectedProduct.imageUrls?.[0] || 'https://via.placeholder.com/100'} 
+                      alt={selectedProduct.name} 
+                    />
+                    <div className={styles.floatingCardInfo}>
+                      <h4>{selectedProduct.name}</h4>
+                      <p>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedProduct.priceAfter)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className={styles.videoOverlay}>
+
+
                 <div className={styles.videoHeader}>
                   <div className={styles.liveBadge}>LIVE</div>
                   <div className={styles.viewerCount}>
@@ -757,7 +940,20 @@ export default function LivestreamPage() {
                           )}
                         </button>
                         <button
+                          onClick={toggleVoiceRecognition}
+                          className={`${styles.controlBtn} ${styles.controlBtnVoice} ${isVoiceRecording ? styles.controlBtnVoiceActive : ''}`}
+                          title="Nhận diện giọng nói"
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                            <line x1="12" y1="19" x2="12" y2="23"/>
+                            <line x1="8" y1="23" x2="16" y2="23"/>
+                          </svg>
+                        </button>
+                        <button
                           onClick={handleEndLivestream}
+
                           className={`${styles.controlBtn} ${styles.controlBtnDanger}`}
                           title="Kết thúc Livestream"
                         >
@@ -819,16 +1015,28 @@ export default function LivestreamPage() {
             {/* Product Showcase */}
             <div className={styles.section} style={{ padding: '20px' }}>
               <h3 style={{ fontSize: '1rem', marginBottom: '15px' }}>Sản phẩm đang bán</h3>
-              <div style={{ display: 'flex', gap: '15px', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '15px' }}>
-                <div style={{ width: '60px', height: '60px', background: '#333', borderRadius: '10px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyItems: 'center' }}>
-                   <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="1" style={{ margin: 'auto' }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+              {selectedProduct ? (
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '15px' }}>
+                  <div style={{ width: '60px', height: '60px', background: '#333', borderRadius: '10px', flexShrink: 0, overflow: 'hidden' }}>
+                    {selectedProduct.imageUrls && selectedProduct.imageUrls.length > 0 ? (
+                      <img src={selectedProduct.imageUrls[0]} alt={selectedProduct.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="1" style={{ margin: '15px auto', display: 'block' }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                    )}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>{selectedProduct.name}</div>
+                    <div style={{ fontSize: '0.9rem', color: '#60a5fa', fontWeight: '800' }}>
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedProduct.priceAfter)}
+                    </div>
+                  </div>
+                  <button className={styles.primaryBtn} style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={handleBuyNow}>MUA</button>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>Áo Hoodie Unisex Premium</div>
-                  <div style={{ fontSize: '0.9rem', color: '#60a5fa', fontWeight: '800' }}>299.000đ</div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#64748b', fontSize: '0.85rem', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '15px' }}>
+                   Nói "ID + [Số]" để hiển thị sản phẩm
                 </div>
-                <button className={styles.primaryBtn} style={{ padding: '6px 12px', fontSize: '0.75rem' }}>MUA</button>
-              </div>
+              )}
             </div>
 
             {/* Participants */}

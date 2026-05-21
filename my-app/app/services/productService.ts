@@ -1,4 +1,4 @@
-const API_BASE = '';
+const API_BASE = ''; // Sử dụng Next.js proxy rewrite (định cấu hình trong next.config.ts) hoặc 'http://localhost:8087'
 
 export interface ProductVariant {
   id: number;
