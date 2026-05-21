@@ -19,16 +19,17 @@ print("✅ Whisper large-v3 ready!")
 
 app = FastAPI(title="STT Service - Vietnamese ID")
 
-# CẦN THIẾT: Thêm lại CORS để Frontend có thể gọi API
+# CẤU HÌNH CORS (PHẢI CÓ)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Cho phép tất cả các nguồn để test
+    allow_origins=["*"], # Cho phép tất cả các nguồn
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 mapping = {
+
 
     "không": "0", "một": "1", "mốt": "1", "hai": "2",
     "ba": "3", "bốn": "4", "tư": "4", "năm": "5",

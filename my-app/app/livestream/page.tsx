@@ -638,11 +638,12 @@ export default function LivestreamPage() {
       const formData = new FormData();
       formData.append('audio', blob, 'recording.webm');
 
-      // Call FastAPI (assuming it runs on localhost:5000)
-      const response = await fetch('http://localhost:5000/speech-to-text', {
+      // Call FastAPI (assuming it runs on 127.0.0.1:5000)
+      const response = await fetch('http://127.0.0.1:5000/speech-to-text', {
         method: 'POST',
         body: formData,
       });
+
 
       if (response.ok) {
         const data = await response.json();
@@ -653,14 +654,24 @@ export default function LivestreamPage() {
           setRecognizedNumber(id);
           
           // Fetch product info
+          console.log(`🔍 Fetching product details for ID: ${id}...`);
           try {
             const productRes = await getProductById(parseInt(id));
-            if (productRes.success) {
+            console.log('📦 Product API Response:', productRes);
+            
+            if (productRes && productRes.success && productRes.data) {
               setSelectedProduct(productRes.data);
+              console.log('✅ Product set successfully:', productRes.data.name);
+            } else {
+              console.warn('⚠️ Product not found or success is false');
+              setError(`Không tìm thấy sản phẩm có ID: ${id}`);
+              setSelectedProduct(null);
             }
           } catch (fetchErr) {
-            console.error('Error fetching product:', fetchErr);
+            console.error('❌ Error fetching product:', fetchErr);
+            setError(`Lỗi kết nối khi lấy sản phẩm ID ${id}. Kiểm tra Product Service.`);
           }
+
 
           // Tự động tắt overlay sau 5 giây
           setTimeout(() => setRecognizedNumber(null), 5000);
@@ -824,14 +835,24 @@ export default function LivestreamPage() {
                 </div>
               )}
 
-              {recognizedNumber && (
-                <div className={styles.voiceOverlay}>
-                  <div className={styles.voiceLabel}>SỐ THỨ TỰ</div>
-                  <div className={styles.voiceNumber}>{recognizedNumber}</div>
+              {recognizedNumber && selectedProduct && (
+                <div className={styles.productFloatingCard}>
+                  <div className={styles.floatingCardLabel}>SẢN PHẨM ĐƯỢC CHỌN</div>
+                  <div className={styles.floatingCardContent}>
+                    <img 
+                      src={selectedProduct.imageUrls?.[0] || 'https://via.placeholder.com/100'} 
+                      alt={selectedProduct.name} 
+                    />
+                    <div className={styles.floatingCardInfo}>
+                      <h4>{selectedProduct.name}</h4>
+                      <p>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedProduct.priceAfter)}</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
               <div className={styles.videoOverlay}>
+
 
                 <div className={styles.videoHeader}>
                   <div className={styles.liveBadge}>LIVE</div>

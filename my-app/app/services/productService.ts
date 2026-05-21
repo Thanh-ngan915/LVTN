@@ -1,4 +1,4 @@
-const API_BASE = '';
+const API_BASE = 'http://localhost:8084'; // Cập nhật cổng chính xác của Product Service
 
 export interface ProductVariant {
   id: number;
