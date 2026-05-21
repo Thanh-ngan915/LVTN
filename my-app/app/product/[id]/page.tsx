@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '../../components/Header';
-import { Product, ProductVariant, getProductById, getProductsByStore } from '../../services/productService';
+import { Product, ProductVariant, getProductById, getProductsByStore, getProductsByCategory } from '../../services/productService';
+import ProductCard from '../../components/ProductCard';
 import { RatingDTO, RatingSummaryDTO, getRatingsByProduct, getRatingSummary, submitRating } from '../../services/ratingService';
 import { addToCart } from '../../services/cartService';
 import styles from './page.module.css';
@@ -37,6 +38,10 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Related Products
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
 
   // Gallery
   const [selectedImage, setSelectedImage] = useState(0);
@@ -144,6 +149,29 @@ export default function ProductDetailPage() {
         .catch(console.error);
     }
   }, [product?.storeId]);
+
+  // Load related products
+  useEffect(() => {
+    if (!product || !product.categoryShortname) {
+      setRelatedProducts([]);
+      return;
+    }
+
+    setRelatedLoading(true);
+    getProductsByCategory(product.categoryShortname, 0, 10)
+      .then((res) => {
+        if (res.success && res.data) {
+          const filtered = res.data.filter((p) => p.id !== product.id);
+          setRelatedProducts(filtered.slice(0, 5));
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load related products', err);
+      })
+      .finally(() => {
+        setRelatedLoading(false);
+      });
+  }, [product?.id, product?.categoryShortname]);
 
   // Get unique colors and sizes
   const colors = product?.variants
@@ -768,6 +796,18 @@ export default function ProductDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Sản phẩm liên quan */}
+        {relatedProducts.length > 0 && (
+          <div className={styles.relatedSection}>
+            <h2 className={styles.sectionTitle}>📋 SẢN PHẨM LIÊN QUAN</h2>
+            <div className={styles.relatedGrid}>
+              {relatedProducts.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Toast */}
