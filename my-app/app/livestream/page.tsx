@@ -14,6 +14,7 @@ import {
 import * as LiveKit from 'livekit-client';
 import styles from './livestream.module.css';
 import { getProductById, Product } from '../services/productService';
+import { useRouter } from 'next/navigation';
 
 
 interface Room {
@@ -32,6 +33,7 @@ interface TokenData {
 }
 
 export default function LivestreamPage() {
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<'host' | 'viewer'>('viewer');
   const [isRoomHost, setIsRoomHost] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -585,6 +587,43 @@ export default function LivestreamPage() {
     }
   };
 
+  const handleBuyNow = () => {
+    if (!selectedProduct) return;
+
+    // Kiểm tra đăng nhập
+    const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    if (!userStr) {
+      alert('⚠️ Vui lòng đăng nhập để mua hàng');
+      return;
+    }
+
+    // Mặc định chọn biến thể đầu tiên nếu có để thanh toán
+    const firstVariant = selectedProduct.variants && selectedProduct.variants.length > 0 
+      ? selectedProduct.variants[0] 
+      : null;
+
+    const displayOrigPrice = firstVariant ? firstVariant.priceBefore : selectedProduct.priceBefore;
+    const displayPrice = firstVariant ? firstVariant.priceAfter : selectedProduct.priceAfter;
+    const color = firstVariant ? firstVariant.color : '';
+    const size = firstVariant ? firstVariant.size : '';
+    const variantId = firstVariant ? String(firstVariant.id) : '';
+
+    const params = new URLSearchParams({
+      productId: String(selectedProduct.id),
+      productName: selectedProduct.name,
+      quantity: '1',
+      storeId: selectedProduct.storeId || '',
+      priceBefore: String(displayOrigPrice || 0),
+      priceAfter: String(displayPrice || 0),
+      image: selectedProduct.imageUrls?.[0] || '',
+      color: color || '',
+      size: size || '',
+      variantId: variantId || '',
+    });
+
+    router.push(`/checkout?${params.toString()}`);
+  };
+
   // ================= VOICE RECOGNITION LOGIC =================
   const toggleVoiceRecognition = async () => {
     if (isVoiceRecording) {
@@ -991,7 +1030,7 @@ export default function LivestreamPage() {
                       {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedProduct.priceAfter)}
                     </div>
                   </div>
-                  <button className={styles.primaryBtn} style={{ padding: '6px 12px', fontSize: '0.75rem' }}>MUA</button>
+                  <button className={styles.primaryBtn} style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={handleBuyNow}>MUA</button>
                 </div>
               ) : (
                 <div style={{ textAlign: 'center', padding: '20px', color: '#64748b', fontSize: '0.85rem', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '15px' }}>
