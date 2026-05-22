@@ -13,6 +13,8 @@ export default function ProfilePage() {
     const [hasStore, setHasStore] = useState(false);
     // const token = localStorage.getItem("token");
     const [uploading, setUploading] = useState(false);
+    const [userRole, setUserRole] = useState<string|null>(null);
+    const [storeRoleId, setStoreRoleId] = useState<string|null>(null);
     const compressImage = (file: File, maxSizeMB = 2): Promise<File> => {
         return new Promise((resolve) => {
             const canvas = document.createElement("canvas");
@@ -100,6 +102,15 @@ export default function ProfilePage() {
     };
 
     useEffect(() => {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+            const u = JSON.parse(storedUser);
+            setUserRole(u.role);
+            setStoreRoleId(u.storeRoleId);
+        }
+    }, []);
+
+    useEffect(() => {
         const token = localStorage.getItem("token");
         const storedUser = localStorage.getItem("user");
 
@@ -133,6 +144,8 @@ export default function ProfilePage() {
                 console.log("Profile data:", data);
                 setUser(data);
                 setLoading(false);
+                setUserRole(data.role);
+                setStoreRoleId(data.storeRoleId);
                 fetch(`/api/stores/has-store?userId=${userId}`, {
                     headers: { Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` }
                 })
@@ -219,7 +232,7 @@ export default function ProfilePage() {
                     <div className={styles.orderSection}>
                         <h2 className={styles.sectionTitle}>Quản lý mua sắm</h2>
                         <div className={styles.orderGrid}>
-                            <div className={styles.orderCard} onClick={() => router.push("/orders")}>
+                            <div className={styles.orderCard} onClick={() => router.push("/order/history")}>
                                 <div className={styles.orderIcon}>🚚</div>
                                 <div className={styles.orderInfo}>
                                     <strong>Đơn hàng</strong>
@@ -236,7 +249,6 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                    {/* GIỮ NGUYÊN TẤT CẢ CÁC NÚT HÀNH ĐỘNG CỦA BẠN */}
                     <div className={styles.actions}>
                         <button className={styles.btnEdit} onClick={() => router.push("/profile/edit")}>
                             Chỉnh sửa trang cá nhân
@@ -247,13 +259,21 @@ export default function ProfilePage() {
                         <button className={styles.btnEdit} onClick={() => router.push("/profile/change-password")}>
                             Đổi mật khẩu
                         </button>
-                        {!hasStore ? (
-                            <button className={styles.btnShop} onClick={() => setShowShopModal(true)}>
-                                🏪 Đăng ký bán hàng
+                        {userRole === "ADMIN" ? (
+                            <button className={styles.btnShop} onClick={() => router.push("/admin")}>
+                                🛡️ Trang Admin
                             </button>
-                        ) : (
+                        ) : storeRoleId ? (
                             <button className={styles.btnShop} onClick={() => router.push("/my-store")}>
                                 🏪 Quản lý shop
+                            </button>
+                        ) : hasStore ? (
+                            <button className={styles.btnShop} style={{ opacity: 0.7, cursor: "default" }}>
+                                ⏳ Shop đang chờ duyệt
+                            </button>
+                        ) : (
+                            <button className={styles.btnShop} onClick={() => setShowShopModal(true)}>
+                                🏪 Đăng ký bán hàng
                             </button>
                         )}
                         <button className={styles.btnLogout} onClick={handleLogout}>Đăng xuất</button>

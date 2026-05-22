@@ -1,0 +1,372 @@
+.page {
+    min-height: 100vh;
+    background: #f5f5f5;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+.title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.tab {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 600;
+    background: #fff;
+    color: #555;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+}
+
+.tabActive {
+    background: #ee4d2d;
+    color: #fff;
+}
+
+.tabCount {
+    margin-left: 6px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    padding: 1px 6px;
+    font-size: 11px;
+}
+
+/* Empty state */
+.empty {
+    text-align: center;
+    padding: 60px;
+    background: #fff;
+    border-radius: 12px;
+}
+
+.emptyIcon {
+    font-size: 48px;
+}
+
+.emptyText {
+    color: #999;
+    margin-top: 12px;
+}
+
+.emptyBtn {
+    margin-top: 16px;
+    padding: 10px 24px;
+    background: #ee4d2d;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* Order list */
+.orderList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.orderCard {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Order header */
+.orderHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.orderId {
+    font-weight: 600;
+    color: #333;
+}
+
+.statusBadge {
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.statusPending  { color: #f59e0b; }
+.statusConfirmed { color: #3b82f6; }
+.statusShipping  { color: #8b5cf6; }
+.statusDelivered { color: #10b981; }
+.statusCancelled { color: #ef4444; }
+
+/* Order item */
+.orderItem {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.productImage {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.productImagePlaceholder {
+    width: 70px;
+    height: 70px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.productInfo {
+    flex: 1;
+}
+
+.productName {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.productVariant {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 4px;
+}
+
+.productQty {
+    font-size: 13px;
+    color: #888;
+}
+
+.productPrice {
+    text-align: right;
+}
+
+.priceBefore {
+    font-size: 12px;
+    color: #999;
+    text-decoration: line-through;
+}
+
+.priceAfter {
+    font-weight: 600;
+    color: #ee4d2d;
+}
+
+/* Order footer */
+.orderFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.orderDate {
+    font-size: 13px;
+    color: #999;
+}
+
+.orderActions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.orderTotal {
+    font-weight: 700;
+    color: #ee4d2d;
+    font-size: 16px;
+}
+
+.btnDetail {
+    padding: 8px 16px;
+    border: 1px solid #ee4d2d;
+    background: #fff;
+    color: #ee4d2d;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.btnDetail:hover {
+    background: #fff5f3;
+}
+
+.btnCancel {
+    padding: 8px 16px;
+    border: 1px solid #ef4444;
+    background: #fff;
+    color: #ef4444;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.btnCancel:hover {
+    background: #fef2f2;
+}
+
+.btnReview {
+    padding: 8px 16px;
+    background: #ee4d2d;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.btnReview:hover {
+    background: #d94429;
+}
+
+/* Loading */
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    color: #999;
+}
+
+/* Confirm Dialog */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.confirmBox {
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+}
+
+.confirmIcon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.confirmTitle {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.confirmText {
+    color: #888;
+    margin-bottom: 24px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.confirmActions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btnBack {
+    padding: 10px 24px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #fff;
+    color: #555;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btnBack:hover {
+    background: #f5f5f5;
+}
+
+.btnConfirmCancel {
+    padding: 10px 24px;
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.btnConfirmCancel:hover {
+    background: #dc2626;
+}
+
+.btnConfirmCancel:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    z-index: 2000;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+}
+.ratedBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}

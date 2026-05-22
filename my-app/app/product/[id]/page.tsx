@@ -749,13 +749,33 @@ export default function ProductDetailPage() {
                         day: 'numeric',
                       }) : ''}
                     </div>
-                    {rating.materialUrls && rating.materialUrls.length > 0 && (
-                      <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap'}}>
-                        {rating.materialUrls.map((url, i) => (
-                          <img key={i} src={url} alt="" style={{width:80,height:80,objectFit:'cover',borderRadius:4,border:'1px solid #eee'}} />
-                        ))}
-                      </div>
-                    )}
+                      {(() => {
+                          const textContents = rating.materialUrls?.filter(
+                              url => url.startsWith('text:')
+                          ).map(url => url.replace('text:', '')) || [];
+
+                          const imageUrls = rating.materialUrls?.filter(
+                              url => !url.startsWith('text:')
+                          ) || [];
+
+                          return (
+                              <>
+                                  {textContents.map((text, i) => (
+                                      <div key={i} style={{fontSize:14, color:'#333', marginTop:6, lineHeight:1.6}}>
+                                          {text}
+                                      </div>
+                                  ))}
+                                  {imageUrls.length > 0 && (
+                                      <div style={{display:'flex', gap:8, marginTop:8, flexWrap:'wrap'}}>
+                                          {imageUrls.map((url, i) => (
+                                              <img key={i} src={url} alt=""
+                                                   style={{width:80, height:80, objectFit:'cover', borderRadius:4, border:'1px solid #eee'}} />
+                                          ))}
+                                      </div>
+                                  )}
+                              </>
+                          );
+                      })()}
                     {rating.replies && rating.replies.length > 0 && (
                       <div style={{marginTop:12,paddingLeft:16,borderLeft:'2px solid #f0f0f0'}}>
                         {rating.replies.map((reply) => (

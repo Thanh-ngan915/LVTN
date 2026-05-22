@@ -6,16 +6,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.userservice.dto.PasswordRequest;
 import org.example.userservice.dto.UserDTO;
 import org.example.userservice.entity.Account;
+import org.example.userservice.entity.StoreRole;
 import org.example.userservice.entity.User;
 import org.example.userservice.repository.AccountRepository;
+import org.example.userservice.repository.StoreRoleRepository;
 import org.example.userservice.repository.UserRepository;
 import org.example.userservice.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor //tự động inject repo qua constructor
@@ -38,6 +43,8 @@ public class UserServiceImpl implements UserService {
                 .address(user.getAddress())
                 .status(user.getStatus())
                 .rankId(user.getRankId())
+                .role(user.getRole())
+                .storeRoleId(account.getStoreRoleId())
                 .build();
     }
 
@@ -127,5 +134,28 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setImage(imageUrl);
         userRepository.save(user);
+    }
+
+    @Autowired
+    private StoreRoleRepository storeRoleRepository;
+
+    @Override
+    @Transactional
+    public void approveStore(String userId, String storeId) {
+        // 1. Tạo StoreRole
+        StoreRole storeRole = StoreRole.builder()
+                .id(UUID.randomUUID().toString())
+                .storeRole(storeId)  // storeId lưu vào store_role field
+                .status("active")
+                .role("SELLER")
+                .createdBy("admin")
+                .build();
+        storeRoleRepository.save(storeRole);
+
+        // 2. Gán vào Account
+        Account account = accountRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+        account.setStoreRoleId(storeRole.getId());
+        accountRepository.save(account);
     }
 }

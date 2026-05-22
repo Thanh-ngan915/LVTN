@@ -11,4 +11,5 @@ public interface UserService {
     void updateUserName (String userId, String newUserName);
     String updateAvatar (String userId, MultipartFile file);
     void updateAvatarUrl(String userId, String imageUrl);
+    void approveStore(String userId, String storeId);
 }

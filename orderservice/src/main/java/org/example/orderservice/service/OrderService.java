@@ -20,6 +20,7 @@ public class OrderService {
     private final ProductOrderRepository productOrderRepository;
     private final DeliveryInformationRepository deliveryInformationRepository;
     private final VoucherRepository voucherRepository;
+    private final RatingRepository ratingRepository;
 
     /**
      * Tạo đơn hàng mới (Mua ngay)
@@ -162,6 +163,31 @@ public class OrderService {
         return result;
     }
 
+    @Transactional
+    public OrderResponseDTO cancelOrder(Integer orderId, String userId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        // Chỉ được hủy đơn của chính mình
+        if (!order.getUserId().equals(userId)) {
+            throw new RuntimeException("Không có quyền hủy đơn này");
+        }
+
+        // Chỉ được hủy khi đang pending
+        if (!"pending".equals(order.getStatus())) {
+            throw new RuntimeException("Chỉ có thể hủy đơn hàng đang chờ xác nhận");
+        }
+
+        order.setStatus("cancelled");
+        order.setUpdateAt(LocalDateTime.now());
+        orderRepository.save(order);
+
+        DeliveryInformation delivery = deliveryInformationRepository
+                .findById(order.getDeliveryInformationId()).orElse(null);
+        List<ProductOrder> items = productOrderRepository.findByOrderId(orderId);
+        return toOrderResponseDTO(order, delivery, items);
+    }
+
     // ---- Helpers ----
 
     private static final float SHIPPING_FEE = 30000f;
@@ -198,7 +224,7 @@ public class OrderService {
 
         // Compute shipping fee (free for orders >= 500000)
         float shippingFee = order.getTotal() >= 500000f ? 0f : SHIPPING_FEE;
-
+        boolean rated = !ratingRepository.findByOrderId(order.getId()).isEmpty();
         return OrderResponseDTO.builder()
                 .id(order.getId())
                 .userId(order.getUserId())
@@ -216,6 +242,7 @@ public class OrderService {
                 .deliveryInformation(delivery != null ? toDeliveryDTO(delivery) : null)
                 .voucherInfo(voucherInfo)
                 .items(itemDTOs)
+                .rated(rated)
                 .build();
     }
 
