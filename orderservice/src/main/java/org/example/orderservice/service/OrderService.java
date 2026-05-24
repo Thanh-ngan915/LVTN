@@ -41,10 +41,19 @@ public class OrderService {
         delivery = deliveryInformationRepository.save(delivery);
 
         // 2. Tính toán tổng tiền
-        int qty = request.getQuantity() != null ? request.getQuantity() : 1;
-        float priceAfter = request.getProductPriceAfter() != null ? request.getProductPriceAfter() : 0f;
-        float priceBefore = request.getProductPriceBefore() != null ? request.getProductPriceBefore() : priceAfter;
-        float total = priceAfter * qty;
+        float total = 0f;
+        List<OrderItemRequestDTO> requestItems = request.getItems();
+        if (requestItems != null && !requestItems.isEmpty()) {
+            for (OrderItemRequestDTO item : requestItems) {
+                int itemQty = item.getQuantity() != null ? item.getQuantity() : 1;
+                float itemPriceAfter = item.getProductPriceAfter() != null ? item.getProductPriceAfter() : 0f;
+                total += itemPriceAfter * itemQty;
+            }
+        } else {
+            int qty = request.getQuantity() != null ? request.getQuantity() : 1;
+            float priceAfter = request.getProductPriceAfter() != null ? request.getProductPriceAfter() : 0f;
+            total = priceAfter * qty;
+        }
         float discount = 0f;
 
         // 3. Áp dụng voucher nếu có
@@ -94,29 +103,62 @@ public class OrderService {
         order = orderRepository.save(order);
 
         // 5. Tạo product order item
-        ProductOrder productOrder = ProductOrder.builder()
-                .productId(request.getProductId())
-                .orderId(order.getId())
-                .quantity(qty)
-                .priceBefore(priceBefore)
-                .priceAfter(priceAfter)
-                .productName(request.getProductName())
-                .productImage(request.getProductImage())
-                .color(request.getColor())
-                .size(request.getSize())
-                .build();
-        productOrderRepository.save(productOrder);
+        List<ProductOrder> savedItems = new ArrayList<>();
+        if (requestItems != null && !requestItems.isEmpty()) {
+            for (OrderItemRequestDTO item : requestItems) {
+                int itemQty = item.getQuantity() != null ? item.getQuantity() : 1;
+                float itemPriceAfter = item.getProductPriceAfter() != null ? item.getProductPriceAfter() : 0f;
+                float itemPriceBefore = item.getProductPriceBefore() != null ? item.getProductPriceBefore() : itemPriceAfter;
+                
+                ProductOrder productOrder = ProductOrder.builder()
+                        .productId(item.getProductId())
+                        .orderId(order.getId())
+                        .quantity(itemQty)
+                        .priceBefore(itemPriceBefore)
+                        .priceAfter(itemPriceAfter)
+                        .productName(item.getProductName())
+                        .productImage(item.getProductImage())
+                        .color(item.getColor())
+                        .size(item.getSize())
+                        .build();
+                savedItems.add(productOrderRepository.save(productOrder));
+            }
+        } else {
+            int qty = request.getQuantity() != null ? request.getQuantity() : 1;
+            float priceAfter = request.getProductPriceAfter() != null ? request.getProductPriceAfter() : 0f;
+            float priceBefore = request.getProductPriceBefore() != null ? request.getProductPriceBefore() : priceAfter;
+            
+            ProductOrder productOrder = ProductOrder.builder()
+                    .productId(request.getProductId())
+                    .orderId(order.getId())
+                    .quantity(qty)
+                    .priceBefore(priceBefore)
+                    .priceAfter(priceAfter)
+                    .productName(request.getProductName())
+                    .productImage(request.getProductImage())
+                    .color(request.getColor())
+                    .size(request.getSize())
+                    .build();
+            savedItems.add(productOrderRepository.save(productOrder));
+        }
 
-        return toOrderResponseDTO(order, delivery, List.of(productOrder));
+        return toOrderResponseDTO(order, delivery, savedItems);
     }
 
     /**
      * Lấy danh sách voucher của shop
      */
     public List<VoucherDTO> getVouchersByStore(String storeId) {
-        List<Voucher> vouchers = voucherRepository
+        List<Voucher> storeVouchers = voucherRepository
                 .findByStoreIdAndStatusAndEndDateAfter(storeId, "active", LocalDateTime.now());
-        return vouchers.stream().map(this::toVoucherDTO).collect(Collectors.toList());
+        List<Voucher> platformVouchers = voucherRepository
+                .findByStoreIdIsNullAndStatusAndEndDateAfter("active", LocalDateTime.now());
+        
+        List<Voucher> allVouchers = new ArrayList<>();
+        allVouchers.addAll(storeVouchers);
+        allVouchers.addAll(platformVouchers);
+        
+        return allVouchers.stream().map(this::toVoucherDTO).collect(Collectors.toList());
     }
 
     /**

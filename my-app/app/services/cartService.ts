@@ -119,6 +119,24 @@ export async function removeFromCart(cartItemId: string): Promise<CartApiRespons
 }
 
 /**
+ * Xóa nhiều sản phẩm khỏi giỏ hàng
+ */
+export async function removeMultipleFromCart(cartItemIds: string[]): Promise<CartApiResponse<void>> {
+  const userId = getUserId();
+  if (!userId) throw new Error('Chưa đăng nhập');
+  const res = await fetch(`${API_BASE}/api/cart/items`, {
+    method: 'DELETE',
+    headers: { 
+        'Content-Type': 'application/json',
+        'X-User-Id': userId 
+    },
+    body: JSON.stringify(cartItemIds),
+  });
+  if (!res.ok) throw new Error('Failed to remove items from cart');
+  return res.json();
+}
+
+/**
  * Xóa toàn bộ giỏ hàng
  */
 export async function clearCart(): Promise<CartApiResponse<void>> {

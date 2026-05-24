@@ -129,6 +129,19 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
+    public void removeMultipleFromCart(List<String> cartItemIds, String userId) {
+        for (String cartItemId : cartItemIds) {
+            try {
+                removeFromCart(cartItemId, userId);
+            } catch (Exception e) {
+                log.warn("Failed to remove cart item {} for user {}: {}", cartItemId, userId, e.getMessage());
+            }
+        }
+        log.info("Removed multiple items from cart for userId={}", userId);
+    }
+
+    @Override
+    @Transactional
     public void clearCart(String userId) {
         cartItemRepository.deleteByUserId(userId);
         log.info("Cleared cart for userId={}", userId);
