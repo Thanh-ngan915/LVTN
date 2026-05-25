@@ -106,7 +106,6 @@ export default function ProfilePage() {
         if (storedUser) {
             const u = JSON.parse(storedUser);
             setUserRole(u.role);
-            setStoreRoleId(u.storeRoleId);
         }
     }, []);
 
@@ -141,6 +140,7 @@ export default function ProfilePage() {
                 return res.json();
             })
             .then((data) => {
+                console.log("storeRoleId từ API:", data.storeRoleId);
                 console.log("Profile data:", data);
                 setUser(data);
                 setLoading(false);
