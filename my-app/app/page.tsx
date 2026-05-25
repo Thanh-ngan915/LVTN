@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
-import HeroBanner from './components/HeroBanner';
 import CategoryFilter from './components/CategoryFilter';
 import ProductGrid from './components/ProductGrid';
 import FlashSale from './components/FlashSale';
@@ -105,7 +104,6 @@ export default function Home() {
   return (
     <div className={styles.page}>
       <Header onSearch={handleSearch} />
-      <HeroBanner />
       <main className={styles.main} id="products">
         <div className={styles.container}>
           {!searchKeyword && !activeCategory && (

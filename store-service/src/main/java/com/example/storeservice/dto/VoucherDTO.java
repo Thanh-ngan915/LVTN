@@ -7,13 +7,12 @@ import lombok.NoArgsConstructor;
 
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-import java.util.List;
-@Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class VoucherDTO {
     private String id;
     private String code;

@@ -232,4 +232,11 @@ public class VoucherServiceImpl implements VoucherService {
                 .build();
     }
 
+    @Override
+    public List<VoucherDTO> getAllActiveVouchers() {
+        return voucherRepository.findByStatus(1).stream()
+                .filter(v -> v.getEndDate() != null && v.getEndDate().isAfter(LocalDateTime.now()))
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
 }
