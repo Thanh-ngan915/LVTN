@@ -178,13 +178,28 @@ export default function MyStorePage() {
         try {
             const url = editProduct ? `/api/products/${editProduct.id}` : `/api/products`;
             const method = editProduct ? "PUT" : "POST";
+
+            // Khi tạo mới: backend tự lấy storeId & createdBy từ JWT token
+            // Chỉ cần gửi dữ liệu sản phẩm, KHÔNG cần gửi storeId/createdBy thủ công
+            const sendBody = editProduct
+                ? body  // Khi sửa: gửi toàn bộ bao gồm updatedBy
+                : {     // Khi tạo: bỏ storeId và createdBy (backend tự lấy từ token)
+                    name: body.name,
+                    priceBefore: body.priceBefore,
+                    priceAfter: body.priceAfter,
+                    initQuantity: body.initQuantity,
+                    description: body.description,
+                    categoryShortname: body.categoryShortname,
+                    status: body.status,
+                };
+
             const res = await fetch(url, {
                 method,
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}`,
                 },
-                body: JSON.stringify(body),
+                body: JSON.stringify(sendBody),
             });
             if (!res.ok) throw new Error("Lưu thất bại");
             const data = await res.json();

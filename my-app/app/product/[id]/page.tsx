@@ -139,8 +139,8 @@ export default function ProductDetailPage() {
   // Load shop info
   useEffect(() => {
     if (product?.storeId) {
-      import('../../services/userService').then(({ getUserProfile }) => {
-        getUserProfile(product.storeId)
+      import('../../services/storeService').then(({ getStoreById }) => {
+        getStoreById(product.storeId)
           .then(setShopProfile)
           .catch(console.error);
       });
@@ -549,15 +549,15 @@ export default function ProductDetailPage() {
         <div className={styles.shopSection}>
           <div className={styles.shopInfo}>
             <div className={styles.shopAvatar}>
-              {shopProfile?.image ? (
-                <img src={shopProfile.image} alt={shopProfile.fullName} />
+              {shopProfile?.store?.image ? (
+                <img src={shopProfile.store.image} alt={shopProfile.store.name} />
               ) : (
                 <span style={{ fontSize: 24 }}>🏪</span>
               )}
               <span className={styles.shopBadge}>Yêu thích+</span>
             </div>
             <div className={styles.shopNameContainer}>
-              <div className={styles.shopName}>{shopProfile?.fullName || product.storeId}</div>
+              <div className={styles.shopName}>{shopProfile?.store?.name || product.storeId}</div>
               <div className={styles.shopStatus}>Online 2 phút trước</div>
               <div className={styles.shopActions}>
                 <button className={`${styles.shopBtn} ${styles.chatBtn}`}>

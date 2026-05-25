@@ -1,6 +1,7 @@
 package com.example.storeservice.controller;
 
 import com.example.storeservice.dto.StoreDTO;
+import com.example.storeservice.dto.StoreProfileResponseDTO;
 import com.example.storeservice.service.StoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,7 @@ public class StoreController {
 
     // Hiển thị thông tin shop
     @GetMapping("/{storeId}")
-    public ResponseEntity<StoreDTO> getStoreById(@PathVariable String storeId) {
+    public ResponseEntity<StoreProfileResponseDTO> getStoreById(@PathVariable String storeId) {
         return ResponseEntity.ok(storeService.getStoreById(storeId));
     }
 }
