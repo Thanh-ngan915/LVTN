@@ -90,6 +90,25 @@ public class CartController {
     }
 
     /**
+     * Xóa nhiều sản phẩm khỏi giỏ hàng
+     * DELETE /api/cart/items
+     * Header: X-User-Id: userId
+     * Body: ["id1", "id2"]
+     */
+    @DeleteMapping("/items")
+    public ResponseEntity<ApiResponse<Void>> removeMultipleFromCart(
+            @RequestBody List<String> cartItemIds,
+            @RequestHeader(value = "X-User-Id") String userId
+    ) {
+        try {
+            cartService.removeMultipleFromCart(cartItemIds, userId);
+            return ResponseEntity.ok(ApiResponse.success(null, "Đã xóa các sản phẩm khỏi giỏ hàng!"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
      * Xóa toàn bộ giỏ hàng
      * DELETE /api/cart
      * Header: X-User-Id: userId

@@ -1,15 +1,18 @@
 package org.example.productservice.controller;
 
+import org.example.productservice.client.StoreClient;
 import org.example.productservice.dto.ApiResponse;
 import org.example.productservice.dto.CategoryDTO;
 import org.example.productservice.dto.ProductDTO;
 import org.example.productservice.service.ProductService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +23,7 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final StoreClient storeClient;
 
     /**
      * Lấy tất cả sản phẩm (phân trang)
@@ -222,13 +226,41 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success(categories, "Categories retrieved successfully"));
     }
 
-    //Tạo spham mới: POST /api/products
+    /**
+     * Tạo sản phẩm mới: POST /api/products
+     * Tự động đồng bộ storeId từ Access Token:
+     *   1. Đọc userId từ JWT (qua JwtTokenFilter -> request attribute)
+     *   2. Gọi store-service lấy storeId của user đó
+     *   3. Gán storeId vào sản phẩm trước khi lưu
+     */
     @PostMapping("/products")
     public ResponseEntity<ApiResponse<ProductDTO>> createProduct(
-            @RequestBody ProductDTO productDTO) {
+            @RequestBody ProductDTO productDTO,
+            HttpServletRequest request) {
         try {
+            // Lấy userId từ JWT token (đã được set bởi JwtTokenFilter)
+            String userId = (String) request.getAttribute("userId");
+            if (!StringUtils.hasText(userId)) {
+                return ResponseEntity.status(401).body(ApiResponse.error("Vui lòng đăng nhập"));
+            }
+
+            // Lấy Bearer token gốc để truyền sang store-service
+            String bearerToken = request.getHeader("Authorization");
+
+            // Gọi store-service lấy storeId theo userId từ token
+            String storeId = storeClient.getStoreIdByUserId(userId, bearerToken);
+            if (!StringUtils.hasText(storeId)) {
+                return ResponseEntity.status(403).body(
+                    ApiResponse.error("Bạn chưa có shop. Vui lòng đăng ký shop trước khi đăng sản phẩm.")
+                );
+            }
+
+            // Tự động gán storeId và createdBy từ token
+            productDTO.setStoreId(storeId);
+            productDTO.setCreatedBy(userId);
+
             ProductDTO created = productService.createProduct(productDTO);
-            return ResponseEntity.ok(ApiResponse.success(created, "Product created successfully"));
+            return ResponseEntity.ok(ApiResponse.success(created, "Tạo sản phẩm thành công"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }

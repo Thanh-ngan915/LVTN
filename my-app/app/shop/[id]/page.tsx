@@ -11,7 +11,7 @@ import {
   getCategories,
   Category
 } from '../../services/productService';
-import { getUserProfile, UserProfile } from '../../services/userService';
+import { getStoreById, StoreProfileResponseDTO } from '../../services/storeService';
 import styles from './page.module.css';
 
 export default function ShopProfilePage() {
@@ -19,7 +19,7 @@ export default function ShopProfilePage() {
   const router = useRouter();
   const storeId = params.id as string;
 
-  const [shopInfo, setShopInfo] = useState<UserProfile | null>(null);
+  const [shopInfo, setShopInfo] = useState<StoreProfileResponseDTO | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,10 +37,10 @@ export default function ShopProfilePage() {
 
     setLoading(true);
     Promise.all([
-      getUserProfile(storeId).catch(() => null),
+      getStoreById(storeId).catch(() => null),
       getCategories().catch(() => ({ data: [] }))
     ]).then(([profile, catRes]) => {
-      setShopInfo(profile as UserProfile);
+      setShopInfo(profile as StoreProfileResponseDTO);
       setCategories(catRes.data || []);
     }).finally(() => setLoading(false));
   }, [storeId]);
@@ -97,15 +97,15 @@ export default function ShopProfilePage() {
         <div className={styles.headerCard}>
           <div className={styles.shopInfoMain}>
             <div className={styles.avatarWrapper}>
-              {shopInfo?.image ? (
-                <img src={shopInfo.image} alt={shopInfo.fullName} />
+              {shopInfo?.store?.image ? (
+                <img src={shopInfo.store.image} alt={shopInfo.store.name} />
               ) : (
                 <div style={{fontSize: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#eee'}}>🏪</div>
               )}
               <span className={styles.shopBadge}>Yêu thích+</span>
             </div>
             <div className={styles.shopDetails}>
-              <h1 className={styles.shopName}>{shopInfo?.fullName || storeId}</h1>
+              <h1 className={styles.shopName}>{shopInfo?.store?.name || storeId}</h1>
               <div className={styles.shopStatus}>Online 2 phút trước</div>
               <div className={styles.headerActions}>
                 <button className={`${styles.actionBtn} ${styles.followBtn}`}>

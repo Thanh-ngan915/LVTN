@@ -27,6 +27,11 @@ public interface CartService {
     void removeFromCart(String cartItemId, String userId);
 
     /**
+     * Xóa nhiều sản phẩm khỏi giỏ hàng
+     */
+    void removeMultipleFromCart(List<String> cartItemIds, String userId);
+
+    /**
      * Xóa toàn bộ giỏ hàng
      */
     void clearCart(String userId);

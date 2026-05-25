@@ -8,7 +8,9 @@ import {
   getVouchersByStore,
   VoucherDTO,
   OrderRequestDTO,
+  OrderItemRequestDTO,
 } from '../services/orderService';
+import { getCart, removeMultipleFromCart, CartItemDTO } from '../services/cartService';
 import styles from './checkout.module.css';
 
 const SHIPPING_FEE = 30000;
@@ -17,7 +19,7 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Product info from URL params
+  // Product info from URL params (Single item checkout)
   const productId = Number(searchParams.get('productId'));
   const productName = searchParams.get('productName') || '';
   const quantity = Number(searchParams.get('quantity')) || 1;
@@ -28,6 +30,25 @@ function CheckoutContent() {
   const color = searchParams.get('color') || '';
   const size = searchParams.get('size') || '';
   const variantId = Number(searchParams.get('variantId')) || undefined;
+
+  // Cart checkout info
+  const cartItemIdsStr = searchParams.get('cartItemIds');
+  const cartItemIds = cartItemIdsStr ? cartItemIdsStr.split(',') : [];
+  const isCartCheckout = cartItemIds.length > 0;
+  const [checkoutItems, setCheckoutItems] = useState<CartItemDTO[]>([]);
+
+  useEffect(() => {
+    if (isCartCheckout) {
+      getCart().then(res => {
+        if (res.success) {
+          const items = res.data.filter(item => cartItemIds.includes(item.id));
+          setCheckoutItems(items);
+        }
+      }).catch(console.error);
+    }
+  }, [cartItemIdsStr]);
+
+  const actualStoreId = isCartCheckout ? (checkoutItems.length > 0 ? checkoutItems[0].storeId : '') : storeId;
 
   // Delivery form
   const [recipientName, setRecipientName] = useState('');
@@ -67,13 +88,13 @@ function CheckoutContent() {
 
   // Load vouchers
   useEffect(() => {
-    if (!storeId) return;
-    getVouchersByStore(storeId)
+    if (!actualStoreId) return;
+    getVouchersByStore(actualStoreId)
       .then((res) => {
         if (res.success) setVouchers(res.data || []);
       })
       .catch(() => {});
-  }, [storeId]);
+  }, [actualStoreId]);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -100,7 +121,9 @@ function CheckoutContent() {
     []
   );
 
-  const subtotal = priceAfter * quantity;
+  const subtotal = isCartCheckout 
+    ? checkoutItems.reduce((sum, item) => sum + (item.priceAfter || 0) * item.quantity, 0)
+    : priceAfter * quantity;
   const discount = calcDiscount(selectedVoucher, subtotal);
   const shippingFee = subtotal >= 500000 ? 0 : SHIPPING_FEE;
   const total = subtotal - discount + shippingFee;
@@ -145,16 +168,16 @@ function CheckoutContent() {
     setPlacing(true);
     try {
       const request: OrderRequestDTO = {
-        productId,
+        productId: isCartCheckout && checkoutItems.length > 0 ? Number(checkoutItems[0].productId) : productId,
         variantId,
-        quantity,
-        storeId,
-        productPriceBefore: priceBefore,
-        productPriceAfter: priceAfter,
+        quantity: isCartCheckout && checkoutItems.length > 0 ? checkoutItems[0].quantity : quantity,
+        storeId: actualStoreId,
+        productPriceBefore: isCartCheckout && checkoutItems.length > 0 ? checkoutItems[0].priceBefore : priceBefore,
+        productPriceAfter: isCartCheckout && checkoutItems.length > 0 ? checkoutItems[0].priceAfter : priceAfter,
         voucherId: selectedVoucher?.id ?? null,
         paymentMethod,
-        productName: productName || undefined,
-        productImage: image || undefined,
+        productName: isCartCheckout && checkoutItems.length > 0 ? checkoutItems[0].productName : (productName || undefined),
+        productImage: isCartCheckout && checkoutItems.length > 0 ? (checkoutItems[0].productImage || undefined) : (image || undefined),
         color: color || undefined,
         size: size || undefined,
         recipientName: recipientName.trim(),
@@ -163,9 +186,24 @@ function CheckoutContent() {
         district: district.trim(),
         ward: ward.trim(),
         addressDetail: addressDetail.trim(),
+        items: isCartCheckout ? checkoutItems.map(item => ({
+          productId: Number(item.productId),
+          quantity: item.quantity,
+          productPriceBefore: item.priceBefore,
+          productPriceAfter: item.priceAfter,
+          productName: item.productName,
+          productImage: item.productImage || undefined,
+        })) : undefined
       };
       const res = await createOrder(request);
       if (res.success) {
+        if (isCartCheckout) {
+          try {
+            await removeMultipleFromCart(cartItemIds);
+          } catch (e) {
+            console.error('Failed to remove items from cart after checkout', e);
+          }
+        }
         if (paymentMethod === 'VNPAY') {
           // Gọi API tạo URL thanh toán VNPay thực tế
           showToast('🏦 Đang chuyển đến cổng thanh toán VNPay...');
@@ -268,39 +306,75 @@ function CheckoutContent() {
               <span className={styles.sectionIcon}>🛍️</span>
               Sản phẩm đặt mua
             </h2>
-            <div className={styles.productRow}>
-              <div className={styles.productImageWrap}>
-                {image ? (
-                  <img src={image} alt={productName} className={styles.productImage} />
-                ) : (
-                  <div className={styles.productImagePlaceholder}>🖼️</div>
-                )}
-              </div>
-              <div className={styles.productMeta}>
-                <p className={styles.productName}>{productName}</p>
-                {(color || size) && (
-                  <p className={styles.productVariant}>
-                    {color && <span>Màu: {color}</span>}
-                    {color && size && <span className={styles.variantDot}>•</span>}
-                    {size && <span>Size: {size}</span>}
-                  </p>
-                )}
-                <div className={styles.productPricing}>
-                  {priceBefore > priceAfter && (
-                    <span className={styles.oldPrice}>{formatPrice(priceBefore)}</span>
+            {isCartCheckout ? (
+              checkoutItems.map(item => (
+                <div key={item.id} className={styles.productRow}>
+                  <div className={styles.productImageWrap}>
+                    {item.productImage ? (
+                      <img src={item.productImage} alt={item.productName} className={styles.productImage} />
+                    ) : (
+                      <div className={styles.productImagePlaceholder}>🖼️</div>
+                    )}
+                  </div>
+                  <div className={styles.productMeta}>
+                    <p className={styles.productName}>{item.productName}</p>
+                    {item.categoryName && (
+                      <p className={styles.productVariant}>
+                        <span>{item.categoryName}</span>
+                      </p>
+                    )}
+                    <div className={styles.productPricing}>
+                      {item.priceBefore > item.priceAfter && (
+                        <span className={styles.oldPrice}>{formatPrice(item.priceBefore)}</span>
+                      )}
+                      <span className={styles.newPrice}>{formatPrice(item.priceAfter)}</span>
+                    </div>
+                  </div>
+                  <div className={styles.productQty}>
+                    <span className={styles.qtyLabel}>Số lượng</span>
+                    <span className={styles.qtyValue}>x{item.quantity}</span>
+                  </div>
+                  <div className={styles.productTotal}>
+                    <span className={styles.totalLabel}>Thành tiền</span>
+                    <span className={styles.totalValue}>{formatPrice(item.priceAfter * item.quantity)}</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={styles.productRow}>
+                <div className={styles.productImageWrap}>
+                  {image ? (
+                    <img src={image} alt={productName} className={styles.productImage} />
+                  ) : (
+                    <div className={styles.productImagePlaceholder}>🖼️</div>
                   )}
-                  <span className={styles.newPrice}>{formatPrice(priceAfter)}</span>
+                </div>
+                <div className={styles.productMeta}>
+                  <p className={styles.productName}>{productName}</p>
+                  {(color || size) && (
+                    <p className={styles.productVariant}>
+                      {color && <span>Màu: {color}</span>}
+                      {color && size && <span className={styles.variantDot}>•</span>}
+                      {size && <span>Size: {size}</span>}
+                    </p>
+                  )}
+                  <div className={styles.productPricing}>
+                    {priceBefore > priceAfter && (
+                      <span className={styles.oldPrice}>{formatPrice(priceBefore)}</span>
+                    )}
+                    <span className={styles.newPrice}>{formatPrice(priceAfter)}</span>
+                  </div>
+                </div>
+                <div className={styles.productQty}>
+                  <span className={styles.qtyLabel}>Số lượng</span>
+                  <span className={styles.qtyValue}>x{quantity}</span>
+                </div>
+                <div className={styles.productTotal}>
+                  <span className={styles.totalLabel}>Thành tiền</span>
+                  <span className={styles.totalValue}>{formatPrice(subtotal)}</span>
                 </div>
               </div>
-              <div className={styles.productQty}>
-                <span className={styles.qtyLabel}>Số lượng</span>
-                <span className={styles.qtyValue}>x{quantity}</span>
-              </div>
-              <div className={styles.productTotal}>
-                <span className={styles.totalLabel}>Thành tiền</span>
-                <span className={styles.totalValue}>{formatPrice(subtotal)}</span>
-              </div>
-            </div>
+            )}
           </section>
 
           {/* === SECTION 2: ĐỊA CHỈ GIAO HÀNG === */}
