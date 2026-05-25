@@ -35,6 +35,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/stores/has-store").authenticated()
                         .requestMatchers("/api/stores/register").authenticated()
                         .requestMatchers("/api/stores/my-store").authenticated()
+                        .requestMatchers("/api/vouchers/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);

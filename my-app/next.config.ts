@@ -52,6 +52,10 @@ const nextConfig: NextConfig = {
          destination: 'http://localhost:8090/api/stores',
       },
       {
+         source: '/api/vouchers/:path*',
+         destination: 'http://localhost:8090/api/vouchers/:path*',
+      },
+      {
         source: '/api/:path*',
         destination: 'http://localhost:8086/api/:path*',
       },

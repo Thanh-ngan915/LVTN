@@ -40,7 +40,7 @@ interface ProductForm {
     storeId: string;
     createdBy: string;
     status: string;
-    updatedBy: string,
+    updatedBy: string;
 }
 
 const EMPTY_FORM: ProductForm = {
@@ -49,6 +49,55 @@ const EMPTY_FORM: ProductForm = {
     storeId: "", createdBy: "",
     status: "pending",
     updatedBy: "",
+};
+
+interface PriceConditionDTO {
+    totalMin: number | null;
+    totalMax: number | null;
+    priceMin: number | null;
+}
+
+interface Voucher {
+    id: string;
+    code: string;
+    title: string;
+    description: string;
+    initQuantity: number;
+    currentQuantity: number;
+    status: number;
+    type: number;
+    percent: number;
+    maximum: number;
+    startDate: string;
+    endDate: string;
+    categoryShortnames: string[];
+    priceCondition: PriceConditionDTO | null;
+}
+
+interface VoucherForm {
+    code: string;
+    title: string;
+    description: string;
+    initQuantity: string;
+    type: string;
+    percent: string;
+    maximum: string;
+    startDate: string;
+    endDate: string;
+    categoryShortnames: string[];
+    hasPriceCondition: boolean;
+    totalMin: string;
+    totalMax: string;
+    priceMin: string;
+}
+
+const EMPTY_VOUCHER_FORM: VoucherForm = {
+    code: "", title: "", description: "",
+    initQuantity: "", type: "1", percent: "", maximum: "",
+    startDate: "", endDate: "",
+    categoryShortnames: [],
+    hasPriceCondition: false,
+    totalMin: "", totalMax: "", priceMin: "",
 };
 
 export default function MyStorePage() {
@@ -63,9 +112,20 @@ export default function MyStorePage() {
     const [saving, setSaving] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [categories, setCategories] = useState<{shortname: string, name: string}[]>([]);
+    const [categories, setCategories] = useState<{ shortname: string; name: string }[]>([]);
     const [activeTab, setActiveTab] = useState<"active" | "deleted">("active");
     const [deletedProducts, setDeletedProducts] = useState<Product[]>([]);
+    const [activeSection, setActiveSection] = useState<"products" | "vouchers">("products");
+    const [vouchers, setVouchers] = useState<Voucher[]>([]);
+    const [voucherLoading, setVoucherLoading] = useState(false);
+    const [showVoucherModal, setShowVoucherModal] = useState(false);
+    const [voucherForm, setVoucherForm] = useState<VoucherForm>(EMPTY_VOUCHER_FORM);
+    const [voucherSaving, setVoucherSaving] = useState(false);
+    const [voucherError, setVoucherError] = useState<string | null>(null);
+    const [editVoucher, setEditVoucher] = useState<Voucher | null>(null);
+    const [deleteVoucherId, setDeleteVoucherId] = useState<string | null>(null);
+    const [voucherTab, setVoucherTab] = useState<"active" | "deleted">("active");
+    const [deletedVouchers, setDeletedVouchers] = useState<Voucher[]>([]);
 
     const getAuth = () => {
         const token = localStorage.getItem("token");
@@ -90,9 +150,7 @@ export default function MyStorePage() {
                 method: "PUT",
                 headers: { Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}` },
             });
-            // Xóa khỏi danh sách đã xóa
             setDeletedProducts(prev => prev.filter(p => p.id !== id));
-            // Fetch lại danh sách active để cập nhật
             const res = await fetch(`/api/products/store/${store?.id}?size=100`, {
                 headers: { Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}` },
             });
@@ -104,23 +162,21 @@ export default function MyStorePage() {
     };
 
     useEffect(() => {
-        // Fetch categories riêng, không cần token
         fetch(`/api/categories`)
             .then(r => r.json())
             .then(catData => setCategories(catData.data || []));
 
-        // Fetch store + products
         const { token, userId } = getAuth();
         if (!token || !userId) { router.push("/login"); return; }
 
         fetch(`/api/stores/my-store?userId=${userId}`, {
-            headers: { Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` }
+            headers: { Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` },
         })
             .then(r => r.json())
             .then(async (storeData: Store) => {
                 setStore(storeData);
                 const res = await fetch(`/api/products/store/${storeData.id}?size=100`, {
-                    headers: { Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}` }
+                    headers: { Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}` },
                 });
                 const data = await res.json();
                 setProducts(data.data || []);
@@ -201,6 +257,185 @@ export default function MyStorePage() {
         }
     };
 
+    const fetchVouchers = async () => {
+        if (!store) return;
+        setVoucherLoading(true);
+        const { token } = getAuth();
+        try {
+            const res = await fetch(`/api/vouchers/store/${store.id}`, {
+                headers: { Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}` },
+            });
+            const data = await res.json();
+            setVouchers(data || []);
+        } catch {
+            setVouchers([]);
+        } finally {
+            setVoucherLoading(false);
+        }
+    };
+
+    const buildVoucherBody = () => ({
+        code: voucherForm.code,
+        title: voucherForm.title,
+        description: voucherForm.description,
+        initQuantity: parseInt(voucherForm.initQuantity),
+        type: parseInt(voucherForm.type),
+        percent: parseFloat(voucherForm.percent),
+        maximum: voucherForm.maximum ? parseInt(voucherForm.maximum) : null,
+        startDate: new Date(voucherForm.startDate).toISOString().slice(0, 19),
+        endDate: new Date(voucherForm.endDate).toISOString().slice(0, 19),
+        categoryShortnames: voucherForm.categoryShortnames.length > 0 ? voucherForm.categoryShortnames : null,
+        priceCondition: voucherForm.hasPriceCondition ? {
+            totalMin: voucherForm.totalMin ? parseFloat(voucherForm.totalMin) : null,
+            totalMax: voucherForm.totalMax ? parseFloat(voucherForm.totalMax) : null,
+            priceMin: voucherForm.priceMin ? parseFloat(voucherForm.priceMin) : null,
+        } : null,
+    });
+
+    const validateVoucherForm = () => {
+        if (!voucherForm.code.trim()) { setVoucherError("Vui lòng nhập mã voucher"); return false; }
+        if (!voucherForm.title.trim()) { setVoucherError("Vui lòng nhập tiêu đề"); return false; }
+        if (!voucherForm.initQuantity) { setVoucherError("Vui lòng nhập số lượng"); return false; }
+        if (!voucherForm.percent) {
+            setVoucherError(voucherForm.type === "1" ? "Vui lòng nhập % giảm" : "Vui lòng nhập số tiền giảm");
+            return false;
+        }
+        if (!voucherForm.startDate || !voucherForm.endDate) { setVoucherError("Vui lòng chọn ngày"); return false; }
+        if (new Date(voucherForm.startDate) >= new Date(voucherForm.endDate)) {
+            setVoucherError("Ngày bắt đầu phải trước ngày kết thúc"); return false;
+        }
+        return true;
+    };
+
+    const closeVoucherModal = () => {
+        setShowVoucherModal(false);
+        setEditVoucher(null);
+        setVoucherForm(EMPTY_VOUCHER_FORM);
+        setVoucherError(null);
+    };
+
+    const handleCreateVoucher = async () => {
+        if (!validateVoucherForm()) return;
+        setVoucherSaving(true);
+        setVoucherError(null);
+        const { token, userId } = getAuth();
+        try {
+            const res = await fetch(`/api/vouchers/store/${store!.id}?userId=${userId}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}`,
+                },
+                body: JSON.stringify(buildVoucherBody()),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || "Tạo voucher thất bại");
+            }
+            const newVoucher = await res.json();
+            setVouchers(prev => [newVoucher, ...prev]);
+            closeVoucherModal();
+        } catch (err: any) {
+            setVoucherError(err.message);
+        } finally {
+            setVoucherSaving(false);
+        }
+    };
+
+    const openEditVoucher = (v: Voucher) => {
+        setEditVoucher(v);
+        setVoucherForm({
+            code: v.code,
+            title: v.title,
+            description: v.description,
+            initQuantity: String(v.initQuantity),
+            type: String(v.type),
+            percent: String(v.percent),
+            maximum: v.maximum ? String(v.maximum) : "",
+            startDate: v.startDate.slice(0, 16),
+            endDate: v.endDate.slice(0, 16),
+            categoryShortnames: v.categoryShortnames || [],
+            hasPriceCondition: !!v.priceCondition,
+            totalMin: v.priceCondition?.totalMin ? String(v.priceCondition.totalMin) : "",
+            totalMax: v.priceCondition?.totalMax ? String(v.priceCondition.totalMax) : "",
+            priceMin: v.priceCondition?.priceMin ? String(v.priceCondition.priceMin) : "",
+        });
+        setVoucherError(null);
+        setShowVoucherModal(true);
+    };
+
+    const handleUpdateVoucher = async () => {
+        if (!validateVoucherForm()) return;
+        setVoucherSaving(true);
+        setVoucherError(null);
+        const { token, userId } = getAuth();
+        try {
+            const res = await fetch(`/api/vouchers/store/${store!.id}/${editVoucher!.id}?userId=${userId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}`,
+                },
+                body: JSON.stringify(buildVoucherBody()),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || "Cập nhật thất bại");
+            }
+            const updated = await res.json();
+            setVouchers(prev => prev.map(v => v.id === editVoucher!.id ? updated : v));
+            closeVoucherModal();
+        } catch (err: any) {
+            setVoucherError(err.message);
+        } finally {
+            setVoucherSaving(false);
+        }
+    };
+
+    const handleDeleteVoucher = async (id: string) => {
+        const { token, userId } = getAuth();
+        try {
+            const res = await fetch(`/api/vouchers/store/${store!.id}/${id}?userId=${userId}`, {
+                method: "DELETE",
+                headers: { Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}` },
+            });
+            if (!res.ok) throw new Error("Xóa thất bại");
+            setVouchers(prev => prev.filter(v => v.id !== id));
+            setDeleteVoucherId(null);
+        } catch {
+            alert("Xóa voucher thất bại");
+        }
+    };
+
+    const fetchDeletedVouchers = async () => {
+        if (!store) return;
+        const { token } = getAuth();
+        try {
+            const res = await fetch(`/api/vouchers/store/${store.id}/deleted`, {
+                headers: { Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}` },
+            });
+            const data = await res.json();
+            setDeletedVouchers(data || []);
+        } catch {
+            setDeletedVouchers([]);
+        }
+    };
+
+    const handleRestoreVoucher = async (id: string) => {
+        const { token, userId } = getAuth();
+        try {
+            const res = await fetch(`/api/vouchers/store/${store!.id}/${id}/restore?userId=${userId}`, {
+                method: "PUT",
+                headers: { Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}` },
+            });
+            if (!res.ok) throw new Error("Khôi phục thất bại");
+            setDeletedVouchers(prev => prev.filter(v => v.id !== id));
+            await fetchVouchers(); // refresh lại tab active
+        } catch {
+            alert("Khôi phục voucher thất bại");
+        }
+    };
+
     const handleDelete = async (id: number) => {
         const { token } = getAuth();
         try {
@@ -229,11 +464,17 @@ export default function MyStorePage() {
                     <span>✦</span> ANVI
                 </div>
                 <nav className={styles.sidebarNav}>
-                    <button className={`${styles.navItem} ${styles.navActive}`}>
+                    <button
+                        className={`${styles.navItem} ${activeSection === "products" ? styles.navActive : ""}`}
+                        onClick={() => setActiveSection("products")}>
                         <span>📦</span> Sản phẩm
                     </button>
                     <button className={styles.navItem}><span>📋</span> Đơn hàng</button>
-                    <button className={styles.navItem}><span>🎟️</span> Voucher</button>
+                    <button
+                        className={`${styles.navItem} ${activeSection === "vouchers" ? styles.navActive : ""}`}
+                        onClick={() => { setActiveSection("vouchers"); fetchVouchers(); }}>
+                        <span>🎟️</span> Voucher
+                    </button>
                     <button className={styles.navItem}><span>📊</span> Thống kê</button>
                 </nav>
                 <div className={styles.sidebarFooter}>
@@ -258,218 +499,400 @@ export default function MyStorePage() {
                             </span>
                         </div>
                     </div>
-                    <button className={styles.btnCreate} onClick={openCreate}>+ Thêm sản phẩm</button>
+                    {activeSection === "products" && (
+                        <button className={styles.btnCreate} onClick={openCreate}>+ Thêm sản phẩm</button>
+                    )}
                 </header>
 
-                <div className={styles.statsRow}>
-                    <div className={styles.statCard}>
-                        <div className={styles.statIcon}>📦</div>
-                        <div>
-                            <div className={styles.statNum}>{products.length}</div>
-                            <div className={styles.statLabel}>Sản phẩm</div>
+                {/* ── SECTION: SẢN PHẨM ── */}
+                {activeSection === "products" && (<>
+                    <div className={styles.statsRow}>
+                        <div className={styles.statCard}>
+                            <div className={styles.statIcon}>📦</div>
+                            <div>
+                                <div className={styles.statNum}>{products.length}</div>
+                                <div className={styles.statLabel}>Sản phẩm</div>
+                            </div>
+                        </div>
+                        <div className={styles.statCard}>
+                            <div className={styles.statIcon}>🛒</div>
+                            <div>
+                                <div className={styles.statNum}>{products.reduce((s, p) => s + (p.sold || 0), 0)}</div>
+                                <div className={styles.statLabel}>Đã bán</div>
+                            </div>
+                        </div>
+                        <div className={styles.statCard}>
+                            <div className={styles.statIcon}>📍</div>
+                            <div>
+                                <div className={styles.statNum} style={{ fontSize: "0.95rem" }}>{store?.location || "—"}</div>
+                                <div className={styles.statLabel}>Địa chỉ</div>
+                            </div>
                         </div>
                     </div>
-                    <div className={styles.statCard}>
-                        <div className={styles.statIcon}>🛒</div>
-                        <div>
-                            <div className={styles.statNum}>{products.reduce((s, p) => s + (p.sold || 0), 0)}</div>
-                            <div className={styles.statLabel}>Đã bán</div>
-                        </div>
-                    </div>
-                    <div className={styles.statCard}>
-                        <div className={styles.statIcon}>📍</div>
-                        <div>
-                            <div className={styles.statNum} style={{ fontSize: "0.95rem" }}>{store?.location || "—"}</div>
-                            <div className={styles.statLabel}>Địa chỉ</div>
-                        </div>
-                    </div>
-                </div>
 
-                {/*<div className={styles.tableSection}>*/}
-                {/*    <div className={styles.tableHeader}>*/}
-                {/*        <h2 className={styles.tableTitle}>Danh sách sản phẩm</h2>*/}
-                {/*        <input className={styles.searchInput} placeholder="🔍 Tìm sản phẩm..."*/}
-                {/*               value={search} onChange={e => setSearch(e.target.value)} />*/}
-                {/*    </div>*/}
-
-                {/*    {filtered.length === 0 ? (*/}
-                {/*        <div className={styles.empty}>*/}
-                {/*            <div className={styles.emptyIcon}>📭</div>*/}
-                {/*            <p>Chưa có sản phẩm nào</p>*/}
-                {/*            <button className={styles.btnCreate} onClick={openCreate}>Thêm sản phẩm đầu tiên</button>*/}
-                {/*        </div>*/}
-                {/*    ) : (*/}
-                {/*        <div className={styles.tableWrap}>*/}
-                {/*            <table className={styles.table}>*/}
-                {/*                <thead>*/}
-                {/*                <tr>*/}
-                {/*                    <th>Ảnh</th><th>Tên sản phẩm</th><th>Giá gốc</th>*/}
-                {/*                    <th>Giá bán</th><th>Tồn kho</th><th>Đã bán</th>*/}
-                {/*                    <th>Trạng thái</th><th>Thao tác</th>*/}
-                {/*                </tr>*/}
-                {/*                </thead>*/}
-                {/*                <tbody>*/}
-                {/*                {filtered.map(p => (*/}
-                {/*                    <tr key={p.id}>*/}
-                {/*                        <td>*/}
-                {/*                            {p.imageUrls?.[0]*/}
-                {/*                                ? <img src={p.imageUrls[0]} alt={p.name} className={styles.productThumb} />*/}
-                {/*                                : <div className={styles.productThumbPlaceholder}>🖼️</div>}*/}
-                {/*                        </td>*/}
-                {/*                        <td className={styles.productName}>{p.name}</td>*/}
-                {/*                        <td className={styles.priceOld}>{p.priceBefore?.toLocaleString("vi-VN")}đ</td>*/}
-                {/*                        <td className={styles.priceNew}>{p.priceAfter?.toLocaleString("vi-VN")}đ</td>*/}
-                {/*                        <td>{p.currentQuantity}</td>*/}
-                {/*                        <td>{p.sold || 0}</td>*/}
-                {/*                        <td>*/}
-                {/*                                <span className={`${*/}
-                {/*                                    styles.statusBadge} ${p.status === "active" ? */}
-                {/*                                    styles.statusActive : p.status === "pending" ? styles.statusPending : */}
-                {/*                                    styles.statusInactive}`}>*/}
-                {/*                                    {p.status === "active" ? "Đang bán" :*/}
-                {/*                                        p.status === "pending" ? "⏳ Chờ duyệt" :*/}
-                {/*                                        "Ẩn"}*/}
-                {/*                                </span>*/}
-                {/*                        </td>*/}
-                {/*                        <td>*/}
-                {/*                            <div className={styles.actions}>*/}
-                {/*                                <button className={styles.btnEdit} onClick={() => openEdit(p)}>Sửa</button>*/}
-                {/*                                <button className={styles.btnDelete} onClick={() => setDeleteId(p.id)}>Xóa</button>*/}
-                {/*                            </div>*/}
-                {/*                        </td>*/}
-                {/*                    </tr>*/}
-                {/*                ))}*/}
-                {/*                </tbody>*/}
-                {/*            </table>*/}
-                {/*        </div>*/}
-                {/*    )}*/}
-                {/*</div>*/}
-                <div className={styles.tableSection}>
-                    <div className={styles.tableHeader}>
-                        <h2 className={styles.tableTitle}>Danh sách sản phẩm</h2>
-                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                            {/* Tab chuyển đổi */}
-                            <button
-                                onClick={() => setActiveTab("active")}
-                                style={{
+                    <div className={styles.tableSection}>
+                        <div className={styles.tableHeader}>
+                            <h2 className={styles.tableTitle}>Danh sách sản phẩm</h2>
+                            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                                <button onClick={() => setActiveTab("active")} style={{
                                     padding: "6px 16px", borderRadius: "8px", border: "none", cursor: "pointer",
                                     background: activeTab === "active" ? "#6366f1" : "#f3f4f6",
-                                    color: activeTab === "active" ? "white" : "#374151",
-                                    fontWeight: 600,
-                                }}>
-                                Đang bán
-                            </button>
-                            <button
-                                onClick={() => { setActiveTab("deleted"); fetchDeletedProducts(); }}
-                                style={{
+                                    color: activeTab === "active" ? "white" : "#374151", fontWeight: 600,
+                                }}>Đang bán</button>
+                                <button onClick={() => { setActiveTab("deleted"); fetchDeletedProducts(); }} style={{
                                     padding: "6px 16px", borderRadius: "8px", border: "none", cursor: "pointer",
                                     background: activeTab === "deleted" ? "#ef4444" : "#f3f4f6",
-                                    color: activeTab === "deleted" ? "white" : "#374151",
-                                    fontWeight: 600,
-                                }}>
-                                Đã xóa
-                            </button>
-                            <input className={styles.searchInput} placeholder="🔍 Tìm sản phẩm..."
-                                   value={search} onChange={e => setSearch(e.target.value)} />
+                                    color: activeTab === "deleted" ? "white" : "#374151", fontWeight: 600,
+                                }}>Đã xóa</button>
+                                <input className={styles.searchInput} placeholder="🔍 Tìm sản phẩm..."
+                                       value={search} onChange={e => setSearch(e.target.value)} />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Tab đang bán — giữ nguyên table hiện tại */}
-                    {activeTab === "active" && (
-                        filtered.length === 0 ? (
-                            <div className={styles.empty}>
-                                <div className={styles.emptyIcon}>📭</div>
-                                <p>Chưa có sản phẩm nào</p>
-                                <button className={styles.btnCreate} onClick={openCreate}>Thêm sản phẩm đầu tiên</button>
-                            </div>
-                        ) : (
-                            <div className={styles.tableWrap}>
-                                <table className={styles.table}>
-                                    <thead>
-                                    <tr>
-                                        <th>Ảnh</th><th>Tên sản phẩm</th><th>Giá gốc</th>
-                                        <th>Giá bán</th><th>Tồn kho</th><th>Đã bán</th>
-                                        <th>Trạng thái</th><th>Thao tác</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {filtered.map(p => (
-                                        <tr key={p.id}>
-                                            <td>
-                                                {p.imageUrls?.[0]
-                                                    ? <img src={p.imageUrls[0]} alt={p.name} className={styles.productThumb} />
-                                                    : <div className={styles.productThumbPlaceholder}>🖼️</div>}
-                                            </td>
-                                            <td className={styles.productName}>{p.name}</td>
-                                            <td className={styles.priceOld}>{p.priceBefore?.toLocaleString("vi-VN")}đ</td>
-                                            <td className={styles.priceNew}>{p.priceAfter?.toLocaleString("vi-VN")}đ</td>
-                                            <td>{p.currentQuantity}</td>
-                                            <td>{p.sold || 0}</td>
-                                            <td>
-                                <span className={`${styles.statusBadge} ${
-                                    p.status === "active" ? styles.statusActive :
-                                        p.status === "pending" ? styles.statusPending :
-                                            styles.statusInactive}`}>
-                                    {p.status === "active" ? "✅ Đang bán" :
-                                        p.status === "pending" ? "⏳ Chờ duyệt" : "🚫 Ẩn"}
-                                </span>
-                                            </td>
-                                            <td>
-                                                <div className={styles.actions}>
-                                                    <button className={styles.btnEdit} onClick={() => openEdit(p)}>Sửa</button>
-                                                    <button className={styles.btnDelete} onClick={() => setDeleteId(p.id)}>Xóa</button>
-                                                </div>
-                                            </td>
+                        {activeTab === "active" && (
+                            filtered.length === 0 ? (
+                                <div className={styles.empty}>
+                                    <div className={styles.emptyIcon}>📭</div>
+                                    <p>Chưa có sản phẩm nào</p>
+                                    <button className={styles.btnCreate} onClick={openCreate}>Thêm sản phẩm đầu tiên</button>
+                                </div>
+                            ) : (
+                                <div className={styles.tableWrap}>
+                                    <table className={styles.table}>
+                                        <thead>
+                                        <tr>
+                                            <th>Ảnh</th><th>Tên sản phẩm</th><th>Giá gốc</th>
+                                            <th>Giá bán</th><th>Tồn kho</th><th>Đã bán</th>
+                                            <th>Trạng thái</th><th>Thao tác</th>
                                         </tr>
-                                    ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )
-                    )}
-                    {/* Tab đã xóa */}
-                    {activeTab === "deleted" && (
-                        deletedProducts.length === 0 ? (
-                            <div className={styles.empty}>
-                                <div className={styles.emptyIcon}>🗑️</div>
-                                <p>Không có sản phẩm nào đã xóa</p>
-                            </div>
-                        ) : (
-                            <div className={styles.tableWrap}>
-                                <table className={styles.table}>
-                                    <thead>
-                                    <tr>
-                                        <th>Ảnh</th><th>Tên sản phẩm</th><th>Giá gốc</th>
-                                        <th>Giá bán</th><th>Đã bán</th><th>Thao tác</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {deletedProducts.map(p => (
-                                        <tr key={p.id} style={{ opacity: 0.6 }}>
-                                            <td>
-                                                {p.imageUrls?.[0]
-                                                    ? <img src={p.imageUrls[0]} alt={p.name} className={styles.productThumb} />
-                                                    : <div className={styles.productThumbPlaceholder}>🖼️</div>}
-                                            </td>
-                                            <td className={styles.productName}>{p.name}</td>
-                                            <td className={styles.priceOld}>{p.priceBefore?.toLocaleString("vi-VN")}đ</td>
-                                            <td className={styles.priceNew}>{p.priceAfter?.toLocaleString("vi-VN")}đ</td>
-                                            <td>{p.sold || 0}</td>
-                                            <td>
-                                                <button className={styles.btnEdit} onClick={() => handleRestore(p.id)}>
-                                                    🔄 Khôi phục
-                                                </button>
-                                            </td>
+                                        </thead>
+                                        <tbody>
+                                        {filtered.map(p => (
+                                            <tr key={p.id}>
+                                                <td>
+                                                    {p.imageUrls?.[0]
+                                                        ? <img src={p.imageUrls[0]} alt={p.name} className={styles.productThumb} />
+                                                        : <div className={styles.productThumbPlaceholder}>🖼️</div>}
+                                                </td>
+                                                <td className={styles.productName}>{p.name}</td>
+                                                <td className={styles.priceOld}>{p.priceBefore?.toLocaleString("vi-VN")}đ</td>
+                                                <td className={styles.priceNew}>{p.priceAfter?.toLocaleString("vi-VN")}đ</td>
+                                                <td>{p.currentQuantity}</td>
+                                                <td>{p.sold || 0}</td>
+                                                <td>
+                                                        <span className={`${styles.statusBadge} ${p.status === "active" ? styles.statusActive : p.status === "pending" ? styles.statusPending : styles.statusInactive}`}>
+                                                            {p.status === "active" ? "✅ Đang bán" : p.status === "pending" ? "⏳ Chờ duyệt" : "🚫 Ẩn"}
+                                                        </span>
+                                                </td>
+                                                <td>
+                                                    <div className={styles.actions}>
+                                                        <button className={styles.btnEdit} onClick={() => openEdit(p)}>Sửa</button>
+                                                        <button className={styles.btnDelete} onClick={() => setDeleteId(p.id)}>Xóa</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )
+                        )}
+                        {activeTab === "deleted" && (
+                            deletedProducts.length === 0 ? (
+                                <div className={styles.empty}>
+                                    <div className={styles.emptyIcon}>🗑️</div>
+                                    <p>Không có sản phẩm nào đã xóa</p>
+                                </div>
+                            ) : (
+                                <div className={styles.tableWrap}>
+                                    <table className={styles.table}>
+                                        <thead>
+                                        <tr>
+                                            <th>Ảnh</th><th>Tên sản phẩm</th><th>Giá gốc</th>
+                                            <th>Giá bán</th><th>Đã bán</th><th>Thao tác</th>
                                         </tr>
-                                    ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                        {deletedProducts.map(p => (
+                                            <tr key={p.id} style={{ opacity: 0.6 }}>
+                                                <td>
+                                                    {p.imageUrls?.[0]
+                                                        ? <img src={p.imageUrls[0]} alt={p.name} className={styles.productThumb} />
+                                                        : <div className={styles.productThumbPlaceholder}>🖼️</div>}
+                                                </td>
+                                                <td className={styles.productName}>{p.name}</td>
+                                                <td className={styles.priceOld}>{p.priceBefore?.toLocaleString("vi-VN")}đ</td>
+                                                <td className={styles.priceNew}>{p.priceAfter?.toLocaleString("vi-VN")}đ</td>
+                                                <td>{p.sold || 0}</td>
+                                                <td>
+                                                    <button className={styles.btnEdit} onClick={() => handleRestore(p.id)}>
+                                                        🔄 Khôi phục
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )
+                        )}
+                    </div>
+                </>)}
+
+                {/* ── SECTION: VOUCHER ── */}
+                {activeSection === "vouchers" && (
+                    <div className={styles.tableSection}>
+                        <div className={styles.tableHeader}>
+                            <h2 className={styles.tableTitle}>🎟️ Danh sách Voucher</h2>
+                            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                                <button onClick={() => setVoucherTab("active")} style={{
+                                    padding: "6px 16px", borderRadius: "8px", border: "none", cursor: "pointer",
+                                    background: voucherTab === "active" ? "#6366f1" : "#f3f4f6",
+                                    color: voucherTab === "active" ? "white" : "#374151", fontWeight: 600,
+                                }}>Đang dùng</button>
+                                <button onClick={() => { setVoucherTab("deleted"); fetchDeletedVouchers(); }} style={{
+                                    padding: "6px 16px", borderRadius: "8px", border: "none", cursor: "pointer",
+                                    background: voucherTab === "deleted" ? "#ef4444" : "#f3f4f6",
+                                    color: voucherTab === "deleted" ? "white" : "#374151", fontWeight: 600,
+                                }}>Đã xóa</button>
+                                {voucherTab === "active" && (
+                                    <button className={styles.btnCreate} onClick={() => {
+                                        setVoucherForm(EMPTY_VOUCHER_FORM);
+                                        setVoucherError(null);
+                                        setEditVoucher(null);
+                                        setShowVoucherModal(true);
+                                    }}>+ Tạo Voucher</button>
+                                )}
                             </div>
-                        )
-                    )}
-                </div>
+                        </div>
+
+                        {/* Tab: Đang dùng */}
+                        {voucherTab === "active" && (
+                            voucherLoading ? (
+                                <div className={styles.empty}><div className={styles.spinner}></div></div>
+                            ) : vouchers.length === 0 ? (
+                                <div className={styles.empty}>
+                                    <div className={styles.emptyIcon}>🎟️</div>
+                                    <p>Chưa có voucher nào</p>
+                                    <button className={styles.btnCreate} onClick={() => {
+                                        setVoucherForm(EMPTY_VOUCHER_FORM);
+                                        setVoucherError(null);
+                                        setEditVoucher(null);
+                                        setShowVoucherModal(true);
+                                    }}>Tạo voucher đầu tiên</button>
+                                </div>
+                            ) : (
+                                <div className={styles.tableWrap}>
+                                    <table className={styles.table}>
+                                        <thead>
+                                        <tr>
+                                            <th>Mã</th><th>Tiêu đề</th><th>Giảm</th>
+                                            <th>Số lượng còn</th><th>Hạn dùng</th><th>Trạng thái</th>
+                                            <th>Thao tác</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {vouchers.map(v => (
+                                            <tr key={v.id}>
+                                                <td><strong>{v.code}</strong></td>
+                                                <td>{v.title}</td>
+                                                <td className={styles.priceNew}>
+                                                    {v.type === 1
+                                                        ? `${v.percent}%${v.maximum ? ` (tối đa ${v.maximum.toLocaleString("vi-VN")}đ)` : ""}`
+                                                        : `${v.percent.toLocaleString("vi-VN")}đ`}
+                                                </td>
+                                                <td>{v.currentQuantity}/{v.initQuantity}</td>
+                                                <td style={{ fontSize: "0.85rem" }}>
+                                                    {new Date(v.startDate).toLocaleDateString("vi-VN")} →{" "}
+                                                    {new Date(v.endDate).toLocaleDateString("vi-VN")}
+                                                </td>
+                                                <td>
+                                    <span className={`${styles.statusBadge} ${v.status === 1 ? styles.statusActive : styles.statusInactive}`}>
+                                        {v.status === 1 ? "✅ Đang dùng" : "🚫 Tắt"}
+                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div className={styles.actions}>
+                                                        <button className={styles.btnEdit} onClick={() => openEditVoucher(v)}>Sửa</button>
+                                                        <button className={styles.btnDelete} onClick={() => setDeleteVoucherId(v.id)}>Xóa</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )
+                        )}
+
+                        {/* Tab: Đã xóa */}
+                        {voucherTab === "deleted" && (
+                            deletedVouchers.length === 0 ? (
+                                <div className={styles.empty}>
+                                    <div className={styles.emptyIcon}>🗑️</div>
+                                    <p>Không có voucher nào đã xóa</p>
+                                </div>
+                            ) : (
+                                <div className={styles.tableWrap}>
+                                    <table className={styles.table}>
+                                        <thead>
+                                        <tr>
+                                            <th>Mã</th><th>Tiêu đề</th><th>Giảm</th>
+                                            <th>Số lượng</th><th>Hạn dùng</th><th>Thao tác</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {deletedVouchers.map(v => (
+                                            <tr key={v.id} style={{ opacity: 0.6 }}>
+                                                <td><strong>{v.code}</strong></td>
+                                                <td>{v.title}</td>
+                                                <td className={styles.priceNew}>
+                                                    {v.type === 1
+                                                        ? `${v.percent}%${v.maximum ? ` (tối đa ${v.maximum.toLocaleString("vi-VN")}đ)` : ""}`
+                                                        : `${v.percent.toLocaleString("vi-VN")}đ`}
+                                                </td>
+                                                <td>{v.currentQuantity}/{v.initQuantity}</td>
+                                                <td style={{ fontSize: "0.85rem" }}>
+                                                    {new Date(v.startDate).toLocaleDateString("vi-VN")} →{" "}
+                                                    {new Date(v.endDate).toLocaleDateString("vi-VN")}
+                                                </td>
+                                                <td>
+                                                    <button className={styles.btnEdit} onClick={() => handleRestoreVoucher(v.id)}>
+                                                        🔄 Khôi phục
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )
+                        )}
+                    </div>
+                )}
             </main>
 
+            {/* ── MODAL VOUCHER (TẠO + SỬA) ── */}
+            {showVoucherModal && (
+                <div className={styles.overlay} onClick={e => e.target === e.currentTarget && closeVoucherModal()}>
+                    <div className={styles.modal}>
+                        <div className={styles.modalHeader}>
+                            <h2>{editVoucher ? "✏️ Sửa Voucher" : "🎟️ Tạo Voucher mới"}</h2>
+                            <button className={styles.modalClose} onClick={closeVoucherModal}>✕</button>
+                        </div>
+                        {voucherError && <div className={styles.errorAlert}>{voucherError}</div>}
+                        <div className={styles.modalBody}>
+                            <div className={styles.formGrid}>
+                                <div className={styles.formField}>
+                                    <label>Mã voucher *</label>
+                                    <input value={voucherForm.code}
+                                           onChange={e => setVoucherForm({ ...voucherForm, code: e.target.value.toUpperCase() })}
+                                           placeholder="VD: SALE10"
+                                           disabled={!!editVoucher} />
+                                </div>
+                                <div className={styles.formField}>
+                                    <label>Tiêu đề *</label>
+                                    <input value={voucherForm.title}
+                                           onChange={e => setVoucherForm({ ...voucherForm, title: e.target.value })}
+                                           placeholder="VD: Giảm 10% cho đơn từ 200k" />
+                                </div>
+                                <div className={styles.formField}>
+                                    <label>Loại giảm</label>
+                                    <select value={voucherForm.type}
+                                            onChange={e => setVoucherForm({ ...voucherForm, type: e.target.value })}>
+                                        <option value="1">% Phần trăm</option>
+                                        <option value="2">Tiền cố định</option>
+                                    </select>
+                                </div>
+                                <div className={styles.formField}>
+                                    <label>{voucherForm.type === "1" ? "% Giảm *" : "Số tiền giảm (đ) *"}</label>
+                                    <input type="number" value={voucherForm.percent}
+                                           onChange={e => setVoucherForm({ ...voucherForm, percent: e.target.value })}
+                                           placeholder={voucherForm.type === "1" ? "10" : "50000"} />
+                                </div>
+                                <div className={styles.formField}>
+                                    <label>Số lượng phát hành *</label>
+                                    <input type="number" value={voucherForm.initQuantity}
+                                           onChange={e => setVoucherForm({ ...voucherForm, initQuantity: e.target.value })}
+                                           placeholder="100" />
+                                </div>
+                                <div className={styles.formField}>
+                                    <label>Giảm tối đa (đ)</label>
+                                    <input type="number" value={voucherForm.maximum}
+                                           onChange={e => setVoucherForm({ ...voucherForm, maximum: e.target.value })}
+                                           placeholder="50000 (để trống = không giới hạn)" />
+                                </div>
+                                <div className={styles.formField}>
+                                    <label>Ngày bắt đầu *</label>
+                                    <input type="datetime-local" value={voucherForm.startDate}
+                                           onChange={e => setVoucherForm({ ...voucherForm, startDate: e.target.value })} />
+                                </div>
+                                <div className={styles.formField}>
+                                    <label>Ngày kết thúc *</label>
+                                    <input type="datetime-local" value={voucherForm.endDate}
+                                           onChange={e => setVoucherForm({ ...voucherForm, endDate: e.target.value })} />
+                                </div>
+                                <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
+                                    <label>Mô tả</label>
+                                    <textarea value={voucherForm.description}
+                                              onChange={e => setVoucherForm({ ...voucherForm, description: e.target.value })}
+                                              placeholder="Mô tả điều kiện áp dụng..." rows={2} />
+                                </div>
+                                <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
+                                    <label>Áp dụng cho danh mục (để trống = tất cả)</label>
+                                    <select multiple value={voucherForm.categoryShortnames}
+                                            onChange={e => {
+                                                const selected = Array.from(e.target.selectedOptions).map(o => o.value);
+                                                setVoucherForm({ ...voucherForm, categoryShortnames: selected });
+                                            }}
+                                            style={{ height: "80px" }}>
+                                        {categories.map(c => (
+                                            <option key={c.shortname} value={c.shortname}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
+                                    <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        <input type="checkbox" checked={voucherForm.hasPriceCondition}
+                                               onChange={e => setVoucherForm({ ...voucherForm, hasPriceCondition: e.target.checked })} />
+                                        Thêm điều kiện giá trị đơn hàng
+                                    </label>
+                                </div>
+                                {voucherForm.hasPriceCondition && (<>
+                                    <div className={styles.formField}>
+                                        <label>Đơn tối thiểu (đ)</label>
+                                        <input type="number" value={voucherForm.totalMin}
+                                               onChange={e => setVoucherForm({ ...voucherForm, totalMin: e.target.value })}
+                                               placeholder="200000" />
+                                    </div>
+                                    <div className={styles.formField}>
+                                        <label>Đơn tối đa (đ)</label>
+                                        <input type="number" value={voucherForm.totalMax}
+                                               onChange={e => setVoucherForm({ ...voucherForm, totalMax: e.target.value })}
+                                               placeholder="Để trống = không giới hạn" />
+                                    </div>
+                                    <div className={styles.formField}>
+                                        <label>Giá sản phẩm tối thiểu (đ)</label>
+                                        <input type="number" value={voucherForm.priceMin}
+                                               onChange={e => setVoucherForm({ ...voucherForm, priceMin: e.target.value })}
+                                               placeholder="Để trống = không giới hạn" />
+                                    </div>
+                                </>)}
+                            </div>
+                        </div>
+                        <div className={styles.modalFooter}>
+                            <button className={styles.btnCancel} onClick={closeVoucherModal}>Hủy</button>
+                            <button className={styles.btnSave}
+                                    onClick={editVoucher ? handleUpdateVoucher : handleCreateVoucher}
+                                    disabled={voucherSaving}>
+                                {voucherSaving ? "Đang lưu..." : editVoucher ? "Cập nhật" : "Tạo Voucher"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── MODAL SẢN PHẨM ── */}
             {showModal && (
                 <div className={styles.overlay} onClick={e => e.target === e.currentTarget && setShowModal(false)}>
                     <div className={styles.modal}>
@@ -502,28 +925,21 @@ export default function MyStorePage() {
                                 </div>
                                 <div className={styles.formField}>
                                     <label>Danh mục</label>
-                                    <select
-                                        value={form.categoryShortname}
-                                        onChange={e => setForm({ ...form, categoryShortname: e.target.value })}
-                                    >
+                                    <select value={form.categoryShortname}
+                                            onChange={e => setForm({ ...form, categoryShortname: e.target.value })}>
                                         <option value="">-- Chọn danh mục --</option>
                                         {categories.map(c => (
-                                            <option key={c.shortname} value={c.shortname}>
-                                                {c.name}
-                                            </option>
+                                            <option key={c.shortname} value={c.shortname}>{c.name}</option>
                                         ))}
                                     </select>
                                 </div>
                                 {editProduct && (
                                     <div className={styles.formField}>
                                         <label>Trạng thái</label>
-                                        <select
-                                            value={form.status}
-                                            onChange={e => setForm({ ...form, status: e.target.value })}
-                                        >
+                                        <select value={form.status}
+                                                onChange={e => setForm({ ...form, status: e.target.value })}>
                                             <option value="pending">⏳ Chờ duyệt</option>
                                             <option value="inactive">🚫 Ẩn sản phẩm</option>
-                                            {/* Không có option active — chỉ admin mới set được */}
                                         </select>
                                     </div>
                                 )}
@@ -545,6 +961,7 @@ export default function MyStorePage() {
                 </div>
             )}
 
+            {/* ── CONFIRM XÓA SẢN PHẨM ── */}
             {deleteId !== null && (
                 <div className={styles.overlay} onClick={() => setDeleteId(null)}>
                     <div className={styles.confirmBox} onClick={e => e.stopPropagation()}>
@@ -554,6 +971,21 @@ export default function MyStorePage() {
                         <div className={styles.confirmActions}>
                             <button className={styles.btnCancel} onClick={() => setDeleteId(null)}>Hủy</button>
                             <button className={styles.btnDelete} onClick={() => handleDelete(deleteId)}>Xóa</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── CONFIRM XÓA VOUCHER ── */}
+            {deleteVoucherId !== null && (
+                <div className={styles.overlay} onClick={() => setDeleteVoucherId(null)}>
+                    <div className={styles.confirmBox} onClick={e => e.stopPropagation()}>
+                        <div className={styles.confirmIcon}>🎟️</div>
+                        <h3>Xóa voucher?</h3>
+                        <p>Hành động này không thể hoàn tác.</p>
+                        <div className={styles.confirmActions}>
+                            <button className={styles.btnCancel} onClick={() => setDeleteVoucherId(null)}>Hủy</button>
+                            <button className={styles.btnDelete} onClick={() => handleDeleteVoucher(deleteVoucherId)}>Xóa</button>
                         </div>
                     </div>
                 </div>
