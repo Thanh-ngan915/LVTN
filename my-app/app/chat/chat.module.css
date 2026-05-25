@@ -1,0 +1,382 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,400;0,700;1,400&display=swap');
+
+.chatPageWrapper {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f5f3ef; /* --bg */
+    font-family: 'Sora', sans-serif;
+}
+
+.chatContainer {
+    flex: 1;
+    display: flex;
+    max-width: 1240px;
+    width: 100%;
+    margin: 2rem auto;
+    background: #ffffff; /* --surface */
+    border-radius: 16px; /* --radius */
+    box-shadow: 0 4px 24px rgba(26,26,46,0.08); /* --shadow */
+    overflow: hidden;
+    border: 1px solid #e8e4de; /* --border */
+    animation: fadeUp 0.4s ease both;
+}
+
+/* ─── SIDEBAR BÊN TRÁI ────────────────────────────────────── */
+.sidebar {
+    width: 340px;
+    border-right: 1px solid #e8e4de;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+}
+
+.sidebarHeader {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e8e4de;
+}
+
+.sidebarTitle {
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1a1a2e; /* --text */
+    margin-bottom: 1rem;
+}
+
+.sidebarTitle span {
+    color: #e8572a; /* --accent */
+}
+
+.searchBox .searchInput {
+    width: 100%;
+    border: 1.5px solid #e8e4de;
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    font-size: 0.88rem;
+    font-family: 'Sora', sans-serif;
+    outline: none;
+    background: #f5f3ef;
+    transition: all 0.2s;
+    color: #1a1a2e;
+}
+
+.searchBox .searchInput:focus {
+    border-color: #e8572a;
+    box-shadow: 0 0 0 3px rgba(232,87,42,0.1);
+    background: #ffffff;
+}
+
+.channelList {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+/* Custom thanh cuộn sidebar */
+.channelList::-webkit-scrollbar { width: 5px; }
+.channelList::-webkit-scrollbar-thumb { background: #e8e4de; border-radius: 10px; }
+
+.channelItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.9rem 1rem;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.2s;
+    background: transparent;
+}
+
+.channelItem:hover {
+    background: #f5f3ef;
+}
+
+.channelActive {
+    background: rgba(232,87,42,0.08) !important;
+}
+
+.channelActive .channelName {
+    color: #e8572a;
+    font-weight: 600;
+}
+
+.avatarPlaceholder {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: #f5f3ef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    border: 1px solid #e8e4de;
+    flex-shrink: 0;
+}
+
+.channelInfo {
+    flex: 1;
+    overflow: hidden;
+}
+
+.channelNameRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.channelName {
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: #1a1a2e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.channelTime {
+    font-size: 0.75rem;
+    color: #8a8a9a; /* --muted */
+}
+
+.channelMsgRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lastMsg {
+    font-size: 0.82rem;
+    color: #8a8a9a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.unreadDot {
+    width: 8px;
+    height: 8px;
+    background: #e8572a;
+    border-radius: 50%;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+/* ─── VÙNG KHUNG CHAT BÊN PHẢI ───────────────────────────── */
+.chatMain {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+}
+
+.chatMainHeader {
+    padding: 1.1rem 1.75rem;
+    background: #ffffff;
+    border-bottom: 1px solid #e8e4de;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.activeShopInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.activeAvatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(232,87,42,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+
+.activeShopName {
+    font-family: 'Fraunces', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.activeShopStatus {
+    font-size: 0.78rem;
+    color: #1a9b5e;
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+.viewShopBtn {
+    padding: 0.55rem 1.2rem;
+    border: 1px solid #e8e4de;
+    border-radius: 10px;
+    background: #ffffff;
+    font-size: 0.82rem;
+    font-family: 'Sora', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    color: #1a1a2e;
+    transition: all 0.2s;
+}
+
+.viewShopBtn:hover {
+    border-color: #e8572a;
+    color: #e8572a;
+    background: #fff5f2;
+}
+
+/* Khu vực hiển thị tin nhắn nội bộ */
+.messageBox {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: #faf9f7; /* Phông xám nhẹ giống table hover */
+}
+
+.messageBox::-webkit-scrollbar { width: 5px; }
+.messageBox::-webkit-scrollbar-thumb { background: #e8e4de; border-radius: 10px; }
+
+.msgRow {
+    display: flex;
+    max-width: 70%;
+}
+
+.rowShop {
+    align-self: flex-start;
+}
+
+.rowMe {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.bubble {
+    padding: 0.8rem 1.1rem;
+    border-radius: 14px;
+    font-size: 0.88rem;
+    box-shadow: 0 2px 8px rgba(26,26,46,0.02);
+}
+
+.bubbleShop {
+    background: #ffffff;
+    color: #1a1a2e;
+    border-top-left-radius: 2px;
+    border: 1px solid #e8e4de;
+}
+
+.bubbleMe {
+    background: #e8572a;
+    color: #ffffff;
+    border-top-right-radius: 2px;
+}
+
+.msgText {
+    line-height: 1.5;
+}
+
+.msgTime {
+    display: block;
+    font-size: 0.68rem;
+    margin-top: 4px;
+    text-align: right;
+    opacity: 0.65;
+}
+
+/* Vùng Input nhập liệu gõ chữ */
+.inputArea {
+    padding: 1.25rem 1.75rem;
+    background: #ffffff;
+    border-top: 1px solid #e8e4de;
+    display: flex;
+    gap: 12px;
+}
+
+.chatInput {
+    flex: 1;
+    height: 44px;
+    border: 1.5px solid #e8e4de;
+    border-radius: 10px;
+    padding: 0 1rem;
+    font-size: 0.88rem;
+    outline: none;
+    background: #f5f3ef;
+    color: #1a1a2e;
+    transition: all 0.2s;
+}
+
+.chatInput:focus {
+    border-color: #e8572a;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(232,87,42,0.06);
+}
+
+.sendBtn {
+    padding: 0 1.5rem;
+    background: #e8572a;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    font-family: 'Sora', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(232,87,42,0.2);
+}
+
+.sendBtn:hover:not(:disabled) {
+    background: #d0461b;
+    transform: translateY(-1px);
+}
+
+.sendBtn:disabled {
+    background: #cbd5e1;
+    color: #94a3b8;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* Trạng thái trống rỗng khi chưa chọn shop */
+.emptyChat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #8a8a9a;
+    gap: 0.75rem;
+}
+
+.emptyIcon {
+    font-size: 3.5rem;
+    opacity: 0.6;
+}
+
+.emptyChat p {
+    font-size: 0.92rem;
+    font-weight: 500;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Phản hồi trên màn hình di động nhỏ */
+@media (max-width: 768px) {
+    .sidebar { width: 80px; }
+    .channelInfo, .sidebarHeader h2, .searchBox { display: none; }
+    .avatarPlaceholder { margin: 0 auto; }
+}
