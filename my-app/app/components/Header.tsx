@@ -33,11 +33,11 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
   }, []);
 
   const handleLogout = () => {
+      localStorage.removeItem('username');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      localStorage.removeItem('username');
       setUsername(null);
-      router.push('/login');
+      window.location.href = '/login';
   };
 
   // Load cart count
