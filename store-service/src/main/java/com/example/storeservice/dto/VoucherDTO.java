@@ -5,12 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import lombok.*;
 import java.time.LocalDateTime;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+import java.util.List;
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class VoucherDTO {
     private String id;
     private String code;
@@ -25,4 +28,7 @@ public class VoucherDTO {
     private Integer maximum;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
+
+    private List<String> categoryShortnames;
+    private VoucherRequestDTO.PriceConditionDTO priceCondition;
 }

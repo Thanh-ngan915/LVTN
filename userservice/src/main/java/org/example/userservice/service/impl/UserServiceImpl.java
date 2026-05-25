@@ -29,11 +29,21 @@ public class UserServiceImpl implements UserService {
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     @Override
-    public UserDTO getProfile (String userId){
+    public UserDTO getProfile(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Account account = accountRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        // Chỉ trả storeRoleId nếu là SELLER (đã được duyệt shop)
+        String storeRoleId = null;
+        if (account.getStoreRoleId() != null) {
+            storeRoleId = storeRoleRepository.findById(account.getStoreRoleId())
+                    .filter(sr -> "SELLER".equals(sr.getRole()))
+                    .map(StoreRole::getId)
+                    .orElse(null);
+        }
+
         return UserDTO.builder()
                 .username(account.getUsername())
                 .fullName(user.getFullName())
@@ -44,7 +54,7 @@ public class UserServiceImpl implements UserService {
                 .status(user.getStatus())
                 .rankId(user.getRankId())
                 .role(user.getRole())
-                .storeRoleId(account.getStoreRoleId())
+                .storeRoleId(storeRoleId)
                 .build();
     }
 

@@ -290,6 +290,28 @@ export default function ProductDetailPage() {
     router.push(`/checkout?${params.toString()}`);
   };
 
+  const handleOpenChat = () => {
+        // 1. Kiểm tra đăng nhập giống các luồng mua hàng khác
+        const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+        if (!userStr) {
+            showToast('⚠️ Vui lòng đăng nhập để chat với Shop');
+            return;
+        }
+
+        // 2. Chuẩn bị các tham số cần thiết
+        const storeId = product?.storeId || '';
+        const storeName = shopProfile?.fullName || storeId;
+
+        // 3. Tạo URL kèm query parameters
+        const params = new URLSearchParams({
+            storeId: String(storeId),
+            storeName: String(storeName)
+        });
+
+        // 4. Điều hướng sang trang chat riêng biệt
+        router.push(`/chat?${params.toString()}`);
+  };
+
   const handleSubmitComment = async () => {
     if (!commentText.trim()) return;
     // Lấy username từ localStorage (đã lưu khi login)
@@ -560,12 +582,14 @@ export default function ProductDetailPage() {
               <div className={styles.shopName}>{shopProfile?.store?.name || product.storeId}</div>
               <div className={styles.shopStatus}>Online 2 phút trước</div>
               <div className={styles.shopActions}>
-                <button className={`${styles.shopBtn} ${styles.chatBtn}`}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
-                  Chat Ngay
-                </button>
+                  <button
+                      className={`${styles.shopBtn} ${styles.chatBtn}`}
+                      onClick={handleOpenChat}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                      Chat Ngay
+                  </button>
                 <button
                   className={`${styles.shopBtn} ${styles.viewShopBtn}`}
                   onClick={() => router.push(`/shop/${product.storeId}`)}

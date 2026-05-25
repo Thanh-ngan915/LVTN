@@ -1,5 +1,6 @@
 package com.example.storeservice.entity;
 
+import jakarta.persistence.*;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -9,7 +10,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Entity
+@Table(name="category_condition_voucher")
+@Data @Builder
 @Table(name = "category_condition_voucher")
 @Data
 @Builder
@@ -20,8 +25,13 @@ public class CategoryConditionVoucher {
     private String id;
 
     @Column(name = "voucher_id")
+    @Column(name="voucher_id")
     private String voucherId;
 
     @Column(name = "category_shortname")
     private String categoryShortname;
+    @PrePersist
+    public void prePersist() {
+        this.id = UUID.randomUUID().toString();
+    }
 }
