@@ -29,4 +29,7 @@ public class OrderRequestDTO {
     private String district;
     private String ward;
     private String addressDetail;
+
+    // Multi-item support
+    private java.util.List<OrderItemRequestDTO> items;
 }

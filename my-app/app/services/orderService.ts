@@ -29,6 +29,18 @@ export interface VoucherDTO {
   status: string;
 }
 
+export interface OrderItemRequestDTO {
+  productId: number;
+  variantId?: number;
+  quantity: number;
+  productPriceBefore: number;
+  productPriceAfter: number;
+  productName?: string;
+  productImage?: string;
+  color?: string;
+  size?: string;
+}
+
 export interface OrderRequestDTO {
   productId: number;
   variantId?: number;
@@ -48,6 +60,7 @@ export interface OrderRequestDTO {
   district: string;
   ward: string;
   addressDetail: string;
+  items?: OrderItemRequestDTO[];
 }
 
 export interface OrderResponseDTO {

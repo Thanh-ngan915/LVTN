@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import { CartItemDTO, getCart, updateCartItem, removeFromCart, clearCart } from '../services/cartService';
 import styles from './cart.module.css';
@@ -11,6 +12,8 @@ export default function CartPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [cartUpdateTrigger, setCartUpdateTrigger] = useState(0);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const router = useRouter();
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -61,11 +64,26 @@ export default function CartPage() {
     try {
       await removeFromCart(itemId);
       setCartItems(prev => prev.filter(ci => ci.id !== itemId));
+      setSelectedItemIds(prev => prev.filter(id => id !== itemId));
       setCartUpdateTrigger(prev => prev + 1);
       showToast('🗑️ Đã xóa sản phẩm khỏi giỏ hàng');
     } catch (e: any) {
       showToast(`❌ ${e.message || 'Lỗi xóa sản phẩm'}`);
     }
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedItemIds.length === cartItems.length) {
+      setSelectedItemIds([]);
+    } else {
+      setSelectedItemIds(cartItems.map(item => item.id));
+    }
+  };
+
+  const handleToggleSelect = (itemId: string) => {
+    setSelectedItemIds(prev => 
+      prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
+    );
   };
 
   const handleClearCart = async () => {
@@ -80,11 +98,21 @@ export default function CartPage() {
     }
   };
 
-  // Calculate totals
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = cartItems.reduce((sum, item) => sum + (item.priceAfter || 0) * item.quantity, 0);
-  const totalOriginalPrice = cartItems.reduce((sum, item) => sum + (item.priceBefore || 0) * item.quantity, 0);
+  // Calculate totals for selected items only
+  const selectedItems = cartItems.filter(item => selectedItemIds.includes(item.id));
+  const totalItems = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPrice = selectedItems.reduce((sum, item) => sum + (item.priceAfter || 0) * item.quantity, 0);
+  const totalOriginalPrice = selectedItems.reduce((sum, item) => sum + (item.priceBefore || 0) * item.quantity, 0);
   const totalDiscount = totalOriginalPrice - totalPrice;
+  const isAllSelected = cartItems.length > 0 && selectedItemIds.length === cartItems.length;
+
+  const handleCheckout = () => {
+    if (selectedItemIds.length === 0) {
+      showToast('⚠️ Vui lòng chọn ít nhất một sản phẩm để đặt hàng');
+      return;
+    }
+    router.push(`/checkout?cartItemIds=${selectedItemIds.join(',')}`);
+  };
 
   // Check login
   const isLoggedIn = typeof window !== 'undefined' && !!localStorage.getItem('user');
@@ -143,6 +171,14 @@ export default function CartPage() {
             <div className={styles.cartItems}>
               {/* Header Row */}
               <div className={styles.cartHeader}>
+                <div className={styles.checkboxCol}>
+                  <input 
+                    type="checkbox" 
+                    className={styles.checkbox}
+                    checked={isAllSelected}
+                    onChange={handleToggleSelectAll}
+                  />
+                </div>
                 <span className={styles.colProduct}>Sản phẩm</span>
                 <span className={styles.colPrice}>Đơn giá</span>
                 <span className={styles.colQuantity}>Số lượng</span>
@@ -152,6 +188,14 @@ export default function CartPage() {
 
               {cartItems.map(item => (
                 <div key={item.id} className={styles.cartItem} id={`cart-item-${item.id}`}>
+                  <div className={styles.checkboxCol}>
+                    <input 
+                      type="checkbox" 
+                      className={styles.checkbox}
+                      checked={selectedItemIds.includes(item.id)}
+                      onChange={() => handleToggleSelect(item.id)}
+                    />
+                  </div>
                   <div className={styles.productInfo}>
                     <div className={styles.productImage}>
                       {item.productImage ? (
@@ -260,7 +304,13 @@ export default function CartPage() {
                 </span>
               </div>
 
-              <button className={styles.checkoutBtn} id="checkout-btn">
+              <button 
+                className={styles.checkoutBtn} 
+                id="checkout-btn"
+                onClick={handleCheckout}
+                disabled={selectedItemIds.length === 0}
+                style={{ opacity: selectedItemIds.length === 0 ? 0.6 : 1 }}
+              >
                 Đặt hàng ({totalItems})
               </button>
 

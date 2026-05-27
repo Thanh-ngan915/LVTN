@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '../../components/Header';
-import { Product, ProductVariant, getProductById, getProductsByStore } from '../../services/productService';
+import { Product, ProductVariant, getProductById, getProductsByStore, getProductsByCategory } from '../../services/productService';
+import ProductCard from '../../components/ProductCard';
 import { RatingDTO, RatingSummaryDTO, getRatingsByProduct, getRatingSummary, submitRating } from '../../services/ratingService';
 import { addToCart } from '../../services/cartService';
 import styles from './page.module.css';
@@ -37,6 +38,10 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Related Products
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
 
   // Gallery
   const [selectedImage, setSelectedImage] = useState(0);
@@ -134,8 +139,8 @@ export default function ProductDetailPage() {
   // Load shop info
   useEffect(() => {
     if (product?.storeId) {
-      import('../../services/userService').then(({ getUserProfile }) => {
-        getUserProfile(product.storeId)
+      import('../../services/storeService').then(({ getStoreById }) => {
+        getStoreById(product.storeId)
           .then(setShopProfile)
           .catch(console.error);
       });
@@ -144,6 +149,29 @@ export default function ProductDetailPage() {
         .catch(console.error);
     }
   }, [product?.storeId]);
+
+  // Load related products
+  useEffect(() => {
+    if (!product || !product.categoryShortname) {
+      setRelatedProducts([]);
+      return;
+    }
+
+    setRelatedLoading(true);
+    getProductsByCategory(product.categoryShortname, 0, 10)
+      .then((res) => {
+        if (res.success && res.data) {
+          const filtered = res.data.filter((p) => p.id !== product.id);
+          setRelatedProducts(filtered.slice(0, 5));
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load related products', err);
+      })
+      .finally(() => {
+        setRelatedLoading(false);
+      });
+  }, [product?.id, product?.categoryShortname]);
 
   // Get unique colors and sizes
   const colors = product?.variants
@@ -543,15 +571,15 @@ export default function ProductDetailPage() {
         <div className={styles.shopSection}>
           <div className={styles.shopInfo}>
             <div className={styles.shopAvatar}>
-              {shopProfile?.image ? (
-                <img src={shopProfile.image} alt={shopProfile.fullName} />
+              {shopProfile?.store?.image ? (
+                <img src={shopProfile.store.image} alt={shopProfile.store.name} />
               ) : (
                 <span style={{ fontSize: 24 }}>🏪</span>
               )}
               <span className={styles.shopBadge}>Yêu thích+</span>
             </div>
             <div className={styles.shopNameContainer}>
-              <div className={styles.shopName}>{shopProfile?.fullName || product.storeId}</div>
+              <div className={styles.shopName}>{shopProfile?.store?.name || product.storeId}</div>
               <div className={styles.shopStatus}>Online 2 phút trước</div>
               <div className={styles.shopActions}>
                   <button
@@ -812,6 +840,18 @@ export default function ProductDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Sản phẩm liên quan */}
+        {relatedProducts.length > 0 && (
+          <div className={styles.relatedSection}>
+            <h2 className={styles.sectionTitle}>📋 SẢN PHẨM LIÊN QUAN</h2>
+            <div className={styles.relatedGrid}>
+              {relatedProducts.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Toast */}
