@@ -1,0 +1,332 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+    --bg: #f5f3ef;
+    --surface: #ffffff;
+    --sidebar-bg: #1a1a2e;
+    --accent: #e8572a;
+    --text: #1a1a2e;
+    --muted: #8a8a9a;
+    --border: #e8e4de;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(26,26,46,0.08);
+}
+
+/* ─── Loading ─────────────────────────────────────────────── */
+.loadingScreen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    background: var(--bg);
+    font-family: 'Sora', sans-serif;
+    color: var(--muted);
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Layout ──────────────────────────────────────────────── */
+.page {
+    display: flex;
+    min-height: 100vh;
+    background: var(--bg);
+    font-family: 'Sora', sans-serif;
+}
+
+.main {
+    flex: 1;
+    padding: 2rem 2.5rem;
+    overflow-x: hidden;
+}
+
+/* ─── Header ──────────────────────────────────────────────── */
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.4s ease both;
+}
+
+.titleGroup { display: flex; flex-direction: column; gap: 4px; }
+
+.backBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-family: 'Sora', sans-serif;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 4px;
+    transition: color 0.2s;
+}
+
+.backBtn:hover { color: var(--text); }
+
+.pageTitle {
+    font-family: 'Fraunces', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+
+.btnCreate {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 0.7rem 1.4rem;
+    font-family: 'Sora', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(232,87,42,0.25);
+    white-space: nowrap;
+}
+
+.btnCreate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(232,87,42,0.4);
+}
+
+/* ─── Tabs ────────────────────────────────────────────────── */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.4s 0.1s ease both;
+}
+
+.tabBtn {
+    padding: 0.55rem 1.2rem;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    font-family: 'Sora', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--muted);
+}
+
+.tabActive {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(232,87,42,0.25);
+}
+
+.tabInactive:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* ─── Empty ───────────────────────────────────────────────── */
+.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 2rem;
+    gap: 0.75rem;
+    color: var(--muted);
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    animation: fadeUp 0.4s 0.2s ease both;
+}
+
+.emptyIcon { font-size: 3.5rem; opacity: 0.7; }
+.emptyText { font-size: 0.95rem; color: var(--muted); font-weight: 500; margin: 0; }
+
+.emptyCreateBtn {
+    margin-top: 8px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 0.7rem 1.4rem;
+    font-family: 'Sora', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(232,87,42,0.25);
+}
+
+.emptyCreateBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(232,87,42,0.4);
+}
+
+/* ─── List ────────────────────────────────────────────────── */
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: fadeUp 0.4s 0.2s ease both;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem 1.75rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(26,26,46,0.12);
+}
+
+.cardInfo { flex: 1; min-width: 0; }
+
+.cardTitleRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.cardTitle {
+    font-family: 'Fraunces', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.73rem;
+    font-weight: 600;
+}
+
+.cardDesc {
+    margin: 0 0 6px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cardDate {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ─── Card Actions ────────────────────────────────────────── */
+.cardActions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+.btnView {
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    font-size: 0.8rem;
+    font-family: 'Sora', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btnView:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #fff5f2;
+}
+
+.btnEdit {
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    font-size: 0.8rem;
+    font-family: 'Sora', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btnEdit:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background: #eff6ff;
+}
+
+.btnDelete {
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px;
+    border: 1px solid #fde8e8;
+    background: #fff5f5;
+    color: #e53e3e;
+    font-size: 0.8rem;
+    font-family: 'Sora', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btnDelete:hover { background: #e53e3e; color: #fff; border-color: #e53e3e; }
+
+.btnRestore {
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px;
+    border: 1px solid #b7f0d5;
+    background: #e6f9f0;
+    color: #1a9b5e;
+    font-size: 0.8rem;
+    font-family: 'Sora', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btnRestore:hover { background: #1a9b5e; color: #fff; border-color: #1a9b5e; }
+
+/* ─── Animations ──────────────────────────────────────────── */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Responsive ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .main { padding: 1.25rem; }
+    .topbar { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .card { flex-direction: column; align-items: flex-start; }
+    .cardActions { width: 100%; }
+}

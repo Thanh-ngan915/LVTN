@@ -475,6 +475,11 @@ export default function MyStorePage() {
                         onClick={() => { setActiveSection("vouchers"); fetchVouchers(); }}>
                         <span>🎟️</span> Voucher
                     </button>
+                    <button
+                        className={styles.navItem}
+                        onClick={() => router.push("/my-store/promotions")}>
+                        <span>🎉</span> Khuyến mãi
+                    </button>
                     <button className={styles.navItem}><span>📊</span> Thống kê</button>
                 </nav>
                 <div className={styles.sidebarFooter}>
