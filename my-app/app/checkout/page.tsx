@@ -457,7 +457,7 @@ function CheckoutContent() {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>
               <span className={styles.sectionIcon}>🎟️</span>
-              Voucher của Shop
+              Voucher của sàn
             </h2>
             {selectedVoucher ? (
               <div className={styles.voucherSelected}>
