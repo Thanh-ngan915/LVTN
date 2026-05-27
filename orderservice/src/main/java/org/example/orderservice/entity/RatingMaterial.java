@@ -23,6 +23,9 @@ public class RatingMaterial {
     @Column(name = "rating_id", nullable = false)
     private Integer ratingId;
 
+    @Column(name = "rating_reply_id")
+    private Integer ratingReplyId;
+
     @Column(name = "created_by", length = 50)
     private String createdBy;
 

@@ -102,4 +102,28 @@ public class RatingController {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
+
+    /**
+     * Shop lấy danh sách đánh giá của mình
+     * GET /api/ratings/store/{storeId}?pending=true&page=0&size=10
+     */
+    @GetMapping("/store/{storeId}")
+    public ResponseEntity<ApiResponse<List<RatingDTO>>> getRatingsByStore(
+            @PathVariable String storeId,
+            @RequestParam(required = false) Boolean pending,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<RatingDTO> result = ratingService.getRatingsByStore(storeId, pending, pageable);
+
+        return ResponseEntity.ok(ApiResponse.<List<RatingDTO>>builder()
+                .success(true)
+                .data(result.getContent())
+                .page(result.getNumber())
+                .size(result.getSize())
+                .totalElements(result.getTotalElements())
+                .totalPages(result.getTotalPages())
+                .build());
+    }
 }

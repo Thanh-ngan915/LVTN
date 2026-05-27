@@ -91,6 +91,7 @@ public class RatingService {
             RatingMaterial commentMaterial = RatingMaterial.builder()
                     .url("text:" + request.getComment())  // ← prefix để phân biệt
                     .ratingId(rating.getId())
+                    .ratingReplyId(null)
                     .createdBy(username)
                     .updatedBy(username)
                     .build();
@@ -102,6 +103,7 @@ public class RatingService {
                 RatingMaterial material = RatingMaterial.builder()
                         .url(url)
                         .ratingId(rating.getId())
+                        .ratingReplyId(null)
                         .createdBy(username)
                         .updatedBy(username)
                         .build();
@@ -117,15 +119,17 @@ public class RatingService {
      */
     @Transactional
     public RatingReplyDTO createReply(Integer ratingId, ReplyRequestDTO request, String username) {
-        // Kiểm tra rating tồn tại
         Rating rating = ratingRepository.findById(ratingId)
                 .orElseThrow(() -> new RuntimeException("Đánh giá không tồn tại"));
+
+        if (rating.getIsReply()) {
+            throw new RuntimeException("Đánh giá này đã được phản hồi");
+        }
 
         // Tạo reply
         RatingReply reply = RatingReply.builder()
                 .ratingId(ratingId)
                 .ratingReplyId(request.getParentReplyId())
-                .url(request.getUrl())
                 .stars(request.getStars())
                 .isReply(true)
                 .createdBy(username)
@@ -133,11 +137,41 @@ public class RatingService {
                 .build();
         reply = ratingReplyRepository.save(reply);
 
-        // Update rating is_reply
+        // Lưu comment vào RatingMaterial
+        if (request.getComment() != null && !request.getComment().isBlank()) {
+            ratingMaterialRepository.save(RatingMaterial.builder()
+                    .url("text:" + request.getComment())
+                    .ratingId(ratingId)
+                    .ratingReplyId(reply.getId())   // ← khác với khách hàng
+                    .createdBy(username)
+                    .updatedBy(username)
+                    .build());
+        }
+
+        // Lưu ảnh/video
+        if (request.getMaterialUrls() != null) {
+            for (String url : request.getMaterialUrls()) {
+                ratingMaterialRepository.save(RatingMaterial.builder()
+                        .url(url)
+                        .ratingId(ratingId)
+                        .ratingReplyId(reply.getId())   // ← khác với khách hàng
+                        .createdBy(username)
+                        .updatedBy(username)
+                        .build());
+            }
+        }
+
         rating.setIsReply(true);
         ratingRepository.save(rating);
 
         return toRatingReplyDTO(reply);
+    }
+
+    public Page<RatingDTO> getRatingsByStore(String storeId, Boolean pending, Pageable pageable) {
+        Page<Rating> page = (pending != null && pending)
+                ? ratingRepository.findByStoreIdAndNotReplied(storeId, pageable)
+                : ratingRepository.findByStoreId(storeId, pageable);
+        return page.map(this::toRatingDTO);
     }
 
     /**
@@ -145,8 +179,14 @@ public class RatingService {
      */
     private RatingDTO toRatingDTO(Rating rating) {
         // Lấy materials
-        List<RatingMaterial> materials = ratingMaterialRepository.findByRatingId(rating.getId());
-        List<String> materialUrls = materials.stream()
+        List<RatingMaterial> materials = ratingMaterialRepository.findByRatingIdAndRatingReplyIdIsNull(rating.getId());
+        String comment = materials.stream()
+                .filter(m -> m.getUrl().startsWith("text:"))
+                .map(m -> m.getUrl().substring(5))
+                .findFirst().orElse(null);
+
+        List<String> mediaUrls = materials.stream()
+                .filter(m -> !m.getUrl().startsWith("text:"))
                 .map(RatingMaterial::getUrl)
                 .collect(Collectors.toList());
 
@@ -177,7 +217,8 @@ public class RatingService {
                 .createdAt(rating.getCreatedAt() != null ? rating.getCreatedAt().toString() : null)
                 .userFullName(userFullName)
                 .userImage(userImage)
-                .materialUrls(materialUrls)
+                .comment(comment)
+                .materialUrls(mediaUrls)
                 .replies(replyDTOs)
                 .build();
     }
@@ -186,6 +227,20 @@ public class RatingService {
      * Convert RatingReply entity → RatingReplyDTO
      */
     private RatingReplyDTO toRatingReplyDTO(RatingReply reply) {
+        // Lấy materials của reply này
+        List<RatingMaterial> materials = ratingMaterialRepository.findByRatingReplyId(reply.getId());
+
+        String comment = materials.stream()
+                .filter(m -> m.getUrl().startsWith("text:"))
+                .map(m -> m.getUrl().substring(5))
+                .findFirst().orElse(null);
+
+        List<String> mediaUrls = materials.stream()
+                .filter(m -> !m.getUrl().startsWith("text:"))
+                .map(RatingMaterial::getUrl)
+                .collect(Collectors.toList());
+
+        // User info
         String userFullName = reply.getCreatedBy();
         String userImage = null;
         if (reply.getCreatedBy() != null) {
@@ -200,7 +255,8 @@ public class RatingService {
                 .id(reply.getId())
                 .ratingId(reply.getRatingId())
                 .ratingReplyId(reply.getRatingReplyId())
-                .url(reply.getUrl())
+                .comment(comment)           // ← thay url bằng comment
+                .materialUrls(mediaUrls)    // ← thêm mới
                 .stars(reply.getStars())
                 .isReply(reply.getIsReply())
                 .createdBy(reply.getCreatedBy())
