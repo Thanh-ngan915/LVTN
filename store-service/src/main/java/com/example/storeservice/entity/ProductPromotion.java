@@ -1,14 +1,7 @@
 package com.example.storeservice.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,10 +15,12 @@ public class ProductPromotion {
     private String id;
 
     @Column(name = "product_id")
-    private Integer productId;
-
+    private String productId;
+    @Column(name = "sale_promotion_id")
+    private String salePromotionId;
+  
     private String name;
-    private Float image;
+    private String image;
     private Integer quantity;
     private Integer bought;
 
@@ -47,3 +42,4 @@ public class ProductPromotion {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 }
+

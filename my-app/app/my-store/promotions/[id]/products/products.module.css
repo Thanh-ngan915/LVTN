@@ -1,0 +1,158 @@
+/* products.module.css */
+.loadingScreen {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 100vh; gap: 16px; color: #6b7280;
+}
+.spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.page { min-height: 100vh; background: #f9fafb; padding: 32px 24px; }
+.main { max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; }
+.titleGroup { display: flex; align-items: center; gap: 12px; }
+.backBtn {
+    background: none; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 8px 14px; cursor: pointer; color: #374151; font-size: 0.9rem;
+    transition: background 0.15s;
+}
+.backBtn:hover { background: #f3f4f6; }
+.pageTitle { font-size: 1.4rem; font-weight: 700; color: #111827; margin: 0; }
+.btnCreate {
+    padding: 10px 20px; border-radius: 8px; border: none;
+    background: #6366f1; color: #fff; font-size: 0.9rem;
+    font-weight: 600; cursor: pointer; transition: background 0.15s;
+}
+.btnCreate:hover { background: #4f46e5; }
+
+/* Form card */
+.formCard { background: #fff; border-radius: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); overflow: hidden; }
+.formCardHeader {
+    padding: 18px 24px; border-bottom: 1px solid #f3f4f6;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.formCardTitle { font-size: 1rem; font-weight: 600; color: #374151; margin: 0; }
+.closeBtn {
+    background: none; border: none; font-size: 1.1rem;
+    cursor: pointer; color: #9ca3af; padding: 4px 8px; border-radius: 6px;
+}
+.closeBtn:hover { background: #f3f4f6; color: #374151; }
+.formCardBody { padding: 24px; }
+.errorAlert {
+    margin: 0 24px 0; padding: 12px 16px;
+    background: #fef2f2; border: 1px solid #fecaca;
+    border-radius: 8px; color: #dc2626; font-size: 0.9rem;
+}
+.formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.fullWidth { grid-column: 1 / -1; }
+.formField { display: flex; flex-direction: column; gap: 6px; }
+.formField label { font-size: 0.85rem; font-weight: 600; color: #374151; }
+.formField input, .formField select {
+    border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 10px 12px; font-size: 0.95rem; color: #111827;
+    outline: none; transition: border-color 0.15s; background: #fff;
+}
+.formField input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+
+/* Dropdown */
+.dropdownWrap { position: relative; }
+.dropdownInput {
+    width: 100%; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 10px 12px; font-size: 0.95rem; outline: none;
+    transition: border-color 0.15s; box-sizing: border-box;
+}
+.dropdownInput:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+.dropdownList {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 100;
+    max-height: 240px; overflow-y: auto; margin-top: 4px;
+}
+.dropdownItem {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; cursor: pointer; transition: background 0.1s;
+}
+.dropdownItem:hover { background: #f5f3ff; }
+.dropdownImg { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+.dropdownName { font-size: 0.9rem; font-weight: 500; color: #111827; }
+.dropdownPrice { font-size: 0.8rem; color: #6b7280; margin-top: 2px; }
+.dropdownEmpty {
+    padding: 16px; text-align: center; color: #9ca3af; font-size: 0.9rem;
+}
+.selectedTag {
+    margin-top: 8px; padding: 8px 12px;
+    background: #f0fdf4; border: 1px solid #bbf7d0;
+    border-radius: 8px; font-size: 0.85rem; color: #15803d;
+}
+
+/* Footer */
+.modalFooter {
+    display: flex; justify-content: flex-end; gap: 12px;
+    padding: 16px 24px; border-top: 1px solid #f3f4f6;
+}
+.btnCancel {
+    padding: 10px 20px; border-radius: 8px; border: 1px solid #e5e7eb;
+    background: #fff; color: #374151; font-size: 0.95rem;
+    font-weight: 500; cursor: pointer;
+}
+.btnCancel:hover { background: #f9fafb; }
+.btnSave {
+    padding: 10px 24px; border-radius: 8px; border: none;
+    background: #6366f1; color: #fff; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer;
+}
+.btnSave:hover:not(:disabled) { background: #4f46e5; }
+.btnSave:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Table */
+.tableSection { background: #fff; border-radius: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); overflow: hidden; }
+.tableHeader {
+    padding: 18px 24px; border-bottom: 1px solid #f3f4f6;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.tableTitle { font-size: 1rem; font-weight: 600; color: #374151; margin: 0; }
+.searchInput {
+    border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: 8px 12px; font-size: 0.9rem; outline: none;
+    width: 220px; transition: border-color 0.15s;
+}
+.searchInput:focus { border-color: #6366f1; }
+.empty { padding: 48px 24px; text-align: center; color: #6b7280; }
+.emptyIcon { font-size: 2.5rem; margin-bottom: 12px; }
+.tableWrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; }
+.table th {
+    padding: 12px 16px; text-align: left; font-size: 0.8rem;
+    font-weight: 600; color: #6b7280; background: #f9fafb;
+    border-bottom: 1px solid #f3f4f6; text-transform: uppercase;
+}
+.table td { padding: 14px 16px; border-bottom: 1px solid #f9fafb; vertical-align: middle; }
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: #fafafa; }
+.productThumb { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; }
+.productThumbPlaceholder {
+    width: 48px; height: 48px; background: #f3f4f6;
+    border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; font-size: 1.2rem;
+}
+.productName { font-weight: 500; color: #111827; }
+.priceNew { color: #16a34a; font-weight: 600; }
+.btnDelete {
+    padding: 6px 14px; border-radius: 6px; border: none;
+    background: #fee2e2; color: #dc2626; font-size: 0.85rem;
+    font-weight: 500; cursor: pointer; transition: background 0.15s;
+}
+.btnDelete:hover { background: #fecaca; }
+
+@media (max-width: 600px) {
+    .formGrid { grid-template-columns: 1fr; }
+    .fullWidth { grid-column: 1; }
+    .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
