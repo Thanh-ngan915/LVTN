@@ -169,9 +169,6 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
       <nav className={`${styles.nav} ${mobileMenuOpen ? styles.navOpen : ''}`} id="main-nav">
         <div className={styles.navInner}>
           <Link  href="/" className={styles.navLink}>Trang chủ</Link >
-          <Link  href="#" className={styles.navLink}>Sản phẩm</Link>
-          <Link  href="#" className={styles.navLink}>Khuyến mãi</Link >
-          <Link  href="#" className={styles.navLink}>Bộ sưu tập</Link >
           <Link  href="/livestream" className={styles.navLinkLive}>
             <span className={styles.liveDot}></span>
             Live Stream

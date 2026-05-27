@@ -4,7 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.*;
+import jakarta.persistence.PrePersist;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,6 +35,7 @@ public class Voucher {
 
     private Integer status;  // 1: active, 0: inactive
     private Integer type;    // 1: percent, 2: fixed
+    
     @Column(name = "store_id")
     private String storeId;
 
@@ -58,6 +59,7 @@ public class Voucher {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+    
     @PrePersist
     public void prePersist(){
         this.id = UUID.randomUUID().toString();

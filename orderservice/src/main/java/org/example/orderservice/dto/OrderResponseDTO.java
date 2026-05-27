@@ -16,6 +16,8 @@ public class OrderResponseDTO {
     private Float pay;
     private Float shippingFee;
     private Integer voucherId;
+    private String shopVoucherId;
+    private Float shopDiscount;
     private Integer deliveryInformationId;
     private String status;
     private String paymentMethod;
@@ -23,6 +25,7 @@ public class OrderResponseDTO {
     private String createdAt;
     private DeliveryInformationDTO deliveryInformation;
     private VoucherInfoDTO voucherInfo;
+    private VoucherInfoDTO shopVoucherInfo;
     private List<ProductOrderItemDTO> items;
     private boolean rated;
 
@@ -46,7 +49,7 @@ public class OrderResponseDTO {
     @AllArgsConstructor
     @Builder
     public static class VoucherInfoDTO {
-        private Integer id;
+        private String id;
         private String code;
         private String name;
         private String discountType;

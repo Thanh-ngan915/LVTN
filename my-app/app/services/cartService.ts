@@ -39,6 +39,29 @@ function getUserId(): string {
 }
 
 /**
+ * Lấy token từ localStorage
+ */
+function getToken(): string {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('token') || '';
+}
+
+/**
+ * Hàm hỗ trợ tạo header chứa auth
+ */
+function getAuthHeaders(): any {
+  const userId = getUserId();
+  const token = getToken();
+  const headers: any = {
+    'X-User-Id': userId,
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+/**
  * Lấy giỏ hàng của user
  */
 export async function getCart(): Promise<CartApiResponse<CartItemDTO[]>> {
@@ -47,7 +70,7 @@ export async function getCart(): Promise<CartApiResponse<CartItemDTO[]>> {
     return { success: false, message: 'Chưa đăng nhập', data: [] };
   }
   const res = await fetch(`${API_BASE}/api/cart`, {
-    headers: { 'X-User-Id': userId },
+    headers: getAuthHeaders(),
     cache: 'no-store',
   });
   if (!res.ok) throw new Error('Failed to fetch cart');
@@ -69,7 +92,7 @@ export async function addToCart(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-User-Id': userId,
+      ...getAuthHeaders(),
     },
     body: JSON.stringify({ productId, quantity }),
   });
@@ -93,7 +116,7 @@ export async function updateCartItem(
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      'X-User-Id': userId,
+      ...getAuthHeaders(),
     },
     body: JSON.stringify({ quantity }),
   });
@@ -112,7 +135,7 @@ export async function removeFromCart(cartItemId: string): Promise<CartApiRespons
   if (!userId) throw new Error('Chưa đăng nhập');
   const res = await fetch(`${API_BASE}/api/cart/${cartItemId}`, {
     method: 'DELETE',
-    headers: { 'X-User-Id': userId },
+    headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error('Failed to remove from cart');
   return res.json();
@@ -128,7 +151,7 @@ export async function removeMultipleFromCart(cartItemIds: string[]): Promise<Car
     method: 'DELETE',
     headers: { 
         'Content-Type': 'application/json',
-        'X-User-Id': userId 
+        ...getAuthHeaders(),
     },
     body: JSON.stringify(cartItemIds),
   });
@@ -144,7 +167,7 @@ export async function clearCart(): Promise<CartApiResponse<void>> {
   if (!userId) throw new Error('Chưa đăng nhập');
   const res = await fetch(`${API_BASE}/api/cart`, {
     method: 'DELETE',
-    headers: { 'X-User-Id': userId },
+    headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error('Failed to clear cart');
   return res.json();
@@ -158,7 +181,7 @@ export async function getCartCount(): Promise<number> {
   if (!userId) return 0;
   try {
     const res = await fetch(`${API_BASE}/api/cart/count`, {
-      headers: { 'X-User-Id': userId },
+      headers: getAuthHeaders(),
       cache: 'no-store',
     });
     if (!res.ok) return 0;

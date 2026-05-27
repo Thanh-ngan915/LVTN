@@ -35,6 +35,12 @@ public class Order {
     @Column(name = "voucher_id")
     private Integer voucherId;
 
+    @Column(name = "shop_voucher_id")
+    private String shopVoucherId;
+
+    @Column(name = "shop_discount", nullable = false)
+    private Float shopDiscount;
+
     @Column(name = "delivery_information_id", nullable = false)
     private Integer deliveryInformationId;
 
@@ -58,6 +64,7 @@ public class Order {
         this.createdAt = LocalDateTime.now();
         this.updateAt = LocalDateTime.now();
         if (this.status == null) this.status = "pending";
+        if (this.shopDiscount == null) this.shopDiscount = 0f;
         if (this.total == null) this.total = 0f;
         if (this.discount == null) this.discount = 0f;
         if (this.pay == null) this.pay = 0f;

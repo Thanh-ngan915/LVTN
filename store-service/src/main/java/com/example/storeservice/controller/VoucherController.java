@@ -64,4 +64,9 @@ public class VoucherController {
         voucherService.restoreVoucher(userId, storeId, voucherId);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping
+    public ResponseEntity<List<VoucherDTO>> getAllActiveVouchers() {
+        return ResponseEntity.ok(voucherService.getAllActiveVouchers());
+    }
 }
