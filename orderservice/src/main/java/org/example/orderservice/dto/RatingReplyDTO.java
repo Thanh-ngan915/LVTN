@@ -2,6 +2,8 @@ package org.example.orderservice.dto;
 
 import lombok.*;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,6 +17,8 @@ public class RatingReplyDTO {
     private Boolean isReply;
     private String createdBy;
     private String createdAt;
+    private String comment;
+    private List<String> materialUrls;
 
     // User info
     private String userFullName;

@@ -11,7 +11,7 @@ public class VoucherDTO {
     private String code;
     private String name;
     private String description;
-    private String discountType; // PERCENT, FIXED
+    private String discountType;
     private Float discountValue;
     private Float minOrderValue;
     private Float maxDiscount;

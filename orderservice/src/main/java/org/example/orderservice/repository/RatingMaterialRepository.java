@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface RatingMaterialRepository extends JpaRepository<RatingMaterial, Integer> {
     List<RatingMaterial> findByRatingId(Integer ratingId);
+    List<RatingMaterial> findByRatingReplyId(Integer ratingReplyId);
+    List<RatingMaterial> findByRatingIdAndRatingReplyIdIsNull(Integer ratingId);
 }

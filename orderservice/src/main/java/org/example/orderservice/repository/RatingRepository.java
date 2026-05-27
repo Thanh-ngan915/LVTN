@@ -60,4 +60,8 @@ public interface RatingRepository extends JpaRepository<Rating, Integer> {
 
     List<Rating> findByCreatedBy(String userId);
 
-}
+    @Query("SELECT r FROM Rating r WHERE r.storeId = :storeId ORDER BY r.createdAt DESC")
+    Page<Rating> findByStoreId(@Param("storeId") String storeId, Pageable pageable);
+
+    @Query("SELECT r FROM Rating r WHERE r.storeId = :storeId AND r.isReply = false ORDER BY r.createdAt DESC")
+    Page<Rating> findByStoreIdAndNotReplied(@Param("storeId") String storeId, Pageable pageable);}

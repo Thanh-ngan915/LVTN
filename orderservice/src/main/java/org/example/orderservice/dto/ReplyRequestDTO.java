@@ -2,6 +2,8 @@ package org.example.orderservice.dto;
 
 import lombok.*;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -11,4 +13,5 @@ public class ReplyRequestDTO {
     private String url;
     private Double stars;
     private Integer parentReplyId;
+    private List<String> materialUrls;
 }

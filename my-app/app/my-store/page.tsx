@@ -491,6 +491,11 @@ export default function MyStorePage() {
                         <span>🎟️</span> Voucher
                     </button>
                     <button
+                        className={`${styles.navItem} ${activeSection === "ratings" ? styles.navActive : ""}`}
+                        onClick={() => router.push("/my-store/ratings")}>
+                        <span>⭐</span> Đánh giá
+                    </button>
+                    <button
                         className={styles.navItem}
                         onClick={() => router.push("/my-store/promotions")}>
                         <span>🎉</span> Khuyến mãi

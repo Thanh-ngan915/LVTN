@@ -13,10 +13,10 @@ import lombok.NoArgsConstructor;
 import java.util.UUID;
 
 @Entity
-@Table(name = "price_condition_voucher")
 @Data
 @Builder
 @NoArgsConstructor
+@Table(name="price_condition_voucher")
 @AllArgsConstructor
 public class PriceConditionVoucher {
     @Id
