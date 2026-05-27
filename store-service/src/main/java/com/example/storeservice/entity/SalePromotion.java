@@ -1,14 +1,7 @@
 package com.example.storeservice.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -44,3 +37,4 @@ public class SalePromotion {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 }
+
