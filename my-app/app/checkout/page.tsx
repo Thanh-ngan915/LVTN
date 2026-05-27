@@ -60,8 +60,9 @@ function CheckoutContent() {
 
   // Vouchers
   const [vouchers, setVouchers] = useState<VoucherDTO[]>([]);
-  const [selectedVoucher, setSelectedVoucher] = useState<VoucherDTO | null>(null);
-  const [showVoucherModal, setShowVoucherModal] = useState(false);
+  const [selectedPlatformVoucher, setSelectedPlatformVoucher] = useState<VoucherDTO | null>(null);
+  const [selectedShopVoucher, setSelectedShopVoucher] = useState<VoucherDTO | null>(null);
+  const [showVoucherModal, setShowVoucherModal] = useState<'platform' | 'shop' | null>(null);
   const [voucherCode, setVoucherCode] = useState('');
 
   // Payment
@@ -124,7 +125,9 @@ function CheckoutContent() {
   const subtotal = isCartCheckout 
     ? checkoutItems.reduce((sum, item) => sum + (item.priceAfter || 0) * item.quantity, 0)
     : priceAfter * quantity;
-  const discount = calcDiscount(selectedVoucher, subtotal);
+  const platformDiscount = calcDiscount(selectedPlatformVoucher, subtotal);
+  const shopDiscount = calcDiscount(selectedShopVoucher, subtotal);
+  const discount = platformDiscount + shopDiscount;
   const shippingFee = subtotal >= 500000 ? 0 : SHIPPING_FEE;
   const total = subtotal - discount + shippingFee;
 
@@ -138,8 +141,11 @@ function CheckoutContent() {
       showToast(`❌ Đơn hàng tối thiểu ${formatPrice(found.minOrderValue)} để áp dụng voucher này`);
       return;
     }
-    setSelectedVoucher(found);
-    setShowVoucherModal(false);
+    if (found.isPlatform ?? (found.storeId === null)) {
+      setSelectedPlatformVoucher(found);
+    } else {
+      setSelectedShopVoucher(found);
+    }
     showToast(`✅ Áp dụng voucher "${found.name}" thành công!`);
   };
 
@@ -148,8 +154,12 @@ function CheckoutContent() {
       showToast(`❌ Cần đơn tối thiểu ${formatPrice(v.minOrderValue)} để dùng voucher này`);
       return;
     }
-    setSelectedVoucher(v);
-    setShowVoucherModal(false);
+    if (v.isPlatform ?? (v.storeId === null)) {
+      setSelectedPlatformVoucher(v);
+    } else {
+      setSelectedShopVoucher(v);
+    }
+    setShowVoucherModal(null);
     showToast(`✅ Đã chọn voucher "${v.name}"`);
   };
 
@@ -174,7 +184,8 @@ function CheckoutContent() {
         storeId: actualStoreId,
         productPriceBefore: isCartCheckout && checkoutItems.length > 0 ? checkoutItems[0].priceBefore : priceBefore,
         productPriceAfter: isCartCheckout && checkoutItems.length > 0 ? checkoutItems[0].priceAfter : priceAfter,
-        voucherId: selectedVoucher?.id ?? null,
+        platformVoucherId: selectedPlatformVoucher?.id ?? null,
+        shopVoucherId: selectedShopVoucher?.id ?? null,
         paymentMethod,
         productName: isCartCheckout && checkoutItems.length > 0 ? checkoutItems[0].productName : (productName || undefined),
         productImage: isCartCheckout && checkoutItems.length > 0 ? (checkoutItems[0].productImage || undefined) : (image || undefined),
@@ -457,52 +468,63 @@ function CheckoutContent() {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>
               <span className={styles.sectionIcon}>🎟️</span>
-              Voucher của sàn
+              Voucher ưu đãi
             </h2>
-            {selectedVoucher ? (
-              <div className={styles.voucherSelected}>
-                <div className={styles.voucherSelectedInfo}>
-                  <span className={styles.voucherTag}>🏷️ {selectedVoucher.name}</span>
-                  <span className={styles.voucherSave}>
-                    Tiết kiệm {formatPrice(calcDiscount(selectedVoucher, subtotal))}
-                  </span>
-                </div>
-                <button
-                  className={styles.voucherChangeBtn}
-                  onClick={() => setSelectedVoucher(null)}
-                  id="remove-voucher-btn"
-                >
-                  Bỏ chọn
-                </button>
-              </div>
-            ) : (
-              <div className={styles.voucherInputRow}>
-                <input
-                  className={styles.voucherInput}
-                  type="text"
-                  placeholder="Nhập mã voucher..."
-                  value={voucherCode}
-                  onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-                  id="voucher-code-input"
-                />
-                <button
-                  className={styles.voucherApplyBtn}
-                  onClick={handleApplyVoucherCode}
-                  id="apply-voucher-btn"
-                >
-                  Áp dụng
-                </button>
-                {vouchers.length > 0 && (
-                  <button
-                    className={styles.voucherListBtn}
-                    onClick={() => setShowVoucherModal(true)}
-                    id="select-voucher-btn"
-                  >
-                    Chọn voucher
-                  </button>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              {/* VOUCHER SÀN */}
+              <div style={{ flex: 1, minWidth: '280px', border: '1px solid #ddd', padding: '1rem', borderRadius: '8px' }}>
+                <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>🌟 Voucher Sàn</span>
+                  <button style={{ color: '#007bff', background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setShowVoucherModal('platform')}>Chọn ＞</button>
+                </h3>
+                {selectedPlatformVoucher ? (
+                  <div className={styles.voucherSelected}>
+                    <div className={styles.voucherSelectedInfo}>
+                      <span className={styles.voucherTag}>🏷️ {selectedPlatformVoucher.name}</span>
+                      <span className={styles.voucherSave}>
+                        Tiết kiệm {formatPrice(calcDiscount(selectedPlatformVoucher, subtotal))}
+                      </span>
+                    </div>
+                    <button className={styles.voucherChangeBtn} onClick={() => setSelectedPlatformVoucher(null)}>Bỏ chọn</button>
+                  </div>
+                ) : (
+                  <p style={{ color: '#666', fontSize: '0.9rem' }}>Chưa áp dụng voucher sàn</p>
                 )}
               </div>
-            )}
+              
+              {/* VOUCHER SHOP */}
+              <div style={{ flex: 1, minWidth: '280px', border: '1px solid #ddd', padding: '1rem', borderRadius: '8px' }}>
+                <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>🏪 Voucher Shop</span>
+                  <button style={{ color: '#007bff', background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setShowVoucherModal('shop')}>Chọn ＞</button>
+                </h3>
+                {selectedShopVoucher ? (
+                  <div className={styles.voucherSelected}>
+                    <div className={styles.voucherSelectedInfo}>
+                      <span className={styles.voucherTag}>🏷️ {selectedShopVoucher.name}</span>
+                      <span className={styles.voucherSave}>
+                        Tiết kiệm {formatPrice(calcDiscount(selectedShopVoucher, subtotal))}
+                      </span>
+                    </div>
+                    <button className={styles.voucherChangeBtn} onClick={() => setSelectedShopVoucher(null)}>Bỏ chọn</button>
+                  </div>
+                ) : (
+                  <p style={{ color: '#666', fontSize: '0.9rem' }}>Chưa áp dụng voucher shop</p>
+                )}
+              </div>
+            </div>
+            
+            <div className={styles.voucherInputRow} style={{ marginTop: '1rem' }}>
+              <input
+                className={styles.voucherInput}
+                type="text"
+                placeholder="Nhập mã voucher bất kỳ..."
+                value={voucherCode}
+                onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                id="voucher-code-input"
+              />
+              <button className={styles.voucherApplyBtn} onClick={handleApplyVoucherCode}>Áp dụng</button>
+            </div>
           </section>
 
           {/* === SECTION 4: PHƯƠNG THỨC THANH TOÁN === */}
@@ -619,17 +641,17 @@ function CheckoutContent() {
 
       {/* Voucher Modal */}
       {showVoucherModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowVoucherModal(false)}>
+        <div className={styles.modalOverlay} onClick={() => setShowVoucherModal(null)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3>🎟️ Chọn voucher của shop</h3>
-              <button className={styles.modalClose} onClick={() => setShowVoucherModal(false)}>✕</button>
+              <h3>🎟️ Chọn {showVoucherModal === 'platform' ? 'Voucher Sàn' : 'Voucher Shop'}</h3>
+              <button className={styles.modalClose} onClick={() => setShowVoucherModal(null)}>✕</button>
             </div>
             <div className={styles.voucherList}>
-              {vouchers.length === 0 ? (
+              {vouchers.filter(v => (v.isPlatform ?? (v.storeId === null)) === (showVoucherModal === 'platform')).length === 0 ? (
                 <p className={styles.noVoucher}>Không có voucher nào khả dụng</p>
               ) : (
-                vouchers.map((v) => {
+                vouchers.filter(v => (v.isPlatform ?? (v.storeId === null)) === (showVoucherModal === 'platform')).map((v) => {
                   const saveable = calcDiscount(v, subtotal);
                   const canApply = subtotal >= (v.minOrderValue || 0);
                   return (

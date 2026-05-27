@@ -31,7 +31,10 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/stores/{storeId}").permitAll() // ← thêm
+                        .requestMatchers(HttpMethod.GET, "/api/stores/{storeId}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/vouchers/store/{storeId}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/vouchers/{voucherId}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/vouchers").permitAll()
                         .requestMatchers("/api/stores/has-store").authenticated()
                         .requestMatchers("/api/stores/register").authenticated()
                         .requestMatchers("/api/stores/my-store").authenticated()

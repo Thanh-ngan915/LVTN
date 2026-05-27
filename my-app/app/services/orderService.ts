@@ -13,7 +13,7 @@ export interface DeliveryInformationDTO {
 }
 
 export interface VoucherDTO {
-  id: number;
+  id: string;
   code: string;
   name: string;
   description: string;
@@ -21,12 +21,14 @@ export interface VoucherDTO {
   discountValue: number;
   minOrderValue: number;
   maxDiscount: number | null;
-  storeId: number | null;
+  storeId: string | null;
   startDate: string | null;
   endDate: string | null;
   quantity: number | null;
   usedCount: number;
   status: string;
+  // true = voucher sàn (storeId null), false = voucher shop
+  isPlatform: boolean;
 }
 
 export interface OrderItemRequestDTO {
@@ -48,6 +50,11 @@ export interface OrderRequestDTO {
   storeId: string;
   productPriceBefore: number;
   productPriceAfter: number;
+  /** Voucher sàn (isPlatform = true) */
+  platformVoucherId?: number | null;
+  /** Voucher của shop (isPlatform = false) */
+  shopVoucherId?: string | null;
+  /** @deprecated Dùng platformVoucherId thay thế */
   voucherId?: number | null;
   paymentMethod: 'COD' | 'VNPAY';
   productName?: string;
@@ -64,7 +71,7 @@ export interface OrderRequestDTO {
 }
 
 export interface OrderResponseDTO {
-  id: number;
+  id: string;
   userId: string;
   storeId: string;
   total: number;
@@ -72,6 +79,8 @@ export interface OrderResponseDTO {
   pay: number;
   shippingFee: number;
   voucherId: number | null;
+  shopVoucherId: string | null;
+  shopDiscount: number;
   deliveryInformationId: number;
   status: string;
   paymentMethod: string;
@@ -80,7 +89,15 @@ export interface OrderResponseDTO {
   deliveryInformation: DeliveryInformationDTO | null;
   rated?: boolean;
   voucherInfo: {
-    id: number;
+    id: string;
+    code: string;
+    name: string;
+    discountType: string;
+    discountValue: number;
+    maxDiscount: number | null;
+  } | null;
+  shopVoucherInfo: {
+    id: string;
     code: string;
     name: string;
     discountType: string;
@@ -200,8 +217,12 @@ export async function getVouchersByStore(
     headers: { ...getAuthHeaders() },
     cache: 'no-store',
   });
-  if (!res.ok) return { success: true, message: '', data: [] };
-  return res.json();
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+      console.error('getVouchersByStore error:', data);
+      return { success: false, message: data.message || 'Error', data: [] };
+  }
+  return data;
 }
 
 /**
