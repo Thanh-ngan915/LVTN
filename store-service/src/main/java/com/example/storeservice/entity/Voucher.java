@@ -14,8 +14,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name="voucher")
-@Data @Builder @NoArgsConstructor
 @Table(name = "voucher")
 @Data
 @Builder
@@ -25,20 +23,15 @@ public class Voucher {
     @Id
     private String id;
 
-    private  String id;
     private String code;
     private String title;
     private String description;
 
     @Column(name = "init_quantity")
-    @Column(name="init_quantity")
     private Integer initQuantity;
 
     @Column(name = "current_quantity")
     private Integer currentQuantity;
-
-    private Integer status;
-    private Integer type;
 
     private Integer status;  // 1: active, 0: inactive
     private Integer type;    // 1: percent, 2: fixed
