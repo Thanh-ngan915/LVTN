@@ -13,7 +13,16 @@ public class OrderRequestDTO {
     private String storeId;
     private Float productPriceBefore;
     private Float productPriceAfter;
+
+    // Voucher sàn (store_id IS NULL)
+    private Integer platformVoucherId;
+
+    // Voucher của shop (store_id = storeId của đơn)
+    private String shopVoucherId;
+
+    // Tương thích ngược: nếu FE cũ gửi voucherId, coi như platformVoucherId
     private Integer voucherId;
+
     private String paymentMethod; // COD, VNPAY
 
     // Product metadata
@@ -33,3 +42,4 @@ public class OrderRequestDTO {
     // Multi-item support
     private java.util.List<OrderItemRequestDTO> items;
 }
+

@@ -4,7 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.*;
+import jakarta.persistence.PrePersist;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,8 +17,6 @@ import java.util.UUID;
 @Data
 @Builder
 @NoArgsConstructor
-@Table(name="price_condition_voucher")
-@Data @Builder @NoArgsConstructor
 @AllArgsConstructor
 public class PriceConditionVoucher {
     @Id
@@ -38,6 +36,7 @@ public class PriceConditionVoucher {
 
     @Column(name = "price_max")
     private Float priceMax;
+    
     @PrePersist
     public void prePersist() {
         this.id = UUID.randomUUID().toString();

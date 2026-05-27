@@ -11,4 +11,5 @@ public interface VoucherRepository extends JpaRepository<Voucher,String> {
     boolean existsByCode(String code);
     List<Voucher> findByStoreId(String storeId);
     List<Voucher> findByStoreIdAndStatus(String storeId, Integer status);
+    List<Voucher> findByStatus(Integer status);
 }

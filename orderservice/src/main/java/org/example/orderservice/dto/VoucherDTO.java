@@ -7,7 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class VoucherDTO {
-    private Integer id;
+    private String id;
     private String code;
     private String name;
     private String description;
@@ -21,4 +21,7 @@ public class VoucherDTO {
     private Integer quantity;
     private Integer usedCount;
     private String status;
+    // true = voucher sàn (storeId IS NULL), false = voucher của shop
+    private boolean isPlatform;
 }
+

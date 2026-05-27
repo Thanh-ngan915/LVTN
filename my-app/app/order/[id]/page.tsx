@@ -254,7 +254,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>
               <span className={`${styles.sectionIcon} ${styles.sectionIconVoucher}`}>🎟️</span>
-              Voucher của Shop
+              Voucher của sàn
             </h2>
             {voucher ? (
               <div className={styles.voucherCard}>
