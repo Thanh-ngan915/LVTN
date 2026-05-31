@@ -24,6 +24,7 @@ interface Room {
   hostName: string;
   currentViewers: number;
   status: string;
+  description?: string;
 }
 
 interface TokenData {
@@ -421,7 +422,7 @@ export default function LivestreamPage() {
       const payload = encoder.encode(data);
 
       // Gửi cho tất cả mọi người trong phòng
-      await livekitRef.current.localParticipant.publishData(payload, DataPacket_Kind.RELIABLE);
+      await livekitRef.current.localParticipant.publishData(payload, { reliable: true });
 
       // Hiển thị tin nhắn của chính mình
       setChatMessages((prev) => [...prev, { 

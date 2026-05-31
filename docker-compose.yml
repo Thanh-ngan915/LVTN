@@ -1,0 +1,232 @@
+# ==========================================================
+# ANVI SHOP - Docker Compose
+# Chạy: docker-compose up -d --build
+# Dừng: docker-compose down
+# Xem logs: docker-compose logs -f <service-name>
+# ==========================================================
+
+services:
+
+  # --------------------------------------------------------
+  # 1. MySQL Database (dùng chung cho tất cả services)
+  # --------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: anvi-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: anvi@root2025
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql-init/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - anvi-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-panvi@root2025"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # 2. Kafka (KRaft mode - không cần Zookeeper)
+  # --------------------------------------------------------
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: anvi-kafka
+    restart: unless-stopped
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - anvi-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # 3. UserService (port 8085)
+  # --------------------------------------------------------
+  userservice:
+    build:
+      context: ./userservice
+      dockerfile: Dockerfile
+    container_name: anvi-userservice
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    environment:
+      # Ghi đè application.properties - dùng tên service "mysql" thay vì localhost
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/usersdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&useUnicode=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: anvi@root2025
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - anvi-network
+    volumes:
+      - userservice_uploads:/app/uploads
+
+  # --------------------------------------------------------
+  # 4. ProductService (port 8087)
+  # --------------------------------------------------------
+  productservice:
+    build:
+      context: ./productservice
+      dockerfile: Dockerfile
+    container_name: anvi-productservice
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/productdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&useUnicode=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: anvi@root2025
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      STORE_SERVICE_URL: http://storeservice:8090
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - anvi-network
+
+  # --------------------------------------------------------
+  # 5. StoreService (port 8090)
+  # --------------------------------------------------------
+  storeservice:
+    build:
+      context: ./store-service
+      dockerfile: Dockerfile
+    container_name: anvi-storeservice
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/storesdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&useUnicode=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: anvi@root2025
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      PRODUCT_SERVICE_URL: http://productservice:8087
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - anvi-network
+
+  # --------------------------------------------------------
+  # 6. OrderService (port 8088)
+  # --------------------------------------------------------
+  orderservice:
+    build:
+      context: ./orderservice
+      dockerfile: Dockerfile
+    container_name: anvi-orderservice
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ordersdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&useUnicode=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: anvi@root2025
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # Ghi đè URL gọi đến store-service (trong OrderService.java)
+      STORE_SERVICE_URL: http://storeservice:8090/api/vouchers
+    depends_on:
+      mysql:
+        condition: service_healthy
+      storeservice:
+        condition: service_started
+    networks:
+      - anvi-network
+
+  # --------------------------------------------------------
+  # 7. API Gateway (port 8080)
+  # --------------------------------------------------------
+  apigateway:
+    build:
+      context: ./apigatewway
+      dockerfile: Dockerfile
+    container_name: anvi-apigateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Ghi đè tất cả route URIs - trỏ đến tên service trong Docker network
+      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_0__URI: http://userservice:8085
+      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_6__URI: http://userservice:8085
+      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_1__URI: http://livestreamservice:8086
+      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_2__URI: http://chatbotservice:8081
+      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_7__URI: http://productservice:8087
+      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_8__URI: http://productservice:8087
+      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_3__URI: http://productservice:8087
+      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_4__URI: http://orderservice:8088
+      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_5__URI: http://orderservice:8088
+      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_9__URI: http://storeservice:8090
+    depends_on:
+      - userservice
+      - orderservice
+      - productservice
+      - storeservice
+    networks:
+      - anvi-network
+
+  # --------------------------------------------------------
+  # 8. Frontend - Next.js (port 3000)
+  # --------------------------------------------------------
+  frontend:
+    build:
+      context: ./my-app
+      dockerfile: Dockerfile
+    container_name: anvi-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Trỏ các URL server-side rewrites đến tên service trong Docker network
+      PRODUCT_SERVICE_URL: http://productservice:8087
+      USER_SERVICE_URL: http://userservice:8085
+      ORDER_SERVICE_URL: http://orderservice:8088
+      STORE_SERVICE_URL: http://storeservice:8090
+      GATEWAY_URL: http://apigateway:8080
+      LIVESTREAM_SERVICE_URL: http://livestreamservice:8086
+    depends_on:
+      - apigateway
+    networks:
+      - anvi-network
+
+# ==========================================================
+# Networks & Volumes
+# ==========================================================
+networks:
+  anvi-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  kafka_data:
+    driver: local
+  userservice_uploads:
+    driver: local

@@ -1,0 +1,25 @@
+# Node modules (sẽ được cài lại bên trong container)
+node_modules/
+npm-debug.log*
+
+# Next.js build outputs
+.next/
+out/
+
+# Environment files (không được đưa vào image)
+.env
+.env.local
+.env.production
+.env*.local
+
+# IDE & Editor
+.idea/
+.vscode/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TypeScript build info
+tsconfig.tsbuildinfo
