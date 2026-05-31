@@ -184,7 +184,7 @@ function CheckoutContent() {
         storeId: actualStoreId,
         productPriceBefore: isCartCheckout && checkoutItems.length > 0 ? checkoutItems[0].priceBefore : priceBefore,
         productPriceAfter: isCartCheckout && checkoutItems.length > 0 ? checkoutItems[0].priceAfter : priceAfter,
-        platformVoucherId: selectedPlatformVoucher?.id ?? null,
+        platformVoucherId: selectedPlatformVoucher?.id ? Number(selectedPlatformVoucher.id) : null,
         shopVoucherId: selectedShopVoucher?.id ?? null,
         paymentMethod,
         productName: isCartCheckout && checkoutItems.length > 0 ? checkoutItems[0].productName : (productName || undefined),
@@ -244,7 +244,7 @@ function CheckoutContent() {
           }
         } else {
           // COD - hiển thị thành công ngay
-          setOrderSuccess({ id: res.data.id, pay: res.data.pay });
+          setOrderSuccess({ id: Number(res.data.id), pay: res.data.pay });
         }
       }
     } catch (e: any) {

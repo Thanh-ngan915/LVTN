@@ -9,7 +9,7 @@ function PaymentResultContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState<'success' | 'failed' | 'error'>('loading');
+  const [status, setStatus] = useState<'success' | 'failed' | 'error' | 'loading'>('loading');
   const [message, setMessage] = useState('Đang xác thực giao dịch...');
 
   useEffect(() => {

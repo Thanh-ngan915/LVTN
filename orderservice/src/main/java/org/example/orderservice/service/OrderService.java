@@ -7,6 +7,7 @@ import org.example.orderservice.repository.*;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -27,7 +28,10 @@ public class OrderService {
     private final RatingRepository ratingRepository;
     
     private final RestTemplate restTemplate = new RestTemplate();
-    private final String STORE_SERVICE_URL = "http://localhost:8090/api/vouchers";
+
+    // Có thể override bằng env var STORE_SERVICE_URL khi chạy Docker
+    @Value("${store.service.url:http://localhost:8090}/api/vouchers")
+    private String STORE_SERVICE_URL;
 
     /**
      * Tạo đơn hàng mới (Mua ngay)
@@ -302,20 +306,14 @@ public class OrderService {
     public OrderResponseDTO getOrderById(Integer orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
-        DeliveryInformation delivery = deliveryInformationRepository
-                .findById(order.getDeliveryInformationId()).orElse(null);
-        List<ProductOrder> items = productOrderRepository.findByOrderId(orderId);
-        return toOrderResponseDTO(order, delivery, items);
+        return toOrderResponseDTO(order, order.getDeliveryInformation(), order.getItems());
     }
 
     public List<OrderResponseDTO> getOrdersByUser(String userId) {
         List<Order> orders = orderRepository.findByUserId(userId);
         List<OrderResponseDTO> result = new ArrayList<>();
         for (Order order : orders) {
-            DeliveryInformation delivery = deliveryInformationRepository
-                    .findById(order.getDeliveryInformationId()).orElse(null);
-            List<ProductOrder> items = productOrderRepository.findByOrderId(order.getId());
-            result.add(toOrderResponseDTO(order, delivery, items));
+            result.add(toOrderResponseDTO(order, order.getDeliveryInformation(), order.getItems()));
         }
         return result;
     }
@@ -336,10 +334,7 @@ public class OrderService {
         order.setUpdateAt(LocalDateTime.now());
         orderRepository.save(order);
 
-        DeliveryInformation delivery = deliveryInformationRepository
-                .findById(order.getDeliveryInformationId()).orElse(null);
-        List<ProductOrder> items = productOrderRepository.findByOrderId(orderId);
-        return toOrderResponseDTO(order, delivery, items);
+        return toOrderResponseDTO(order, order.getDeliveryInformation(), order.getItems());
     }
 
     private static final float SHIPPING_FEE = 30000f;

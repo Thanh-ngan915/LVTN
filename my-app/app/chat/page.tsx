@@ -35,7 +35,7 @@ interface ChatChannel {
     updatedAt: string;
 }
 
-export default function CustomerChatPage() {
+function ChatContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -225,5 +225,15 @@ export default function CustomerChatPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+import { Suspense } from 'react';
+
+export default function CustomerChatPage() {
+    return (
+        <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Đang tải tin nhắn...</div>}>
+            <ChatContent />
+        </Suspense>
     );
 }
