@@ -1,13 +1,13 @@
 # =====================================================
 # Stage 1: Build
 # =====================================================
-FROM gradle:8.11-jdk21-alpine AS build
+FROM gradle:8.12-jdk21-alpine AS build
 WORKDIR /app
 COPY build.gradle settings.gradle gradlew ./
 COPY gradle ./gradle
-RUN gradle dependencies --no-daemon || true
+RUN ./gradlew dependencies --no-daemon || true
 COPY src ./src
-RUN gradle bootJar --no-daemon -x test
+RUN ./gradlew bootJar --no-daemon -x test
 
 # =====================================================
 # Stage 2: Runtime

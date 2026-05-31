@@ -29,7 +29,8 @@ public class SecurityConfig {
                     "/api/products/category/**",
                     "/api/products/search",
                     "/api/products/store/**",
-                    "/api/categories"
+                    "/api/categories",
+                    "/api/cart/**"
                 ).permitAll()
                 // Tạo/sửa/xóa sản phẩm: cần xác thực
                 .anyRequest().authenticated()

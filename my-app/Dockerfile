@@ -16,6 +16,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Build với biến môi trường: các URL backend trỏ đến tên service trong Docker network
 ENV NEXT_PUBLIC_API_URL=http://localhost:8080
+ENV PRODUCT_SERVICE_URL=http://productservice:8087
+ENV USER_SERVICE_URL=http://userservice:8085
+ENV ORDER_SERVICE_URL=http://orderservice:8088
+ENV STORE_SERVICE_URL=http://storeservice:8090
+ENV GATEWAY_URL=http://apigateway:8080
+ENV LIVESTREAM_SERVICE_URL=http://livestreamservice:8086
 RUN npm run build
 
 # =====================================================

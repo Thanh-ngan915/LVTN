@@ -7,7 +7,8 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.text();
-        const response = await fetch(`http://localhost:8085${path}`, {
+        const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:8085';
+        const response = await fetch(`${userServiceUrl}${path}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body,

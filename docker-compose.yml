@@ -18,7 +18,7 @@ services:
       MYSQL_ROOT_PASSWORD: anvi@root2025
       MYSQL_ALLOW_EMPTY_PASSWORD: "no"
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql-init/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -152,7 +152,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: anvi@root2025
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       # Ghi đè URL gọi đến store-service (trong OrderService.java)
-      STORE_SERVICE_URL: http://storeservice:8090/api/vouchers
+      STORE_SERVICE_URL: http://storeservice:8090
     depends_on:
       mysql:
         condition: service_healthy
@@ -172,18 +172,6 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
-    environment:
-      # Ghi đè tất cả route URIs - trỏ đến tên service trong Docker network
-      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_0__URI: http://userservice:8085
-      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_6__URI: http://userservice:8085
-      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_1__URI: http://livestreamservice:8086
-      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_2__URI: http://chatbotservice:8081
-      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_7__URI: http://productservice:8087
-      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_8__URI: http://productservice:8087
-      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_3__URI: http://productservice:8087
-      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_4__URI: http://orderservice:8088
-      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_5__URI: http://orderservice:8088
-      SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_9__URI: http://storeservice:8090
     depends_on:
       - userservice
       - orderservice
