@@ -773,42 +773,40 @@ export default function ProductDetailPage() {
                         day: 'numeric',
                       }) : ''}
                     </div>
-                      {(() => {
-                          const textContents = rating.materialUrls?.filter(
-                              url => url.startsWith('text:')
-                          ).map(url => url.replace('text:', '')) || [];
-
-                          const imageUrls = rating.materialUrls?.filter(
-                              url => !url.startsWith('text:')
-                          ) || [];
-
-                          return (
-                              <>
-                                  {textContents.map((text, i) => (
-                                      <div key={i} style={{fontSize:14, color:'#333', marginTop:6, lineHeight:1.6}}>
-                                          {text}
-                                      </div>
-                                  ))}
-                                  {imageUrls.length > 0 && (
-                                      <div style={{display:'flex', gap:8, marginTop:8, flexWrap:'wrap'}}>
-                                          {imageUrls.map((url, i) => (
-                                              <img key={i} src={url} alt=""
-                                                   style={{width:80, height:80, objectFit:'cover', borderRadius:4, border:'1px solid #eee'}} />
-                                          ))}
-                                      </div>
-                                  )}
-                              </>
-                          );
-                      })()}
+                      {rating.comment && (
+                          <div style={{fontSize:14, color:'#333', marginTop:6, lineHeight:1.6}}>
+                              {rating.comment}
+                          </div>
+                      )}
+                      {rating.materialUrls && rating.materialUrls.length > 0 && (
+                          <div style={{display:'flex', gap:8, marginTop:8, flexWrap:'wrap'}}>
+                              {rating.materialUrls.map((url, i) => (
+                                  <img key={i} src={url} alt=""
+                                       style={{width:80, height:80, objectFit:'cover', borderRadius:4, border:'1px solid #eee'}} />
+                              ))}
+                          </div>
+                      )}
                     {rating.replies && rating.replies.length > 0 && (
-                      <div style={{marginTop:12,paddingLeft:16,borderLeft:'2px solid #f0f0f0'}}>
+                        <div style={{marginTop:12, padding:'10px 14px', background:'#fff9f0', borderLeft:'3px solid #ee4d2d', borderRadius:'0 6px 6px 0'}}>
                         {rating.replies.map((reply) => (
                           <div key={reply.id} style={{marginBottom:8}}>
                             <span style={{fontWeight:600,fontSize:13,color:'#ee4d2d'}}>{reply.userFullName || reply.createdBy}</span>
                             <span style={{fontSize:12,color:'#999',marginLeft:8}}>
                               {reply.createdAt ? new Date(reply.createdAt).toLocaleDateString('vi-VN') : ''}
                             </span>
-                            {reply.url && <div style={{fontSize:13,color:'#555',marginTop:4}}>{reply.url}</div>}
+                              {reply.comment && (
+                                  <div style={{fontSize:13, color:'#444', marginTop:4, lineHeight:1.6}}>
+                                      {reply.comment}
+                                  </div>
+                              )}
+                              {reply.materialUrls && reply.materialUrls.filter((u: string) => !u.startsWith('text:')).length > 0 && (
+                                  <div style={{display:'flex', gap:6, marginTop:8, flexWrap:'wrap'}}>
+                                      {reply.materialUrls.filter((u: string) => !u.startsWith('text:')).map((url: string, i: number) => (
+                                          <img key={i} src={url} alt=""
+                                               style={{width:72, height:72, objectFit:'cover', borderRadius:4, border:'1px solid #f0d9d0'}} />
+                                      ))}
+                                  </div>
+                              )}
                           </div>
                         ))}
                       </div>
