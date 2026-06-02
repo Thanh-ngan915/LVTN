@@ -8,7 +8,8 @@ export interface RatingReplyDTO {
   id: number;
   ratingId: number;
   ratingReplyId: number | null;
-  url: string | null;
+  comment: string | null;
+  materialUrls: string[];
   stars: number | null;
   isReply: boolean;
   createdBy: string;
@@ -27,6 +28,7 @@ export interface RatingDTO {
   createdAt: string;
   userFullName: string;
   userImage: string | null;
+  comment: string | null;
   materialUrls: string[];
   replies: RatingReplyDTO[];
 }
