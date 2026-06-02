@@ -45,6 +45,9 @@ public class Wallet {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Version
+    private Long version;
+
     @PrePersist
     public void prePersist() {
         this.id = UUID.randomUUID().toString();
