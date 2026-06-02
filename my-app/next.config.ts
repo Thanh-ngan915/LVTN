@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
+        source: '/api/admin/:path*',
+        destination: 'http://localhost:8085/api/admin/:path*',
+      },
+      {
         source: '/api/products/:path*',
         destination: 'http://localhost:8087/api/products/:path*',
       },
@@ -32,6 +36,10 @@ const nextConfig: NextConfig = {
         destination: 'http://localhost:8087/api/cart/:path*',
       },
       {
+        source: '/api/auth/:path*',
+        destination: 'http://localhost:8085/api/auth/:path*',
+      },
+      {
         source: '/api/cart',
         destination: 'http://localhost:8087/api/cart',
       },
@@ -54,6 +62,10 @@ const nextConfig: NextConfig = {
       {
          source: '/api/vouchers/:path*',
          destination: 'http://localhost:8090/api/vouchers/:path*',
+      },
+      {
+         source: '/api/seller/:path*',
+         destination: 'http://localhost:8088/api/seller/:path*',
       },
       {
         source: '/api/:path*',

@@ -84,10 +84,14 @@ export default function LoginPage() {
               }));
           }
       }
-      
-      setMessage({ text: data.message || `Đăng nhập thành công! Chào ${data.fullName}`, type: "success" });
+
+        setMessage({ text: data.message || `Đăng nhập thành công! Chào ${data.fullName}`, type: "success" });
         setTimeout(() => {
-            router.push("/");
+            if (data.role === "ADMIN") {
+                router.push("/admin/dashboard");
+            } else {
+                router.push("/");
+            }
         }, 1000);
       // Optional: Redirect to Dashboard after 1.5 seconds
       // setTimeout(() => router.push("/dashboard"), 1500);
