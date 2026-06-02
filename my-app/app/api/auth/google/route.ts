@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Forward request to UserService directly (bypass API Gateway)
-    const response = await fetch(`http://localhost:8085/api/auth/google/callback?code=${code}`, {
+    const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:8085';
+    const response = await fetch(`${userServiceUrl}/api/auth/google/callback?code=${code}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -41,8 +41,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
     
-    // Forward request to UserService directly (bypass API Gateway)
-    const response = await fetch('http://localhost:8085/api/auth/google/callback', {
+    const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:8085';
+    const response = await fetch(`${userServiceUrl}/api/auth/google/callback`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

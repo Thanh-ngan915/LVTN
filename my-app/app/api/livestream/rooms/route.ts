@@ -4,7 +4,8 @@ export async function GET(request: NextRequest) {
   console.log('[route] GET /api/livestream/rooms');
   
   try {
-    const response = await fetch('http://localhost:8086/api/livestream/rooms', {
+    const livestreamServiceUrl = process.env.LIVESTREAM_SERVICE_URL || 'http://localhost:8086';
+    const response = await fetch(`${livestreamServiceUrl}/api/livestream/rooms`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -39,7 +40,8 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => undefined);
 
-    const response = await fetch('http://localhost:8086/api/livestream/rooms', {
+    const livestreamServiceUrl = process.env.LIVESTREAM_SERVICE_URL || 'http://localhost:8086';
+    const response = await fetch(`${livestreamServiceUrl}/api/livestream/rooms`, {
       method: 'POST',
       headers,
       body: body ? JSON.stringify(body) : undefined,

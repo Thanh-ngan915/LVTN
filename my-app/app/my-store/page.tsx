@@ -115,7 +115,7 @@ export default function MyStorePage() {
     const [categories, setCategories] = useState<{ shortname: string; name: string }[]>([]);
     const [activeTab, setActiveTab] = useState<"active" | "deleted">("active");
     const [deletedProducts, setDeletedProducts] = useState<Product[]>([]);
-    const [activeSection, setActiveSection] = useState<"products" | "vouchers">("products");
+    const [activeSection, setActiveSection] = useState<"products" | "vouchers" | "ratings" | "promotions">("products");
     const [vouchers, setVouchers] = useState<Voucher[]>([]);
     const [voucherLoading, setVoucherLoading] = useState(false);
     const [showVoucherModal, setShowVoucherModal] = useState(false);

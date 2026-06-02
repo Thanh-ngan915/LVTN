@@ -26,7 +26,7 @@ export default function OrderHistoryPage() {
             if (res.success) {
                 // Cập nhật state local, không cần fetch lại
                 setOrders(prev => prev.map(o =>
-                    o.id === cancelId ? { ...o, status: 'cancelled' } : o
+                    Number(o.id) === cancelId ? { ...o, status: 'cancelled' } : o
                 ));
                 setCancelId(null);
                 setToast('✅ Hủy đơn hàng thành công');
@@ -174,16 +174,31 @@ export default function OrderHistoryPage() {
                                                 Xem chi tiết
                                             </button>
                                             {order.status === 'pending' && (
-                                                <button className={styles.btnCancel} onClick={() => setCancelId(order.id)}>
+                                                <button className={styles.btnCancel} onClick={() => setCancelId(Number(order.id))}>
                                                     Hủy đơn
                                                 </button>
                                             )}
                                             {order.status === 'delivered' && (
                                                 order.rated
-                                                ? <span className={styles.ratedBadge}> ✓ Đã đánh giá</span>
-                                                : <button className={styles.btnReview} onClick={() => setReviewOrder(order as Order)}>
-                                                    Đánh giá
-                                                </button>
+                                                    ? <span className={styles.ratedBadge}> ✓ Đã đánh giá</span>
+                                                    : <button className={styles.btnReview} onClick={() => setReviewOrder({
+                                                        id: Number(order.id),
+                                                        storeId: order.storeId,
+                                                        status: order.status,
+                                                        createdAt: order.createdAt,
+                                                        items: order.items.map(item => ({
+                                                            productId: item.productId,
+                                                            productName: item.productName || '',
+                                                            productImage: item.productImage || '',
+                                                            color: item.color || '',
+                                                            size: item.size || '',
+                                                            quantity: item.quantity,
+                                                            priceAfter: item.priceAfter,
+                                                        })),
+                                                        rated: order.rated
+                                                    })}>
+                                                        Đánh giá
+                                                    </button>
                                             )}
 
                                         </div>
@@ -200,7 +215,7 @@ export default function OrderHistoryPage() {
                     onClose={() => setReviewOrder(null)}
                     onSuccess={(orderId) => {
                         setOrders(prev => prev.map(o =>
-                            o.id === orderId ? { ...o, rated: true } : o
+                            Number(o.id) === orderId ? { ...o, rated: true } : o
                         ));
                         setReviewOrder(null);
                         setToast('✅ Đánh giá thành công');

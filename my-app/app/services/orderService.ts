@@ -226,6 +226,22 @@ export async function getVouchersByStore(
 }
 
 /**
+ * Lấy danh sách tất cả vouchers sàn (platform vouchers)
+ */
+export async function getAllVouchers(): Promise<OrderApiResponse<VoucherDTO[]>> {
+  const res = await fetch(`${API_BASE}/api/orders/vouchers/all`, {
+    headers: { ...getAuthHeaders() },
+    cache: 'no-store',
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+      console.error('getAllVouchers error:', data);
+      return { success: false, message: data.message || 'Error', data: [] };
+  }
+  return data;
+}
+
+/**
  * Lấy danh sách địa chỉ giao hàng của user
  */
 export async function getDeliveryByUser(): Promise<OrderApiResponse<DeliveryInformationDTO[]>> {

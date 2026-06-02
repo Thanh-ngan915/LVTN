@@ -3,6 +3,7 @@ package org.example.orderservice.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "`order`")
@@ -43,6 +44,14 @@ public class Order {
 
     @Column(name = "delivery_information_id", nullable = false)
     private Integer deliveryInformationId;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "delivery_information_id", insertable = false, updatable = false)
+    private DeliveryInformation deliveryInformation;
+
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", insertable = false, updatable = false)
+    private List<ProductOrder> items;
 
     @Column(name = "status", length = 20, nullable = false)
     private String status;
