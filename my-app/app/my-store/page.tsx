@@ -484,7 +484,11 @@ export default function MyStorePage() {
                         onClick={() => setActiveSection("products")}>
                         <span>📦</span> Sản phẩm
                     </button>
-                    <button className={styles.navItem}><span>📋</span> Đơn hàng</button>
+                    <button
+                        className={`${styles.navItem} ${activeSection === "orders" ? styles.navActive : ""}`}
+                        onClick={() => router.push("/seller/orders")}>
+                        <span>📋</span> Đơn hàng
+                    </button>
                     <button
                         className={`${styles.navItem} ${activeSection === "vouchers" ? styles.navActive : ""}`}
                         onClick={() => { setActiveSection("vouchers"); fetchVouchers(); }}>

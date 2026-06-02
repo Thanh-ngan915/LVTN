@@ -155,3 +155,12 @@ public class OrderController {
     }
 
 }
+//    public ResponseEntity<ApiResponse<Page<RatingDTO>>> getRatingsByProduct(
+//            @PathVariable Integer productId,
+//            @RequestParam(required = false) Integer star,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "10") int size) {
+//        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+//        Page<RatingDTO> ratings = ratingService.getRatingsByProductId(productId, star, pageable);
+//        return ResponseEntity.ok(ApiResponse.success(ratings, "OK"));
+//    }
