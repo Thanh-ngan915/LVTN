@@ -1,6 +1,5 @@
 package org.example.userservice.service.impl;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.userservice.dto.PasswordRequest;
@@ -15,11 +14,15 @@ import org.example.userservice.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -35,16 +38,26 @@ public class UserServiceImpl implements UserService {
         Account account = accountRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
-        // Chỉ trả storeRoleId nếu là SELLER (đã được duyệt shop)
-        String storeRoleId = null;
-        if (account.getStoreRoleId() != null) {
-            storeRoleId = storeRoleRepository.findById(account.getStoreRoleId())
-                    .filter(sr -> "SELLER".equals(sr.getRole()))
-                    .map(StoreRole::getId)
-                    .orElse(null);
+        String displayRole = account.getRole();
+        String storeRoleId = account.getStoreRoleId();
+
+        if (storeRoleId != null) {
+            storeRoleRepository.findById(storeRoleId)
+                    .ifPresent(sr -> {
+                    });
+
+            // Check storerole có phải SELLER active không
+            boolean isSeller = storeRoleRepository.findById(storeRoleId)
+                    .map(sr -> "SELLER".equals(sr.getRole()) && "ACTIVE".equals(sr.getStatus()))
+                    .orElse(false);
+
+            if (isSeller) {
+                displayRole = "SELLER";
+            }
         }
 
         return UserDTO.builder()
+                .id(userId)
                 .username(account.getUsername())
                 .fullName(user.getFullName())
                 .email(user.getEmail())
@@ -53,7 +66,7 @@ public class UserServiceImpl implements UserService {
                 .address(user.getAddress())
                 .status(user.getStatus())
                 .rankId(user.getRankId())
-                .role(user.getRole())
+                .role(displayRole)       // SELLER / USER / ADMIN
                 .storeRoleId(storeRoleId)
                 .build();
     }
@@ -155,7 +168,7 @@ public class UserServiceImpl implements UserService {
         // 1. Tạo StoreRole
         StoreRole storeRole = StoreRole.builder()
                 .id(UUID.randomUUID().toString())
-                .storeRole(storeId)  // storeId lưu vào store_role field
+                .storeRole(storeId)
                 .status("active")
                 .role("SELLER")
                 .createdBy("admin")
@@ -168,4 +181,44 @@ public class UserServiceImpl implements UserService {
         account.setStoreRoleId(storeRole.getId());
         accountRepository.save(account);
     }
+
+    @Override
+    public List<UserDTO> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(user -> getProfile(user.getId()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void changeUserRole(String userId, String role) {
+        if (!"USER".equals(role) && !"ADMIN".equals(role)) {
+            throw new RuntimeException("Chỉ được đổi role USER hoặc ADMIN");
+        }
+
+        Account account = accountRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String actualRole = role;
+        if ("USER".equals(role) && account.getStoreRoleId() != null) {
+            actualRole = "SELLER";
+        }
+
+        user.setRole(actualRole);
+        userRepository.save(user);
+        accountRepository.updateRoleByUserId(userId, actualRole);
+    }
+
+    @Override
+    @Transactional
+    public void changeUserStatus(String userId, String status) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setStatus(status);  // "ACTIVE" / "BANNED"
+        userRepository.save(user);
+    }
+
 }

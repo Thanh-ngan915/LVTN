@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.sql.Timestamp;
 @Service
@@ -225,5 +226,20 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Page<ProductDTO> getDeletedProductsByStore(String storeId, Pageable pageable) {
         return productRepository.findAllDeletedByStore(storeId, pageable).map(this::toDTO);
+    }
+
+    @Override
+    public Map<String, Object> getProductStats() {
+        long total = productRepository.countAllActive();
+        long pending = productRepository.countByStatus("pending");
+        long active = productRepository.countByStatus("active");
+        long inactive = productRepository.countByStatus("inactive");
+
+        return Map.of(
+                "total", total,
+                "pending", pending,
+                "active", active,
+                "inactive", inactive
+        );
     }
 }

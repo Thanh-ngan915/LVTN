@@ -21,4 +21,10 @@ public interface AccountRepository extends JpaRepository<Account, String> {
             @Param("newUsername") String newUsername,
             @Param("now") java.time.LocalDateTime now
     );
+    @Modifying
+    @Query("UPDATE Account a SET a.role = :role WHERE a.userId = :userId")
+    int updateRoleByUserId(
+            @Param("userId") String userId,
+            @Param("role") String role
+    );
 }

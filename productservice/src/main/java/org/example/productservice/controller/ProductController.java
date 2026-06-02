@@ -16,6 +16,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -331,6 +332,16 @@ public class ProductController {
                 .totalPages(productPage.getTotalPages())
                 .build();
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/products/stats")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getProductStats() {
+        try {
+            Map<String, Object> stats = productService.getProductStats();
+            return ResponseEntity.ok(ApiResponse.success(stats, "Stats retrieved"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
     }
 
 }
