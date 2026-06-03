@@ -30,6 +30,22 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+    
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: anvi-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql          # tên service mysql ở trên
+      PMA_PORT: 3306           # port bên trong container (không phải 3307)
+      MYSQL_ROOT_PASSWORD: anvi@root2025
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - anvi-network
 
   # --------------------------------------------------------
   # 2. Kafka (KRaft mode - không cần Zookeeper)
