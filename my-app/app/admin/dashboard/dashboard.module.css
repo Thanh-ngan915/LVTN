@@ -23,14 +23,15 @@
     --warning-bg: #fffbeb;
 }
 
-/* ── LAYOUT ── */
 .layout {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
     background: var(--bg);
     color: var(--text);
     font-family: "Sora", sans-serif;
 }
+
 
 /* ── SIDEBAR ── */
 .sidebar {
@@ -151,6 +152,7 @@
     flex: 1;
     padding: 32px;
     overflow-y: auto;
+    height: 100vh;
 }
 
 .pageHeader { margin-bottom: 28px; }

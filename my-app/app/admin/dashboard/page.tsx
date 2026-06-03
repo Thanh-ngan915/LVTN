@@ -7,11 +7,26 @@ import Sidebar from "../../components/Sidebar";
 import DashboardStats from "../../components/DashboardStats";
 import UserTable from "../../components/UserTable";
 import ConfirmModal from "../../components/ConfirmModal";
-import SellerTable from "../../components/SellerTable";
+import ShopTable from "../../components/ShopTable";
+import { StoreDTO } from "../../services/storeService";
+import ProductTable from "../../components/ProductTable";
 
 interface UserDTO {
     id: string; username: string; fullName: string; email: string;
     image: string | null; status: string; role: string; storeRoleId: string | null;
+}
+
+interface ProductDTO {
+    id: number;
+    name: string;
+    priceBefore: number;
+    priceAfter: number;
+    status: string;
+    categoryName: string;
+    storeId: string;
+    currentQuantity: number;
+    imageUrls: string[];
+    createdBy: string;
 }
 
 interface ProductStats {
@@ -21,17 +36,8 @@ interface ProductStats {
     inactive: number;
 }
 
-interface SellerDTO {
-    userId: string;
-    fullName: string;
-    email: string;
-    username: string;
-    image: string;
-    status: string; //Active, banned
-    storeRoleId: string | null; //null= chưa duyệt
-}
 
-type Section = "dashboard" | "users" | "sellers";
+type Section = "dashboard" | "users" | "shops" | "products";
 
 export default function AdminDashboardPage() {
     interface AdminUser {
@@ -53,8 +59,10 @@ export default function AdminDashboardPage() {
     const [actionLoading, setActionLoading] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
     const [productStats, setProductStats] = useState<ProductStats | null>(null);
-    const [sellers, setSellers] = useState<SellerDTO[]>([]);
-    const [loadingSellers, setLoadingSellers] = useState(false);
+    const [shops, setShops] = useState<StoreDTO[]>([]);
+    const [loadingShops, setLoadingShops] = useState(false);
+    const [products, setProducts] = useState<ProductDTO[]>([]);
+    const [loadingProducts, setLoadingProducts] = useState(false);
 
     const fetchProductStats = async () => {
         try {
@@ -66,15 +74,38 @@ export default function AdminDashboardPage() {
         }
     };
 
-    const fetchSellers = async () => {
-        setLoadingSellers(true);
+    const fetchShops = async () => {
+        setLoadingShops(true);
         try {
-            const res = await fetch("/api/admin/sellers", { headers: authHeader() });
+            const res = await fetch("/api/stores", { headers: authHeader() });
             if (res.status === 403) { router.push("/login"); return; }
             const data = await res.json();
-            setSellers(Array.isArray(data) ? data : []);
-        } catch { setSellers([]); }
-        finally { setLoadingSellers(false); }
+            setShops(Array.isArray(data) ? data : []);
+        } catch { setShops([]); }
+        finally { setLoadingShops(false); }
+    };
+
+    const fetchProducts = async () => {
+        setLoadingProducts(true);
+        try {
+            let allProducts: ProductDTO[] = [];
+            let page = 0;
+            const size = 500;
+
+            while (true) {
+                const res = await fetch(`/api/products?page=${page}&size=${size}`, { headers: authHeader() });
+                const data = await res.json();
+                const items = Array.isArray(data.data) ? data.data : [];
+                allProducts = [...allProducts, ...items];
+
+                // Dừng khi đã lấy hết
+                if (items.length < size) break;
+                page++;
+            }
+
+            setProducts(allProducts);
+        } catch { setProducts([]); }
+        finally { setLoadingProducts(false); }
     };
 
     useEffect(() => {
@@ -92,7 +123,8 @@ export default function AdminDashboardPage() {
         if (token) {
             fetchUsers();
             fetchProductStats();
-            fetchSellers();
+            fetchShops();
+            fetchProducts();
         }
     }, [token]);
 
@@ -168,11 +200,21 @@ export default function AdminDashboardPage() {
                     />
                 )}
 
-                {activeSection === "sellers" && (
-                    <SellerTable
-                        sellers={sellers}
-                        loading={loadingSellers}
-                        onRefresh={fetchSellers}
+                {activeSection === "shops" && (
+                    <ShopTable
+                        shops={shops}
+                        loading={loadingShops}
+                        onRefresh={fetchShops}
+                        authHeader={authHeader}
+                        showToast={showToast}
+                    />
+                )}
+
+                {activeSection === "products" && (
+                    <ProductTable
+                        products={products}
+                        loading={loadingProducts}
+                        onRefresh={fetchProducts}
                         authHeader={authHeader}
                         showToast={showToast}
                     />
