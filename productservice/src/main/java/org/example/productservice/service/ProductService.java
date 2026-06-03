@@ -24,4 +24,7 @@ public interface ProductService {
     ProductDTO restoreProduct(Integer id);
     Page<ProductDTO> getDeletedProductsByStore(String storeId, Pageable pageable);
     Map<String, Object> getProductStats();
+    ProductDTO approveProduct(Integer id);
+    ProductDTO rejectProduct(Integer id, String reason);
+    ProductDTO hideProduct(Integer id);
 }

@@ -242,4 +242,40 @@ public class ProductServiceImpl implements ProductService {
                 "inactive", inactive
         );
     }
+
+    @Override
+    @Transactional
+    public ProductDTO approveProduct(Integer id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+        if (!"pending".equals(product.getStatus())) {
+            throw new RuntimeException("Sản phẩm không ở trạng thái chờ duyệt");
+        }
+        product.setStatus("active");
+        product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
+        return toDTO(productRepository.save(product));
+    }
+
+    @Override
+    @Transactional
+    public ProductDTO rejectProduct(Integer id, String reason) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+        if (!"pending".equals(product.getStatus())) {
+            throw new RuntimeException("Sản phẩm không ở trạng thái chờ duyệt");
+        }
+        product.setStatus("inactive");
+        product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
+        return toDTO(productRepository.save(product));
+    }
+
+    @Override
+    @Transactional
+    public ProductDTO hideProduct(Integer id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+        product.setStatus("inactive");
+        product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
+        return toDTO(productRepository.save(product));
+    }
 }

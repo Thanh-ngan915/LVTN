@@ -344,4 +344,21 @@ public class ProductController {
         }
     }
 
+    @PatchMapping("/{id}/approve")
+    public ResponseEntity<ProductDTO> approveProduct(@PathVariable Integer id) {
+        return ResponseEntity.ok(productService.approveProduct(id));
+    }
+
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<ProductDTO> rejectProduct(
+            @PathVariable Integer id,
+            @RequestParam(required = false) String reason) {
+        return ResponseEntity.ok(productService.rejectProduct(id, reason));
+    }
+
+    @PatchMapping("/{id}/hide")
+    public ResponseEntity<ProductDTO> hideProduct(@PathVariable Integer id) {
+        return ResponseEntity.ok(productService.hideProduct(id));
+    }
+
 }
