@@ -32,4 +32,10 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     @Query("SELECT p FROM Product p WHERE p.isDelete = true AND p.storeId = :storeId")
     Page<Product> findAllDeletedByStore(@Param("storeId") String storeId, Pageable pageable);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.isDelete = false")
+    long countAllActive();
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.status = :status AND p.isDelete = false")
+    long countByStatus(@Param("status") String status);
 }

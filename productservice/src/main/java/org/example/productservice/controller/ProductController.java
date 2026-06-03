@@ -16,6 +16,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -331,6 +332,33 @@ public class ProductController {
                 .totalPages(productPage.getTotalPages())
                 .build();
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/products/stats")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getProductStats() {
+        try {
+            Map<String, Object> stats = productService.getProductStats();
+            return ResponseEntity.ok(ApiResponse.success(stats, "Stats retrieved"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/{id}/approve")
+    public ResponseEntity<ProductDTO> approveProduct(@PathVariable Integer id) {
+        return ResponseEntity.ok(productService.approveProduct(id));
+    }
+
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<ProductDTO> rejectProduct(
+            @PathVariable Integer id,
+            @RequestParam(required = false) String reason) {
+        return ResponseEntity.ok(productService.rejectProduct(id, reason));
+    }
+
+    @PatchMapping("/{id}/hide")
+    public ResponseEntity<ProductDTO> hideProduct(@PathVariable Integer id) {
+        return ResponseEntity.ok(productService.hideProduct(id));
     }
 
 }

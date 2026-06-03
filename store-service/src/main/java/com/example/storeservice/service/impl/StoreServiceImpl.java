@@ -84,7 +84,33 @@ public class StoreServiceImpl implements StoreService {
                 .promotions(promotionDTOs)
                 .build();
     }
-    
+
+    @Override
+    public List<StoreDTO> getAllStores() {
+        return storeRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public StoreDTO approveStore(String storeId) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new RuntimeException("Shop không tồn tại"));
+        store.setStatus("active");
+        return toDTO(storeRepository.save(store));
+    }
+
+    @Override
+    @Transactional
+    public StoreDTO updateStoreStatus(String storeId, String status) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new RuntimeException("Shop không tồn tại"));
+        store.setStatus(status.toLowerCase());
+        return toDTO(storeRepository.save(store));
+    }
+
     private StoreDTO toDTO(Store store) {
         return StoreDTO.builder()
                 .id(store.getId())
@@ -93,6 +119,10 @@ public class StoreServiceImpl implements StoreService {
                 .location(store.getLocation())
                 .description(store.getDescription())
                 .status(store.getStatus())
+                .createdBy(store.getCreatedBy())
+                .updatedBy(store.getUpdatedBy())
+                .createdAt(store.getCreatedAt())
+                .updateAt(store.getUpdateAt())
                 .build();
     }
 

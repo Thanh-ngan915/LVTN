@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ProductService {
     Page<ProductDTO> getAllProducts(Pageable pageable);
@@ -22,4 +23,8 @@ public interface ProductService {
     ProductDTO restockProduct(Integer id, Integer additionalQuantity, String updatedBy);
     ProductDTO restoreProduct(Integer id);
     Page<ProductDTO> getDeletedProductsByStore(String storeId, Pageable pageable);
+    Map<String, Object> getProductStats();
+    ProductDTO approveProduct(Integer id);
+    ProductDTO rejectProduct(Integer id, String reason);
+    ProductDTO hideProduct(Integer id);
 }

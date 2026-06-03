@@ -1,17 +1,21 @@
 package org.example.orderservice.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.orderservice.dto.*;
 import org.example.orderservice.entity.*;
 import org.example.orderservice.repository.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RatingService {
@@ -21,6 +25,10 @@ public class RatingService {
     private final RatingReplyRepository ratingReplyRepository;
     private final OrderRepository orderRepository;
     private final UserLocalRepository userLocalRepository;
+    private final RestTemplate restTemplate;
+
+    @Value("${store-service.url:http://localhost:8090}")
+    private String storeServiceUrl;
 
     /**
      * Lấy đánh giá theo productId (phân trang)
@@ -167,6 +175,18 @@ public class RatingService {
         return toRatingReplyDTO(reply);
     }
 
+    private StoreDTO getStoreInfo(String storeId) {
+        if (storeId == null) return null;
+        try {
+            String url = storeServiceUrl + "/api/stores/" + storeId;
+            StoreProfileResponseDTO response = restTemplate.getForObject(url, StoreProfileResponseDTO.class);
+            return (response != null) ? response.getStore() : null;
+        } catch (Exception e) {
+            log.warn("Không lấy được thông tin shop {}: {}", storeId, e.getMessage());
+            return null;
+        }
+    }
+
     public Page<RatingDTO> getRatingsByStore(String storeId, Boolean pending, Pageable pageable) {
         Page<Rating> page = (pending != null && pending)
                 ? ratingRepository.findByStoreIdAndNotReplied(storeId, pageable)
@@ -227,7 +247,6 @@ public class RatingService {
      * Convert RatingReply entity → RatingReplyDTO
      */
     private RatingReplyDTO toRatingReplyDTO(RatingReply reply) {
-        // Lấy materials của reply này
         List<RatingMaterial> materials = ratingMaterialRepository.findByRatingReplyId(reply.getId());
 
         String comment = materials.stream()
@@ -240,14 +259,29 @@ public class RatingService {
                 .map(RatingMaterial::getUrl)
                 .collect(Collectors.toList());
 
-        // User info
         String userFullName = reply.getCreatedBy();
         String userImage = null;
-        if (reply.getCreatedBy() != null) {
-            Optional<UserLocal> userLocal = userLocalRepository.findByUsername(reply.getCreatedBy());
-            if (userLocal.isPresent()) {
-                userFullName = userLocal.get().getFullName() != null ? userLocal.get().getFullName() : reply.getCreatedBy();
-                userImage = userLocal.get().getImage();
+
+        // Kiểm tra createdBy có phải user trong hệ thống không
+        Optional<UserLocal> userLocal = reply.getCreatedBy() != null
+                ? userLocalRepository.findByUsername(reply.getCreatedBy())
+                : Optional.empty();
+
+        if (userLocal.isPresent()) {
+            // Là khách hàng
+            userFullName = userLocal.get().getFullName() != null
+                    ? userLocal.get().getFullName()
+                    : reply.getCreatedBy();
+            userImage = userLocal.get().getImage();
+        } else {
+            // Không phải user → là shop, lấy tên shop
+            Rating parentRating = ratingRepository.findById(reply.getRatingId()).orElse(null);
+            if (parentRating != null) {
+                StoreDTO storeInfo = getStoreInfo(parentRating.getStoreId());
+                if (storeInfo != null) {
+                    userFullName = storeInfo.getName();
+                    userImage = storeInfo.getImage();
+                }
             }
         }
 
@@ -255,8 +289,8 @@ public class RatingService {
                 .id(reply.getId())
                 .ratingId(reply.getRatingId())
                 .ratingReplyId(reply.getRatingReplyId())
-                .comment(comment)           // ← thay url bằng comment
-                .materialUrls(mediaUrls)    // ← thêm mới
+                .comment(comment)
+                .materialUrls(mediaUrls)
                 .stars(reply.getStars())
                 .isReply(reply.getIsReply())
                 .createdBy(reply.getCreatedBy())

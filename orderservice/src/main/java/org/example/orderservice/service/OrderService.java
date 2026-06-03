@@ -26,7 +26,11 @@ public class OrderService {
     private final DeliveryInformationRepository deliveryInformationRepository;
     private final VoucherRepository voucherRepository;
     private final RatingRepository ratingRepository;
-    
+    private final OrderFlowRepository orderFlowRepository;
+    private final OrderRefundRepository orderRefundRepository;
+    private final ProductOrderRefundRepository productOrderRefundRepository;
+    private final String STORE_SERVICE_BASE_URL = "http://localhost:8090/api";
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     // Có thể override bằng env var STORE_SERVICE_URL khi chạy Docker
@@ -93,14 +97,14 @@ public class OrderService {
                         STORE_SERVICE_URL + "/" + request.getShopVoucherId(), StoreVoucherDTO.class);
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                     shopVoucherDTO = response.getBody();
-                    
+
                     if (shopVoucherDTO.getStoreId() == null) {
                         throw new RuntimeException("Voucher '" + shopVoucherDTO.getCode() + "' không phải voucher của shop");
                     }
                     if (!shopVoucherDTO.getStoreId().equals(request.getStoreId())) {
                         throw new RuntimeException("Voucher '" + shopVoucherDTO.getCode() + "' không thuộc shop này");
                     }
-                    
+
                     shopDiscount = calculateApiVoucherDiscount(shopVoucherDTO, total);
                 } else {
                     throw new RuntimeException("Voucher shop không hợp lệ");
@@ -206,18 +210,18 @@ public class OrderService {
         // Validation logic for API voucher
         // status=1 means active in store-service
         if (voucherDTO.getStatus() == null || voucherDTO.getStatus() != 1) return 0f;
-        
+
         float minOrder = 0f;
         if (voucherDTO.getPriceCondition() != null && voucherDTO.getPriceCondition().getTotalMin() != null) {
             minOrder = voucherDTO.getPriceCondition().getTotalMin();
         }
-        
+
         if (orderTotal < minOrder) return 0f;
 
         String discountType = "FIXED";
         Float discountValue = voucherDTO.getMaximum() != null ? voucherDTO.getMaximum().floatValue() : 0f;
         Float maxDiscount = null;
-        
+
         if (voucherDTO.getType() != null && voucherDTO.getType() == 2) {
             discountType = "PERCENT";
             discountValue = voucherDTO.getPercent() != null ? voucherDTO.getPercent().floatValue() : 0f;
@@ -266,13 +270,13 @@ public class OrderService {
 
     private VoucherDTO convertStoreVoucherToVoucherDTO(StoreVoucherDTO v) {
         String discountType = (v.getType() != null && v.getType() == 2) ? "PERCENT" : "FIXED";
-        Float discountValue = (v.getType() != null && v.getType() == 2) 
-            ? (v.getPercent() != null ? v.getPercent().floatValue() : 0f) 
+        Float discountValue = (v.getType() != null && v.getType() == 2)
+            ? (v.getPercent() != null ? v.getPercent().floatValue() : 0f)
             : (v.getMaximum() != null ? v.getMaximum().floatValue() : 0f);
-            
+
         Float minOrder = (v.getPriceCondition() != null && v.getPriceCondition().getTotalMin() != null)
             ? v.getPriceCondition().getTotalMin() : 0f;
-            
+
         return VoucherDTO.builder()
                 .id(v.getId())
                 .code(v.getCode())
@@ -336,6 +340,7 @@ public class OrderService {
 
         return toOrderResponseDTO(order, order.getDeliveryInformation(), order.getItems());
     }
+
 
     private static final float SHIPPING_FEE = 30000f;
 
@@ -453,4 +458,286 @@ public class OrderService {
                 .isDefault(d.getIsDefault())
                 .build();
     }
+
+    private String getStoreIdByUserId(String userId) {
+        try {
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.set("X-User-Id", userId);
+            ResponseEntity<StoreDTO> resp = restTemplate.exchange(
+                    STORE_SERVICE_BASE_URL + "/stores/my-store",
+                    HttpMethod.GET,
+                    new org.springframework.http.HttpEntity<>(headers),
+                    StoreDTO.class
+            );
+            if (resp.getStatusCode().is2xxSuccessful()
+                    && resp.getBody() != null
+                    && resp.getBody().getId() != null) {
+                return resp.getBody().getId();
+            }
+        } catch (Exception ignored) {}
+        throw new RuntimeException("Bạn chưa có shop hoặc không thể xác thực seller");
+    }
+
+    // =========================================================================
+    // SELLER — danh sách & chi tiết đơn hàng
+    // =========================================================================
+
+    public List<OrderResponseDTO> getOrdersBySellerUserId(String userId, String status) {
+        String storeId = getStoreIdByUserId(userId);
+        List<Order> orders = (status != null && !status.isBlank())
+                ? orderRepository.findByStoreIdAndStatus(storeId, status)
+                : orderRepository.findByStoreId(storeId);
+
+        List<OrderResponseDTO> result = new ArrayList<>();
+        for (Order order : orders) {
+            DeliveryInformation delivery = deliveryInformationRepository
+                    .findById(order.getDeliveryInformationId()).orElse(null);
+            List<ProductOrder> items = productOrderRepository.findByOrderId(order.getId());
+            result.add(toOrderResponseDTO(order, delivery, items));
+        }
+        return result;
+    }
+
+    public OrderResponseDTO getOrderDetailForSeller(Integer orderId, String userId) {
+        String storeId = getStoreIdByUserId(userId);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+        if (!storeId.equals(order.getStoreId()))
+            throw new RuntimeException("Đơn hàng không thuộc shop của bạn");
+        DeliveryInformation delivery = deliveryInformationRepository
+                .findById(order.getDeliveryInformationId()).orElse(null);
+        List<ProductOrder> items = productOrderRepository.findByOrderId(orderId);
+        return toOrderResponseDTO(order, delivery, items);
+    }
+
+    // =========================================================================
+    // SELLER — cập nhật trạng thái đơn
+    // =========================================================================
+
+    @Transactional
+    public OrderResponseDTO updateOrderStatusBySeller(Integer orderId,
+                                                      SellerOrderUpdateDTO updateDTO,
+                                                      String userId) {
+        String storeId = getStoreIdByUserId(userId);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+        if (!storeId.equals(order.getStoreId()))
+            throw new RuntimeException("Đơn hàng không thuộc shop của bạn");
+
+        validateSellerStatusTransition(order.getStatus(), updateDTO.getStatus());
+
+        order.setStatus(updateDTO.getStatus());
+        order.setUpdateAt(LocalDateTime.now());
+        orderRepository.save(order);
+        saveOrderFlow(String.valueOf(orderId), updateDTO.getStatus(), storeId, updateDTO.getNote());
+
+        DeliveryInformation delivery = deliveryInformationRepository
+                .findById(order.getDeliveryInformationId()).orElse(null);
+        List<ProductOrder> items = productOrderRepository.findByOrderId(orderId);
+        return toOrderResponseDTO(order, delivery, items);
+    }
+
+    /**
+     * Luồng hợp lệ seller được phép đổi:
+     *   pending   → confirmed | cancelled
+     *   confirmed → shipping
+     */
+    private void validateSellerStatusTransition(String current, String next) {
+        if (next == null || next.isBlank())
+            throw new RuntimeException("Trạng thái mới không được để trống");
+        boolean valid = switch (current) {
+            case "pending"   -> next.equals("confirmed") || next.equals("cancelled");
+            case "confirmed" -> next.equals("shipping");
+            default -> false;
+        };
+        if (!valid)
+            throw new RuntimeException(
+                    "Không thể chuyển trạng thái từ '" + current + "' sang '" + next + "'");
+    }
+
+    // =========================================================================
+    // SELLER — thống kê
+    // =========================================================================
+
+    public SellerOrderStatsDTO getOrderStatsBySellerUserId(String userId) {
+        String storeId = getStoreIdByUserId(userId);
+        List<Order> all = orderRepository.findByStoreId(storeId);
+        float revenue = all.stream()
+                .filter(o -> "completed".equals(o.getStatus()))
+                .map(Order::getPay).reduce(0f, Float::sum);
+        return SellerOrderStatsDTO.builder()
+                .totalRevenue(revenue)
+                .totalOrders(all.size())
+                .pendingCount(  countByStatus(all, "pending"))
+                .confirmedCount(countByStatus(all, "confirmed"))
+                .shippingCount( countByStatus(all, "shipping"))
+                .deliveredCount(countByStatus(all, "delivered"))
+                .completedCount(countByStatus(all, "completed"))
+                .cancelledCount(countByStatus(all, "cancelled"))
+                .build();
+    }
+
+    private long countByStatus(List<Order> orders, String status) {
+        return orders.stream().filter(o -> status.equals(o.getStatus())).count();
+    }
+
+    // =========================================================================
+    // SELLER — lịch sử trạng thái (OrderFlow)
+    // =========================================================================
+
+    public List<OrderFlowDTO> getOrderFlow(Integer orderId, String userId) {
+        String storeId = getStoreIdByUserId(userId);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+        if (!storeId.equals(order.getStoreId()))
+            throw new RuntimeException("Đơn hàng không thuộc shop của bạn");
+        return orderFlowRepository.findByOrderIdOrderByCreatedAtDesc(String.valueOf(orderId))
+                .stream().map(f -> OrderFlowDTO.builder()
+                        .id(f.getId()).orderId(f.getOrderId()).status(f.getStatus())
+                        .note(f.getNote()).createdBy(f.getCreatedBy())
+                        .createdAt(f.getCreatedAt() != null ? f.getCreatedAt().toString() : null)
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    /** Ghi 1 bản ghi OrderFlow mỗi khi trạng thái thay đổi */
+    private void saveOrderFlow(String orderId, String status, String createdBy, String note) {
+        orderFlowRepository.save(OrderFlow.builder()
+                .orderId(orderId)
+                .status(status)
+                .note(note != null ? note : "")
+                .createdBy(createdBy)
+                .build());
+    }
+
+    // =========================================================================
+    // BUYER — tạo yêu cầu hoàn trả
+    // =========================================================================
+
+    /**
+     * Buyer tạo yêu cầu hoàn trả.
+     * Điều kiện: đơn phải ở trạng thái "delivered".
+     */
+    @Transactional
+    public OrderRefundDTO createRefund(OrderRefundRequestDTO request, String userId) {
+        Order order = orderRepository.findById(Integer.valueOf(request.getOrderId()))
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+        if (!order.getUserId().equals(userId))
+            throw new RuntimeException("Không có quyền tạo hoàn trả cho đơn này");
+        if (!"delivered".equals(order.getStatus()))
+            throw new RuntimeException("Chỉ có thể yêu cầu hoàn trả khi đơn đã giao");
+        orderRefundRepository.findByOrderIdAndStatus(request.getOrderId(), "pending")
+                .ifPresent(r -> { throw new RuntimeException("Đơn này đã có yêu cầu hoàn trả đang xử lý"); });
+
+        OrderRefund refund = orderRefundRepository.save(OrderRefund.builder()
+                .orderId(request.getOrderId())
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .status("pending")
+                .createdBy(userId)
+                .build());
+
+        List<ProductOrderRefund> refundItems = new ArrayList<>();
+        if (request.getProducts() != null) {
+            for (OrderRefundRequestDTO.ProductRefundItemDTO item : request.getProducts()) {
+                refundItems.add(productOrderRefundRepository.save(ProductOrderRefund.builder()
+                        .orderRefundId(refund.getId())
+                        .productId(item.getProductId())
+                        .quantity(item.getQuantity())
+                        .description(item.getDescription())
+                        .build()));
+            }
+        }
+        return toOrderRefundDTO(refund, refundItems);
+    }
+
+    // =========================================================================
+    // SELLER — xử lý yêu cầu hoàn trả
+    // =========================================================================
+
+    /**
+     * Seller duyệt (approved) hoặc từ chối (rejected) yêu cầu hoàn trả.
+     * Nếu approved → đơn hàng chuyển sang "refunded".
+     */
+    @Transactional
+    public OrderRefundDTO reviewRefund(String refundId, OrderRefundReviewDTO reviewDTO, String userId) {
+        String storeId = getStoreIdByUserId(userId);
+        OrderRefund refund = orderRefundRepository.findById(refundId)
+                .orElseThrow(() -> new RuntimeException("Yêu cầu hoàn trả không tồn tại"));
+        if (!"pending".equals(refund.getStatus()))
+            throw new RuntimeException("Yêu cầu hoàn trả này đã được xử lý rồi");
+
+        Order order = orderRepository.findById(Integer.valueOf(refund.getOrderId()))
+                .orElseThrow(() -> new RuntimeException("Đơn hàng liên quan không tồn tại"));
+        if (!storeId.equals(order.getStoreId()))
+            throw new RuntimeException("Yêu cầu hoàn trả không thuộc shop của bạn");
+
+        String newStatus = reviewDTO.getStatus();
+        if (!newStatus.equals("approved") && !newStatus.equals("rejected"))
+            throw new RuntimeException("Trạng thái không hợp lệ: chỉ chấp nhận approved hoặc rejected");
+
+        refund.setStatus(newStatus);
+        orderRefundRepository.save(refund);
+
+        if ("approved".equals(newStatus)) {
+            order.setStatus("refunded");
+            order.setUpdateAt(LocalDateTime.now());
+            orderRepository.save(order);
+            saveOrderFlow(String.valueOf(order.getId()), "refunded", storeId,
+                    reviewDTO.getNote() != null ? reviewDTO.getNote() : "Seller chấp nhận hoàn trả");
+        }
+
+        List<ProductOrderRefund> items = productOrderRefundRepository.findByOrderRefundId(refundId);
+        return toOrderRefundDTO(refund, items);
+    }
+
+    /** Seller lấy danh sách yêu cầu hoàn trả của shop */
+    public List<OrderRefundDTO> getRefundsByStore(String userId, String status) {
+        String storeId = getStoreIdByUserId(userId);
+        List<String> orderIds = orderRepository.findByStoreId(storeId)
+                .stream().map(o -> String.valueOf(o.getId())).collect(Collectors.toList());
+
+        List<OrderRefundDTO> result = new ArrayList<>();
+        for (String orderId : orderIds) {
+            orderRefundRepository.findByOrderId(orderId).ifPresent(refund -> {
+                if (status == null || status.isBlank() || status.equals(refund.getStatus())) {
+                    List<ProductOrderRefund> items =
+                            productOrderRefundRepository.findByOrderRefundId(refund.getId());
+                    result.add(toOrderRefundDTO(refund, items));
+                }
+            });
+        }
+        return result;
+    }
+
+    // =========================================================================
+    // toDTO helpers — Refund & Flow
+    // =========================================================================
+
+    private OrderRefundDTO toOrderRefundDTO(OrderRefund refund, List<ProductOrderRefund> items) {
+        List<ProductOrderRefundDTO> itemDTOs = items.stream()
+                .map(i -> ProductOrderRefundDTO.builder()
+                        .id(i.getId()).orderRefundId(i.getOrderRefundId())
+                        .productId(i.getProductId()).quantity(i.getQuantity())
+                        .description(i.getDescription()).build())
+                .collect(Collectors.toList());
+        return OrderRefundDTO.builder()
+                .id(refund.getId()).orderId(refund.getOrderId())
+                .status(refund.getStatus()).title(refund.getTitle())
+                .description(refund.getDescription()).createdBy(refund.getCreatedBy())
+                .createdAt(refund.getCreatedAt() != null ? refund.getCreatedAt().toString() : null)
+                .products(itemDTOs).build();
+    }
 }
+//                .id(d.getId())
+//                .userId(d.getUserId())
+//                .recipientName(d.getRecipientName())
+//                .phone(d.getPhone())
+//                .province(d.getProvince())
+//                .district(d.getDistrict())
+//                .ward(d.getWard())
+//                .addressDetail(d.getAddressDetail())
+//                .isDefault(d.getIsDefault())
+//                .build();
+//    }
+//}

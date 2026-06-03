@@ -6,8 +6,10 @@ import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import io.jsonwebtoken.SignatureAlgorithm;
 
 import java.security.Key;
+import java.util.Date;
 
 @Component
 @Slf4j
@@ -48,5 +50,18 @@ public class JwtTokenProvider {
                 .parseClaimsJws(token)
                 .getBody()
                 .get("role");
+    }
+
+    @Value("${app.jwt.service-token-expiration:60000}")
+    private long serviceTokenExpiration;
+
+    public String generateServiceToken() {
+        return Jwts.builder()
+                .setSubject("store-service")
+                .claim("role", "SERVICE")
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + serviceTokenExpiration))
+                .signWith(key(), SignatureAlgorithm.HS256)
+                .compact();
     }
 }

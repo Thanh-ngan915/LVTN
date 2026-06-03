@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/stores")
 @RequiredArgsConstructor
@@ -38,5 +40,22 @@ public class StoreController {
     @GetMapping("/{storeId}")
     public ResponseEntity<StoreProfileResponseDTO> getStoreById(@PathVariable String storeId) {
         return ResponseEntity.ok(storeService.getStoreById(storeId));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<StoreDTO>> getAllStores() {
+        return ResponseEntity.ok(storeService.getAllStores());
+    }
+
+    @PatchMapping("/{storeId}/approve")
+    public ResponseEntity<StoreDTO> approveStore(@PathVariable String storeId) {
+        return ResponseEntity.ok(storeService.approveStore(storeId));
+    }
+
+    @PatchMapping("/{storeId}/status")
+    public ResponseEntity<StoreDTO> updateStoreStatus(
+            @PathVariable String storeId,
+            @RequestParam String status) {
+        return ResponseEntity.ok(storeService.updateStoreStatus(storeId, status));
     }
 }
