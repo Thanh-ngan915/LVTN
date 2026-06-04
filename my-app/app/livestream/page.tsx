@@ -70,6 +70,10 @@ export default function LivestreamPage() {
   const [recognizedNumber, setRecognizedNumber] = useState<string | null>(null);
   const [recognizedText, setRecognizedText] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const selectedProductRef = useRef<Product | null>(null);
+  useEffect(() => {
+    selectedProductRef.current = selectedProduct;
+  }, [selectedProduct]);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -374,6 +378,22 @@ export default function LivestreamPage() {
               sender: participant?.identity || 'Khách', 
               text: data.text 
             }]);
+          } else if (data.type === 'product') {
+            console.log('✅ Nhận thông tin sản phẩm từ Host:', data.product);
+            setSelectedProduct(data.product);
+          } else if (data.type === 'room_ended') {
+            console.log('✅ Host đã kết thúc phiên live');
+            alert('Phiên livestream đã kết thúc!');
+            if (livekitRef.current) {
+              livekitRef.current.disconnect();
+              livekitRef.current = null;
+            }
+            setCurrentRoom(null);
+            setTokenData(null);
+            setIsRoomHost(false);
+            sessionStorage.removeItem('livestream_room');
+            sessionStorage.removeItem('livestream_is_host');
+            window.location.href = '/livestream'; // Đảm bảo UI reset về danh sách
           }
         } catch (e) {
           console.error('Lỗi giải mã tin nhắn:', e);
@@ -446,6 +466,22 @@ export default function LivestreamPage() {
       room.on(RoomEvent.ParticipantConnected, (participant) => {
         console.log('Participant connected:', participant.identity);
         updateParticipantsList();
+        
+        // Host broadcast sản phẩm đang bán cho viewer mới vào
+        if (isRoomHost && selectedProductRef.current) {
+          try {
+            const encoder = new TextEncoder();
+            const broadcastData = JSON.stringify({
+              type: 'product',
+              product: selectedProductRef.current
+            });
+            const payload = encoder.encode(broadcastData);
+            room.localParticipant.publishData(payload, { reliable: true });
+            console.log(' Đã sync sản phẩm tới viewer mới');
+          } catch (err) {
+            console.error('Lỗi khi broadcast sản phẩm cho người mới:', err);
+          }
+        }
       });
 
       room.on(RoomEvent.ParticipantDisconnected, (participant) => {
@@ -553,6 +589,18 @@ export default function LivestreamPage() {
 
     setLoading(true);
     try {
+      // ✅ Báo cho tất cả viewer out phòng trước khi kết thúc
+      if (livekitRef.current?.localParticipant) {
+        try {
+          const encoder = new TextEncoder();
+          const payload = encoder.encode(JSON.stringify({ type: 'room_ended' }));
+          await livekitRef.current.localParticipant.publishData(payload, { reliable: true });
+          console.log('Đã broadcast lệnh kết thúc phòng tới viewers');
+        } catch (e) {
+          console.error('Lỗi broadcast room_ended:', e);
+        }
+      }
+
       const storedUser = localStorage.getItem('user');
       const user = storedUser ? JSON.parse(storedUser) : null;
       const userId = user?.userId || '1';
@@ -773,6 +821,23 @@ export default function LivestreamPage() {
                 setSelectedProduct(product);
                 setError(null);
                 console.log('✅ Product set successfully:', product.name);
+                
+                // Broadcast product to viewers
+                if (livekitRef.current?.localParticipant) {
+                  try {
+                    const encoder = new TextEncoder();
+                    const broadcastData = JSON.stringify({
+                      type: 'product',
+                      product: product
+                    });
+                    const payload = encoder.encode(broadcastData);
+                    livekitRef.current.localParticipant.publishData(payload, { reliable: true });
+                    console.log('✅ Đã broadcast sản phẩm tới viewers');
+                  } catch (err) {
+                    console.error('Lỗi khi broadcast sản phẩm:', err);
+                  }
+                }
+
                 // Tự động tắt overlay sau 5 giây
                 setTimeout(() => setRecognizedNumber(null), 5000);
               }
