@@ -134,7 +134,7 @@ public class LivestreamRoomService {
             try {
                 org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
                 // order-service chạy ở port 8085 (kiểm tra lại port nếu cần)
-                String url = "http://localhost:8085/api/orders/livestream/" + r.getId() + "/stats";
+                String url = "http://localhost:8088/api/orders/livestream/" + r.getId() + "/stats";
                 org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.getForEntity(url, java.util.Map.class);
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                     java.util.Map data = (java.util.Map) response.getBody().get("data");

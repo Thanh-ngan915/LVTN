@@ -99,7 +99,8 @@ public class OrderService {
                     shopVoucherDTO = response.getBody();
 
                     if (shopVoucherDTO.getStoreId() == null) {
-                        throw new RuntimeException("Voucher '" + shopVoucherDTO.getCode() + "' không phải voucher của shop");
+                        throw new RuntimeException(
+                                "Voucher '" + shopVoucherDTO.getCode() + "' không phải voucher của shop");
                     }
                     if (!shopVoucherDTO.getStoreId().equals(request.getStoreId())) {
                         throw new RuntimeException("Voucher '" + shopVoucherDTO.getCode() + "' không thuộc shop này");
@@ -141,7 +142,8 @@ public class OrderService {
             for (OrderItemRequestDTO item : requestItems) {
                 int itemQty = item.getQuantity() != null ? item.getQuantity() : 1;
                 float itemPriceAfter = item.getProductPriceAfter() != null ? item.getProductPriceAfter() : 0f;
-                float itemPriceBefore = item.getProductPriceBefore() != null ? item.getProductPriceBefore() : itemPriceAfter;
+                float itemPriceBefore = item.getProductPriceBefore() != null ? item.getProductPriceBefore()
+                        : itemPriceAfter;
 
                 ProductOrder productOrder = ProductOrder.builder()
                         .productId(item.getProductId())
@@ -179,9 +181,11 @@ public class OrderService {
     }
 
     private float applyPlatformVoucher(Voucher voucher, float orderTotal) {
-        if (!"active".equals(voucher.getStatus())) return 0f;
+        if (!"active".equals(voucher.getStatus()))
+            return 0f;
         float minOrder = voucher.getMinOrderValue() != null ? voucher.getMinOrderValue() : 0f;
-        if (orderTotal < minOrder) return 0f;
+        if (orderTotal < minOrder)
+            return 0f;
 
         String discountType = voucher.getEffectiveDiscountType();
         Float discountValue = voucher.getEffectiveDiscountValue();
@@ -210,14 +214,16 @@ public class OrderService {
     private float calculateApiVoucherDiscount(StoreVoucherDTO voucherDTO, float orderTotal) {
         // Validation logic for API voucher
         // status=1 means active in store-service
-        if (voucherDTO.getStatus() == null || voucherDTO.getStatus() != 1) return 0f;
+        if (voucherDTO.getStatus() == null || voucherDTO.getStatus() != 1)
+            return 0f;
 
         float minOrder = 0f;
         if (voucherDTO.getPriceCondition() != null && voucherDTO.getPriceCondition().getTotalMin() != null) {
             minOrder = voucherDTO.getPriceCondition().getTotalMin();
         }
 
-        if (orderTotal < minOrder) return 0f;
+        if (orderTotal < minOrder)
+            return 0f;
 
         String discountType = "FIXED";
         Float discountValue = voucherDTO.getMaximum() != null ? voucherDTO.getMaximum().floatValue() : 0f;
@@ -255,8 +261,8 @@ public class OrderService {
                     STORE_SERVICE_URL + "/store/" + storeId,
                     HttpMethod.GET,
                     null,
-                    new ParameterizedTypeReference<List<StoreVoucherDTO>>() {}
-            );
+                    new ParameterizedTypeReference<List<StoreVoucherDTO>>() {
+                    });
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 for (StoreVoucherDTO v : response.getBody()) {
                     result.add(convertStoreVoucherToVoucherDTO(v));
@@ -272,11 +278,12 @@ public class OrderService {
     private VoucherDTO convertStoreVoucherToVoucherDTO(StoreVoucherDTO v) {
         String discountType = (v.getType() != null && v.getType() == 2) ? "PERCENT" : "FIXED";
         Float discountValue = (v.getType() != null && v.getType() == 2)
-            ? (v.getPercent() != null ? v.getPercent().floatValue() : 0f)
-            : (v.getMaximum() != null ? v.getMaximum().floatValue() : 0f);
+                ? (v.getPercent() != null ? v.getPercent().floatValue() : 0f)
+                : (v.getMaximum() != null ? v.getMaximum().floatValue() : 0f);
 
         Float minOrder = (v.getPriceCondition() != null && v.getPriceCondition().getTotalMin() != null)
-            ? v.getPriceCondition().getTotalMin() : 0f;
+                ? v.getPriceCondition().getTotalMin()
+                : 0f;
 
         return VoucherDTO.builder()
                 .id(v.getId())
@@ -291,7 +298,9 @@ public class OrderService {
                 .startDate(v.getStartDate())
                 .endDate(v.getEndDate())
                 .quantity(v.getInitQuantity())
-                .usedCount(v.getInitQuantity() != null && v.getCurrentQuantity() != null ? v.getInitQuantity() - v.getCurrentQuantity() : 0)
+                .usedCount(v.getInitQuantity() != null && v.getCurrentQuantity() != null
+                        ? v.getInitQuantity() - v.getCurrentQuantity()
+                        : 0)
                 .status((v.getStatus() != null && v.getStatus() == 1) ? "active" : "inactive")
                 .isPlatform(false)
                 .build();
@@ -342,7 +351,6 @@ public class OrderService {
         return toOrderResponseDTO(order, order.getDeliveryInformation(), order.getItems());
     }
 
-
     private static final float SHIPPING_FEE = 30000f;
 
     private OrderResponseDTO toOrderResponseDTO(Order order, DeliveryInformation delivery, List<ProductOrder> items) {
@@ -382,13 +390,15 @@ public class OrderService {
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                     StoreVoucherDTO v = response.getBody();
                     shopVoucherInfo = OrderResponseDTO.VoucherInfoDTO.builder()
-                        .id(v.getId())
-                        .code(v.getCode())
-                        .name(v.getTitle() != null ? v.getTitle() : "Shop Voucher")
-                        .discountType(v.getType() != null && v.getType() == 2 ? "PERCENT" : "FIXED")
-                        .discountValue(v.getType() != null && v.getType() == 2 ? (v.getPercent() != null ? v.getPercent().floatValue() : 0f) : (v.getMaximum() != null ? v.getMaximum().floatValue() : 0f))
-                        .maxDiscount(v.getMaximum() != null ? v.getMaximum().floatValue() : null)
-                        .build();
+                            .id(v.getId())
+                            .code(v.getCode())
+                            .name(v.getTitle() != null ? v.getTitle() : "Shop Voucher")
+                            .discountType(v.getType() != null && v.getType() == 2 ? "PERCENT" : "FIXED")
+                            .discountValue(v.getType() != null && v.getType() == 2
+                                    ? (v.getPercent() != null ? v.getPercent().floatValue() : 0f)
+                                    : (v.getMaximum() != null ? v.getMaximum().floatValue() : 0f))
+                            .maxDiscount(v.getMaximum() != null ? v.getMaximum().floatValue() : null)
+                            .build();
                 }
             } catch (Exception e) {
                 // Ignore API failure, just set ID
@@ -468,14 +478,14 @@ public class OrderService {
                     STORE_SERVICE_BASE_URL + "/stores/my-store",
                     HttpMethod.GET,
                     new org.springframework.http.HttpEntity<>(headers),
-                    StoreDTO.class
-            );
+                    StoreDTO.class);
             if (resp.getStatusCode().is2xxSuccessful()
                     && resp.getBody() != null
                     && resp.getBody().getId() != null) {
                 return resp.getBody().getId();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         throw new RuntimeException("Bạn chưa có shop hoặc không thể xác thực seller");
     }
 
@@ -517,8 +527,8 @@ public class OrderService {
 
     @Transactional
     public OrderResponseDTO updateOrderStatusBySeller(Integer orderId,
-                                                      SellerOrderUpdateDTO updateDTO,
-                                                      String userId) {
+            SellerOrderUpdateDTO updateDTO,
+            String userId) {
         String storeId = getStoreIdByUserId(userId);
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
@@ -540,14 +550,14 @@ public class OrderService {
 
     /**
      * Luồng hợp lệ seller được phép đổi:
-     *   pending   → confirmed | cancelled
-     *   confirmed → shipping
+     * pending → confirmed | cancelled
+     * confirmed → shipping
      */
     private void validateSellerStatusTransition(String current, String next) {
         if (next == null || next.isBlank())
             throw new RuntimeException("Trạng thái mới không được để trống");
         boolean valid = switch (current) {
-            case "pending"   -> next.equals("confirmed") || next.equals("cancelled");
+            case "pending" -> next.equals("confirmed") || next.equals("cancelled");
             case "confirmed" -> next.equals("shipping");
             default -> false;
         };
@@ -569,9 +579,9 @@ public class OrderService {
         return SellerOrderStatsDTO.builder()
                 .totalRevenue(revenue)
                 .totalOrders(all.size())
-                .pendingCount(  countByStatus(all, "pending"))
+                .pendingCount(countByStatus(all, "pending"))
                 .confirmedCount(countByStatus(all, "confirmed"))
-                .shippingCount( countByStatus(all, "shipping"))
+                .shippingCount(countByStatus(all, "shipping"))
                 .deliveredCount(countByStatus(all, "delivered"))
                 .completedCount(countByStatus(all, "completed"))
                 .cancelledCount(countByStatus(all, "cancelled"))
@@ -628,7 +638,9 @@ public class OrderService {
         if (!"delivered".equals(order.getStatus()))
             throw new RuntimeException("Chỉ có thể yêu cầu hoàn trả khi đơn đã giao");
         orderRefundRepository.findByOrderIdAndStatus(request.getOrderId(), "pending")
-                .ifPresent(r -> { throw new RuntimeException("Đơn này đã có yêu cầu hoàn trả đang xử lý"); });
+                .ifPresent(r -> {
+                    throw new RuntimeException("Đơn này đã có yêu cầu hoàn trả đang xử lý");
+                });
 
         OrderRefund refund = orderRefundRepository.save(OrderRefund.builder()
                 .orderId(request.getOrderId())
@@ -702,8 +714,7 @@ public class OrderService {
         for (String orderId : orderIds) {
             orderRefundRepository.findByOrderId(orderId).ifPresent(refund -> {
                 if (status == null || status.isBlank() || status.equals(refund.getStatus())) {
-                    List<ProductOrderRefund> items =
-                            productOrderRefundRepository.findByOrderRefundId(refund.getId());
+                    List<ProductOrderRefund> items = productOrderRefundRepository.findByOrderRefundId(refund.getId());
                     result.add(toOrderRefundDTO(refund, items));
                 }
             });
@@ -737,7 +748,7 @@ public class OrderService {
     public java.util.Map<String, Object> getLivestreamStats(Long livestreamRoomId) {
         long totalOrders = orderRepository.countByLivestreamRoomId(livestreamRoomId);
         List<Order> orders = orderRepository.findByLivestreamRoomId(livestreamRoomId);
-        
+
         // Tính tổng doanh thu của các đơn hàng KHÔNG bị hủy
         float totalRevenue = orders.stream()
                 .filter(o -> !"cancelled".equals(o.getStatus()))
@@ -750,15 +761,15 @@ public class OrderService {
         return stats;
     }
 }
-//                .id(d.getId())
-//                .userId(d.getUserId())
-//                .recipientName(d.getRecipientName())
-//                .phone(d.getPhone())
-//                .province(d.getProvince())
-//                .district(d.getDistrict())
-//                .ward(d.getWard())
-//                .addressDetail(d.getAddressDetail())
-//                .isDefault(d.getIsDefault())
-//                .build();
-//    }
-//}
+// .id(d.getId())
+// .userId(d.getUserId())
+// .recipientName(d.getRecipientName())
+// .phone(d.getPhone())
+// .province(d.getProvince())
+// .district(d.getDistrict())
+// .ward(d.getWard())
+// .addressDetail(d.getAddressDetail())
+// .isDefault(d.getIsDefault())
+// .build();
+// }
+// }

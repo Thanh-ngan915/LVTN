@@ -73,8 +73,13 @@ const nextConfig: NextConfig = {
          destination: `${GATEWAY_URL}/api/vouchers/:path*`,
       },
       {
-         source: '/api/seller/:path*',
-         destination: 'http://localhost:8088/api/seller/:path*',
+        source: '/api/seller/:path*',
+        destination: 'http://localhost:8088/api/seller/:path*',
+      },
+      // Livestream service - direct (trước rule catch-all)
+      {
+        source: '/api/livestream/:path*',
+        destination: `${LIVESTREAM_SVC}/api/livestream/:path*`,
       },
       {
         source: '/api/:path*',

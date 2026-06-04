@@ -115,12 +115,39 @@ export default function ProductDetailPage() {
 
     setLoading(true);
     getProductById(productId)
-      .then((res) => {
+      .then(async (res) => {
         if (res.success && res.data) {
-          setProduct(res.data);
-          if (res.data.variants && res.data.variants.length > 0) {
-            const colors = [...new Set(res.data.variants.map(v => v.color).filter(Boolean))];
-            const sizes = [...new Set(res.data.variants.map(v => v.size).filter(Boolean))];
+          let loadedProduct = res.data;
+          
+          try {
+            // Kiểm tra xem sản phẩm có đang trong chương trình Flash Sale không
+            const { getActiveProductPromotions } = await import('../../services/salePromotionService');
+            const activePromos = await getActiveProductPromotions();
+            const promo = activePromos.find(p => Number(p.productId) === productId);
+            
+            if (promo) {
+              loadedProduct = {
+                ...loadedProduct,
+                priceAfter: promo.priceAfter,
+                currentQuantity: promo.quantity - promo.bought,
+                sold: promo.bought,
+              };
+              // Nếu sản phẩm có biến thể, ghi đè giá sau giảm của tất cả biến thể
+              if (loadedProduct.variants && loadedProduct.variants.length > 0) {
+                loadedProduct.variants = loadedProduct.variants.map(v => ({
+                  ...v,
+                  priceAfter: promo.priceAfter
+                }));
+              }
+            }
+          } catch (e) {
+            console.error('Failed to load flash sale info for product', e);
+          }
+
+          setProduct(loadedProduct);
+          if (loadedProduct.variants && loadedProduct.variants.length > 0) {
+            const colors = [...new Set(loadedProduct.variants.map(v => v.color).filter(Boolean))];
+            const sizes = [...new Set(loadedProduct.variants.map(v => v.size).filter(Boolean))];
             if (colors.length > 0) setSelectedColor(colors[0]);
             if (sizes.length > 0) setSelectedSize(sizes[0]);
           }
