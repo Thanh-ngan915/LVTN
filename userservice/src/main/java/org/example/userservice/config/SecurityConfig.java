@@ -25,8 +25,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Provide a no-op CORS config so Spring doesn't add any headers
-                .cors(cors -> cors.configurationSource(noOpCorsConfigurationSource()))
+                .cors(cors -> cors.disable())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -43,28 +42,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * Returns a CORS source that allows nothing — effectively disabling CORS headers
-     * at the service level. The API Gateway handles CORS for all external requests.
-     */
-    @Bean
-    public CorsConfigurationSource noOpCorsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        // Empty allowed origins = no CORS headers added by this service
-        config.setAllowedOrigins(java.util.List.of(
-                "http://localhost:3000",
-                "http://localhost:3001",
-                "http://localhost:8080"
-        ));
-        config.setAllowedMethods(java.util.List.of(
-                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
-        ));
-        config.setAllowedHeaders(java.util.List.of("*"));
-        config.setAllowCredentials(true);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
