@@ -17,6 +17,15 @@ import { getProductById, Product } from '../services/productService';
 import { useRouter } from 'next/navigation';
 
 
+interface StoreDTO {
+  id: string;
+  name: string;
+  image: string;
+  location: string;
+  description: string;
+  status: string;
+}
+
 interface Room {
   id: number;
   roomName: string;
@@ -25,6 +34,8 @@ interface Room {
   currentViewers: number;
   status: string;
   description?: string;
+  storeId?: string;
+  storeName?: string;
 }
 
 interface TokenData {
@@ -62,6 +73,10 @@ export default function LivestreamPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
+  // Shop state
+  const [myStore, setMyStore] = useState<StoreDTO | null>(null);
+  const [myStoreLoading, setMyStoreLoading] = useState(true);
+
 
 
   // Cleanup LiveKit connection khi rời phòng
@@ -76,6 +91,39 @@ export default function LivestreamPage() {
       }
     };
   }, []);
+
+  // Load thông tin shop của user đang đăng nhập
+  useEffect(() => {
+    const loadMyStore = async () => {
+      setMyStoreLoading(true);
+      try {
+        const storedUser = localStorage.getItem('user');
+        const user = storedUser ? JSON.parse(storedUser) : null;
+        if (!user?.userId) {
+          setMyStore(null);
+          setViewMode('viewer');
+          return;
+        }
+        const res = await fetch(`/api/stores/my-store?userId=${user.userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setMyStore(data);
+        } else {
+          // User chưa có shop → ép về chế độ viewer
+          setMyStore(null);
+          setViewMode('viewer');
+        }
+      } catch (err) {
+        console.error('Error loading store info:', err);
+        setMyStore(null);
+        setViewMode('viewer');
+      } finally {
+        setMyStoreLoading(false);
+      }
+    };
+    loadMyStore();
+  }, []);
+
 
   // Restore session on load
   useEffect(() => {
@@ -180,6 +228,12 @@ export default function LivestreamPage() {
       return;
     }
 
+    // Kiểm tra user đã có shop chưa
+    if (!myStore) {
+      alert('⚠️ Bạn cần đăng ký Shop trước khi mở phiên Livestream!');
+      return;
+    }
+
     setLoading(true);
     try {
       // Lấy user info từ localStorage (từ phần trước đã sửa)
@@ -192,7 +246,9 @@ export default function LivestreamPage() {
       const roomData = {
         title: roomTitle,
         description: roomDescription,
-        maxViewers: 1000
+        maxViewers: 1000,
+        storeId: myStore.id,
+        storeName: myStore.name,
       };
 
       const response = await fetch(
@@ -512,7 +568,8 @@ export default function LivestreamPage() {
       );
 
       if (response.ok) {
-        alert('Kết thúc livestream thành công');
+        const stats = await response.json();
+        alert(`Kết thúc livestream thành công!\nTổng lượt xem: ${stats.totalViews}\nĐơn hàng bán được: ${stats.totalOrders}\nDoanh thu: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(stats.totalRevenue)}`);
         setCurrentRoom(null);
         setTokenData(null);
         setCameraOn(false);
@@ -622,6 +679,10 @@ export default function LivestreamPage() {
       variantId: variantId || '',
     });
 
+    if (currentRoom) {
+      params.append('livestreamRoomId', String(currentRoom.id));
+    }
+
     router.push(`/checkout?${params.toString()}`);
   };
 
@@ -700,8 +761,21 @@ export default function LivestreamPage() {
             console.log('📦 Product API Response:', productRes);
             
             if (productRes && productRes.success && productRes.data) {
-              setSelectedProduct(productRes.data);
-              console.log('✅ Product set successfully:', productRes.data.name);
+              const product = productRes.data;
+
+              // ✅ Kiểm tra sản phẩm có thuộc shop của host không
+              if (myStore && product.storeId !== myStore.id) {
+                console.warn(`⚠️ Product storeId (${product.storeId}) != myStore.id (${myStore.id})`);
+                setError(`⚠️ Sản phẩm ID ${id} không thuộc shop của bạn. Chỉ có thể giới thiệu sản phẩm của shop mình.`);
+                setSelectedProduct(null);
+                setRecognizedNumber(null);
+              } else {
+                setSelectedProduct(product);
+                setError(null);
+                console.log('✅ Product set successfully:', product.name);
+                // Tự động tắt overlay sau 5 giây
+                setTimeout(() => setRecognizedNumber(null), 5000);
+              }
             } else {
               console.warn('⚠️ Product not found or success is false');
               setError(`Không tìm thấy sản phẩm có ID: ${id}`);
@@ -711,10 +785,6 @@ export default function LivestreamPage() {
             console.error('❌ Error fetching product:', fetchErr);
             setError(`Lỗi kết nối khi lấy sản phẩm ID ${id}. Kiểm tra Product Service.`);
           }
-
-
-          // Tự động tắt overlay sau 5 giây
-          setTimeout(() => setRecognizedNumber(null), 5000);
         }
 
         
@@ -757,13 +827,24 @@ export default function LivestreamPage() {
             
             {/* Mode chọn - HOST hoặc VIEWER */}
             <div className={styles.modeSelector}>
-              <div 
-                className={`${styles.modeOption} ${viewMode === 'host' ? styles.modeOptionActive : styles.modeOptionInactive}`}
-                onClick={() => setViewMode('host')}
-              >
-                Host (Bán Hàng)
-              </div>
-              <div 
+              {/* Chỉ hiện tab Host nếu user đã có shop */}
+              {myStoreLoading ? (
+                <div style={{ padding: '10px 20px', color: '#94a3b8', fontSize: '0.85rem' }}>
+                  Đang kiểm tra thông tin shop...
+                </div>
+              ) : myStore ? (
+                <div
+                  className={`${styles.modeOption} ${viewMode === 'host' ? styles.modeOptionActive : styles.modeOptionInactive}`}
+                  onClick={() => setViewMode('host')}
+                >
+                  🏪 Host — {myStore.name}
+                </div>
+              ) : (
+                <div style={{ padding: '8px 16px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', color: '#f87171', fontSize: '0.82rem' }}>
+                  ⚠️ Bạn chưa có shop. <a href="/my-store" style={{ color: '#60a5fa', textDecoration: 'underline' }}>Đăng ký ngay</a> để mở Livestream.
+                </div>
+              )}
+              <div
                 className={`${styles.modeOption} ${viewMode === 'viewer' ? styles.modeOptionActive : styles.modeOptionInactive}`}
                 onClick={() => setViewMode('viewer')}
               >
@@ -772,7 +853,7 @@ export default function LivestreamPage() {
             </div>
 
             {/* Form tạo phòng */}
-            {viewMode === 'host' && (
+            {viewMode === 'host' && myStore && (
               <div className={styles.form}>
                 <input
                   type="text"
@@ -806,6 +887,7 @@ export default function LivestreamPage() {
                 <p>Chọn một phòng bên phải để bắt đầu xem và mua sắm!</p>
               </div>
             )}
+
           </div>
 
           {/* Danh sách phòng */}
@@ -912,6 +994,11 @@ export default function LivestreamPage() {
                     <div className={styles.hostDetails}>
                       <h2>{currentRoom.title}</h2>
                       <p>@{currentRoom.hostName}</p>
+                      {currentRoom.storeName && (
+                        <p style={{ color: '#c084fc', fontSize: '0.8rem', marginTop: '2px' }}>
+                          🏪 {currentRoom.storeName}
+                        </p>
+                      )}
                     </div>
                   </div>
 

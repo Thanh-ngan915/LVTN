@@ -44,6 +44,8 @@ public class LivestreamRoomService {
         room.setStatus("ACTIVE");
         room.setCurrentViewers(0);
         room.setStartedAt(LocalDateTime.now());
+        room.setStoreId(request.getStoreId());
+        room.setStoreName(request.getStoreName());
         
         LivestreamRoom savedRoom = roomRepository.save(room);
         
@@ -111,7 +113,12 @@ public class LivestreamRoomService {
     /**
      * Kết thúc phòng livestream
      */
-    public void endRoom(String roomName) {
+    public java.util.Map<String, Object> endRoom(String roomName) {
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("totalViews", 0);
+        stats.put("totalOrders", 0);
+        stats.put("totalRevenue", 0f);
+
         Optional<LivestreamRoom> room = roomRepository.findByRoomName(roomName);
         if (room.isPresent()) {
             LivestreamRoom r = room.get();
@@ -119,6 +126,27 @@ public class LivestreamRoomService {
             r.setEndedAt(LocalDateTime.now());
             roomRepository.save(r);
             
+            // Đếm tổng số người đã từng tham gia
+            long totalViews = participantRepository.countByRoomId(r.getId());
+            stats.put("totalViews", totalViews);
+
+            // Gọi order-service để lấy số đơn hàng
+            try {
+                org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+                // order-service chạy ở port 8085 (kiểm tra lại port nếu cần)
+                String url = "http://localhost:8085/api/orders/livestream/" + r.getId() + "/stats";
+                org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.getForEntity(url, java.util.Map.class);
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    java.util.Map data = (java.util.Map) response.getBody().get("data");
+                    if (data != null) {
+                        stats.put("totalOrders", data.get("totalOrders"));
+                        stats.put("totalRevenue", data.get("totalRevenue"));
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Lỗi khi gọi orderservice để lấy thống kê livestream", e);
+            }
+
             // Xóa phòng khỏi LiveKit
             livekitService.deleteRoom(roomName);
             
@@ -132,6 +160,7 @@ public class LivestreamRoomService {
             
             log.info("Room ended: {}", roomName);
         }
+        return stats;
     }
 
     /**
@@ -149,6 +178,8 @@ public class LivestreamRoomService {
                 .currentViewers(room.getCurrentViewers())
                 .maxViewers(room.getMaxViewers())
                 .thumbnail(room.getThumbnail())
+                .storeId(room.getStoreId())
+                .storeName(room.getStoreName())
                 .startedAt(room.getStartedAt())
                 .endedAt(room.getEndedAt())
                 .createdAt(room.getCreatedAt())

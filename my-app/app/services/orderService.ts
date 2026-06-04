@@ -68,6 +68,7 @@ export interface OrderRequestDTO {
   ward: string;
   addressDetail: string;
   items?: OrderItemRequestDTO[];
+  livestreamRoomId?: number;
 }
 
 export interface OrderResponseDTO {
