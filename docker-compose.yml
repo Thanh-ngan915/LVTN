@@ -13,6 +13,7 @@ services:
   mysql:
     image: mysql:8.0
     container_name: anvi-mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: anvi@root2025
@@ -30,6 +31,22 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+    
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: anvi-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql          # tên service mysql ở trên
+      PMA_PORT: 3306           # port bên trong container (không phải 3307)
+      MYSQL_ROOT_PASSWORD: anvi@root2025
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - anvi-network
 
   # --------------------------------------------------------
   # 2. Kafka (KRaft mode - không cần Zookeeper)
@@ -162,7 +179,32 @@ services:
       - anvi-network
 
   # --------------------------------------------------------
-  # 7. API Gateway (port 8080)
+  # 7. LivestreamService (port 8086)
+  # --------------------------------------------------------
+  livestreamservice:
+    build:
+      context: ./livetreamservice
+      dockerfile: Dockerfile
+    container_name: anvi-livestreamservice
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/livestreamdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&useUnicode=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: anvi@root2025
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      LIVEKIT_URL: wss://livetream-7f2wlo6u.livekit.cloud
+      LIVEKIT_API_KEY: APIroUAKf3K9soB
+      LIVEKIT_API_SECRET: 6RscGpoNsTqpXzaixecf1IDU0y2eYt7fdeR1GVmuOFvA
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - anvi-network
+
+  # --------------------------------------------------------
+  # 8. API Gateway (port 8080)
   # --------------------------------------------------------
   apigateway:
     build:
@@ -172,16 +214,24 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
+    environment:
+      USER_SERVICE_URL: http://userservice:8085
+      PRODUCT_SERVICE_URL: http://productservice:8087
+      ORDER_SERVICE_URL: http://orderservice:8088
+      STORE_SERVICE_URL: http://storeservice:8090
+      LIVESTREAM_SERVICE_URL: http://livestreamservice:8086
+      CHATBOT_SERVICE_URL: http://chatbotservice:8081
     depends_on:
       - userservice
       - orderservice
       - productservice
       - storeservice
+      - livestreamservice
     networks:
       - anvi-network
 
   # --------------------------------------------------------
-  # 8. Frontend - Next.js (port 3000)
+  # 9. Frontend - Next.js (port 3000)
   # --------------------------------------------------------
   frontend:
     build:

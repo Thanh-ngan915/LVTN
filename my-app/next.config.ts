@@ -18,15 +18,15 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/api/products/:path*',
-        destination: `${PRODUCT_SVC}/api/products/:path*`,
+        destination: `${GATEWAY_URL}/api/products/:path*`,
       },
       {
         source: '/api/categories/:path*',
-        destination: `${PRODUCT_SVC}/api/categories/:path*`,
+        destination: `${GATEWAY_URL}/api/categories/:path*`,
       },
       {
         source: '/api/categories',
-        destination: `${PRODUCT_SVC}/api/categories`,
+        destination: `${GATEWAY_URL}/api/categories`,
       },
       {
         source: '/uploads/:path*',
@@ -38,11 +38,11 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/api/ratings/:path*',
-        destination: `${ORDER_SVC}/api/ratings/:path*`,
+        destination: `${GATEWAY_URL}/api/ratings/:path*`,
       },
       {
         source: '/api/cart/:path*',
-        destination: `${PRODUCT_SVC}/api/cart/:path*`,
+        destination: `${GATEWAY_URL}/api/cart/:path*`,
       },
       {
         source: '/api/auth/:path*',
@@ -50,27 +50,27 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/api/cart',
-        destination: `${PRODUCT_SVC}/api/cart`,
+        destination: `${GATEWAY_URL}/api/cart`,
       },
       {
         source: '/api/orders/:path*',
-        destination: `${ORDER_SVC}/api/orders/:path*`,
+        destination: `${GATEWAY_URL}/api/orders/:path*`,
       },
       {
         source: '/api/orders',
-        destination: `${ORDER_SVC}/api/orders`,
+        destination: `${GATEWAY_URL}/api/orders`,
       },
       {
          source: '/api/stores/:path*',
-         destination: `${STORE_SVC}/api/stores/:path*`,
+         destination: `${GATEWAY_URL}/api/stores/:path*`,
       },
       {
          source: '/api/stores',
-         destination: `${STORE_SVC}/api/stores`,
+         destination: `${GATEWAY_URL}/api/stores`,
       },
       {
          source: '/api/vouchers/:path*',
-         destination: `${STORE_SVC}/api/vouchers/:path*`,
+         destination: `${GATEWAY_URL}/api/vouchers/:path*`,
       },
       {
          source: '/api/seller/:path*',
@@ -78,7 +78,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/api/:path*',
-        destination: `${LIVESTREAM_SVC}/api/:path*`,
+        destination: `${GATEWAY_URL}/api/:path*`,
       },
     ];
   },
