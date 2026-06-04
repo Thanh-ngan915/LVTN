@@ -17,7 +17,6 @@ import styles from './page.module.css';
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [flashSaleProducts, setFlashSaleProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -56,21 +55,6 @@ export default function Home() {
         if (res.success) setCategories(res.data);
       })
       .catch((err) => console.error('Failed to fetch categories:', err));
-
-    // Fetch high-demand products for the Flash Sale section
-    getProducts(0, 10, 'sold', 'desc')
-      .then((res) => {
-        if (res.success) {
-          // Sort items by discount percentage to display the highest discount first
-          const sorted = [...res.data].sort((a, b) => {
-            const discA = a.priceBefore && a.priceAfter ? (a.priceBefore - a.priceAfter) / a.priceBefore : 0;
-            const discB = b.priceBefore && b.priceAfter ? (b.priceBefore - b.priceAfter) / b.priceBefore : 0;
-            return discB - discA;
-          });
-          setFlashSaleProducts(sorted);
-        }
-      })
-      .catch((err) => console.error('Failed to fetch flash sale products:', err));
   }, []);
 
   useEffect(() => {
@@ -107,7 +91,7 @@ export default function Home() {
       <main className={styles.main} id="products">
         <div className={styles.container}>
           {!searchKeyword && !activeCategory && (
-            <FlashSale products={flashSaleProducts} />
+            <FlashSale />
           )}
 
           <div className={styles.sectionHeader}>

@@ -2,12 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import ProductCard from './ProductCard';
-import { Product } from '../services/productService';
+import { Product, getProductById } from '../services/productService';
+import { getActiveProductPromotions } from '../services/salePromotionService';
 import styles from './FlashSale.module.css';
-
-interface FlashSaleProps {
-  products: Product[];
-}
 
 interface TimeLeft {
   hours: number;
@@ -15,31 +12,75 @@ interface TimeLeft {
   seconds: number;
 }
 
-export default function FlashSale({ products }: FlashSaleProps) {
+export default function FlashSale() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ hours: 0, minutes: 0, seconds: 0 });
+  const [products, setProducts] = useState<Product[]>([]);
+  const [targetEndDate, setTargetEndDate] = useState<Date | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Calculate time remaining to the next Shopee-like flash sale slot:
-  // Slots: 0:00, 9:00, 12:00, 15:00, 18:00, 21:00, 24:00
   useEffect(() => {
+    async function loadFlashSale() {
+      try {
+        const activePromos = await getActiveProductPromotions();
+        if (activePromos.length === 0) {
+          setProducts([]);
+          setLoading(false);
+          return;
+        }
+
+        // Set countdown to the earliest ending promotion
+        let earliestEnd: Date | null = null;
+        for (const promo of activePromos) {
+          if (promo.endDate) {
+            const endDateObj = new Date(promo.endDate);
+            if (!earliestEnd || endDateObj < earliestEnd) {
+              earliestEnd = endDateObj;
+            }
+          }
+        }
+        setTargetEndDate(earliestEnd);
+
+        // Fetch full product details for each active promotion in parallel
+        const productPromises = activePromos.map(async (promo) => {
+          try {
+            const res = await getProductById(Number(promo.productId));
+            if (res.success && res.data) {
+              return {
+                ...res.data,
+                // Override with promotion-specific details
+                priceAfter: promo.priceAfter,
+                currentQuantity: promo.quantity - promo.bought,
+                sold: promo.bought,
+              };
+            }
+          } catch (e) {
+            console.error(`Error fetching details for product ${promo.productId}:`, e);
+          }
+          return null;
+        });
+
+        const resolved = await Promise.all(productPromises);
+        const filtered = resolved.filter((p): p is Product => p !== null);
+        setProducts(filtered);
+      } catch (err) {
+        console.error('Failed to load active promotions:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadFlashSale();
+  }, []);
+
+  useEffect(() => {
+    if (!targetEndDate) return;
+
     const calculateTimeLeft = () => {
       const now = new Date();
-      const nextTarget = new Date();
-      
-      const slots = [0, 9, 12, 15, 18, 21, 24];
-      const currentHour = now.getHours();
-      
-      let targetHour = slots.find(slot => slot > currentHour);
-      if (targetHour === undefined || targetHour === 24) {
-        targetHour = 0;
-        nextTarget.setDate(now.getDate() + 1);
-      }
-      
-      nextTarget.setHours(targetHour, 0, 0, 0);
-      
-      const difference = nextTarget.getTime() - now.getTime();
+      const difference = targetEndDate.getTime() - now.getTime();
       
       if (difference <= 0) {
         return { hours: 0, minutes: 0, seconds: 0 };
@@ -52,7 +93,6 @@ export default function FlashSale({ products }: FlashSaleProps) {
       };
     };
 
-    // Initial run
     setTimeLeft(calculateTimeLeft());
 
     const timer = setInterval(() => {
@@ -60,7 +100,7 @@ export default function FlashSale({ products }: FlashSaleProps) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [targetEndDate]);
 
   const handleScroll = () => {
     const el = scrollRef.current;
@@ -74,7 +114,6 @@ export default function FlashSale({ products }: FlashSaleProps) {
     const el = scrollRef.current;
     if (el) {
       el.addEventListener('scroll', handleScroll);
-      // Run once on load to establish arrow status
       handleScroll();
     }
     return () => {
@@ -100,9 +139,8 @@ export default function FlashSale({ products }: FlashSaleProps) {
     }
   };
 
-  if (!products || products.length === 0) return null;
+  if (loading || !products || products.length === 0) return null;
 
-  // Format single digits with leading zero
   const pad = (num: number) => num.toString().padStart(2, '0');
 
   return (
@@ -146,7 +184,6 @@ export default function FlashSale({ products }: FlashSaleProps) {
           {products.map((product) => {
             const total = (product.sold || 0) + (product.currentQuantity || 0);
             const percentSold = total > 0 ? Math.round(((product.sold || 0) / total) * 100) : 0;
-            // Limit percentage to look good (minimum 15% fill if sold > 0, to always display some color)
             const displayPercent = product.sold && product.sold > 0 
               ? Math.max(15, percentSold) 
               : 0;
