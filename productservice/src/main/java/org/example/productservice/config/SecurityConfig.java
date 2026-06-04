@@ -22,16 +22,20 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Đọc sản phẩm: public
+                // Đọc sản phẩm: public (dùng AntPathMatcher * thay vì {id})
                 .requestMatchers(
                     "/api/products",
-                    "/api/products/{id}",
+                    "/api/products/*",
                     "/api/products/category/**",
                     "/api/products/search",
                     "/api/products/store/**",
+                    "/api/products/store/*/**",
                     "/api/categories",
-                    "/api/cart/**"
+                    "/api/categories/**",
+                    "/api/cart/count"
                 ).permitAll()
+                // Giỏ hàng cần xác thực (trừ /count)
+                .requestMatchers("/api/cart/**").authenticated()
                 // Tạo/sửa/xóa sản phẩm: cần xác thực
                 .anyRequest().authenticated()
             )
