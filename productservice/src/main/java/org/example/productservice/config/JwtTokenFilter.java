@@ -31,13 +31,16 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String jwt = getJwtFromRequest(request);
+        log.info(">>> JWT present: {}", jwt != null);
 
         if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
             String userId = tokenProvider.getUserIdFromToken(jwt);
             String role = tokenProvider.getRoleFromToken(jwt);
-
+            log.info(">>> userId: {}, role: {}", userId, role);
+            log.info(">>> Request URI: {} {}", request.getMethod(), request.getRequestURI());
             // Đặt userId vào attribute để controller đọc
             request.setAttribute("userId", userId);
+            request.setAttribute("userRole", role);
 
             List<SimpleGrantedAuthority> authorities = List.of(
                     new SimpleGrantedAuthority("ROLE_" + (role != null ? role : "USER"))
@@ -47,6 +50,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(userId, null, authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            log.info(">>> Authorities: {}", SecurityContextHolder.getContext().getAuthentication());
+
 
             log.debug("Authenticated userId: {} with role: {}", userId, role);
         }
