@@ -17,9 +17,14 @@ CREATE DATABASE IF NOT EXISTS storesdb
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
+CREATE DATABASE IF NOT EXISTS livestreamdb
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
 -- Cấp quyền cho user root truy cập tất cả databases
 GRANT ALL PRIVILEGES ON usersdb.* TO 'root'@'%';
 GRANT ALL PRIVILEGES ON ordersdb.* TO 'root'@'%';
 GRANT ALL PRIVILEGES ON productdb.* TO 'root'@'%';
 GRANT ALL PRIVILEGES ON storesdb.* TO 'root'@'%';
+GRANT ALL PRIVILEGES ON livestreamdb.* TO 'root'@'%';
 FLUSH PRIVILEGES;

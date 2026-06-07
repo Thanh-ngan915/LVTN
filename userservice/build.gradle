@@ -42,6 +42,9 @@ dependencies {
     
     // Jackson for JSON processing (Google OAuth)
     implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    // Spring Mail (Forgot Password)
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 }
 
 dependencyManagement {

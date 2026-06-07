@@ -8,4 +8,7 @@ import org.example.userservice.dto.RegisterResponse;
 public interface AuthService {
     RegisterResponse register(RegisterRequest request);
     LoginResponse login(LoginRequest request);
+    void forgotPassword(String email);
+    void resetPassword(String token, String newPassword);
 }
+
