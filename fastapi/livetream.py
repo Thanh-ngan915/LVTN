@@ -8,7 +8,7 @@ from pydantic import BaseModel
 import uvicorn
 
 PORT = 5000
-
+# cấp quyền key push git
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "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")
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
