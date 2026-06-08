@@ -14,6 +14,7 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final org.example.userservice.service.EmailService emailService;
 
     // Lấy thông tin cá nhân (truyền id trên URL để test nhanh)
     @GetMapping("/{userId}/profile")
@@ -64,5 +65,18 @@ public class UserController {
             @RequestParam String storeId) {
         userService.approveStore(userId, storeId);
         return ResponseEntity.ok("Duyệt shop thành công");
+    }
+
+    @PostMapping("/{userId}/send-order-email")
+    public ResponseEntity<String> sendOrderEmail(
+            @PathVariable String userId,
+            @RequestBody org.example.userservice.dto.OrderEmailRequest request) {
+        UserDTO user = userService.getProfile(userId);
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            return ResponseEntity.badRequest().body("User email is empty");
+        }
+        String name = user.getFullName() != null && !user.getFullName().isBlank() ? user.getFullName() : user.getUsername();
+        emailService.sendOrderSuccessEmail(user.getEmail(), name, request.getOrderId(), request.getTransactionNo());
+        return ResponseEntity.ok("Đã gửi email");
     }
 }
