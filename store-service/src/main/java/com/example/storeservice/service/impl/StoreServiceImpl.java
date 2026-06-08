@@ -1,5 +1,6 @@
 package com.example.storeservice.service.impl;
 
+import com.example.storeservice.config.JwtTokenProvider;
 import com.example.storeservice.dto.SalePromotionDTO;
 import com.example.storeservice.dto.StoreDTO;
 import com.example.storeservice.dto.StoreProfileResponseDTO;
@@ -15,8 +16,10 @@ import com.example.storeservice.repository.VoucherRepository;
 import com.example.storeservice.service.StoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +33,10 @@ public class StoreServiceImpl implements StoreService {
     private final VoucherRepository voucherRepository;
     private final StoreSalePromotionRepository storeSalePromotionRepository;
     private final SalePromotionRepository salePromotionRepository;
+    private final RestTemplate restTemplate;
+    private final JwtTokenProvider jwtTokenProvider;
+    @Value("${user-service.url:http://localhost:8085}")
+    private String userServiceUrl;
 
     @Override
     @Transactional
@@ -98,8 +105,29 @@ public class StoreServiceImpl implements StoreService {
     public StoreDTO approveStore(String storeId) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new RuntimeException("Shop không tồn tại"));
+
         store.setStatus("active");
-        return toDTO(storeRepository.save(store));
+        Store saved = storeRepository.save(store);
+
+        try {
+            String url = userServiceUrl + "/api/users/admin/approve-store"
+                    + "?userId=" + store.getCreatedBy()
+                    + "&storeId=" + storeId;
+
+            // Tạo service token và gắn vào header
+            String serviceToken = jwtTokenProvider.generateServiceToken();
+
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.set("Authorization", "Bearer " + serviceToken);
+            org.springframework.http.HttpEntity<Void> entity = new org.springframework.http.HttpEntity<>(headers);
+
+            restTemplate.exchange(url, org.springframework.http.HttpMethod.POST, entity, String.class);
+        } catch (Exception e) {
+            log.error("Failed to notify user-service for store approval: {}", e.getMessage());
+            throw new RuntimeException("Duyệt shop thất bại: không thể cập nhật role");
+        }
+
+        return toDTO(saved);
     }
 
     @Override

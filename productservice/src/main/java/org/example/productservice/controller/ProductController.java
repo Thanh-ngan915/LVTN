@@ -344,21 +344,63 @@ public class ProductController {
         }
     }
 
-    @PatchMapping("/{id}/approve")
-    public ResponseEntity<ProductDTO> approveProduct(@PathVariable Integer id) {
-        return ResponseEntity.ok(productService.approveProduct(id));
-    }
-
-    @PatchMapping("/{id}/reject")
-    public ResponseEntity<ProductDTO> rejectProduct(
+    @PatchMapping("/products/{id}/approve")
+    public ResponseEntity<ApiResponse<ProductDTO>> approveProduct(
             @PathVariable Integer id,
-            @RequestParam(required = false) String reason) {
-        return ResponseEntity.ok(productService.rejectProduct(id, reason));
+            HttpServletRequest request) {
+        try {
+            // Kiểm tra quyền admin
+            String userRole = (String) request.getAttribute("userRole");
+            if (!"admin".equalsIgnoreCase(userRole)) {
+                return ResponseEntity.status(403).body(
+                        ApiResponse.error("Chỉ admin mới có thể duyệt sản phẩm")
+                );
+            }
+
+            ProductDTO approved = productService.approveProduct(id);
+            return ResponseEntity.ok(ApiResponse.success(approved, "Sản phẩm được duyệt"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
     }
 
-    @PatchMapping("/{id}/hide")
-    public ResponseEntity<ProductDTO> hideProduct(@PathVariable Integer id) {
-        return ResponseEntity.ok(productService.hideProduct(id));
+    @PatchMapping("/products/{id}/reject")
+    public ResponseEntity<ApiResponse<ProductDTO>> rejectProduct(
+            @PathVariable Integer id,
+            @RequestParam(required = false) String reason,
+            HttpServletRequest request) {
+        try {
+            String userRole = (String) request.getAttribute("userRole");
+            if (!"admin".equalsIgnoreCase(userRole)) {
+                return ResponseEntity.status(403).body(
+                        ApiResponse.error("Chỉ admin mới có thể từ chối sản phẩm")
+                );
+            }
+
+            ProductDTO rejected = productService.rejectProduct(id, reason);
+            return ResponseEntity.ok(ApiResponse.success(rejected, "Sản phẩm bị từ chối"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/products/{id}/hide")
+    public ResponseEntity<ApiResponse<ProductDTO>> hideProduct(
+            @PathVariable Integer id,
+            HttpServletRequest request) {
+        try {
+            String userRole = (String) request.getAttribute("userRole");
+            if (!"admin".equalsIgnoreCase(userRole)) {
+                return ResponseEntity.status(403).body(
+                        ApiResponse.error("Chỉ admin mới có thể ẩn sản phẩm")
+                );
+            }
+
+            ProductDTO hidden = productService.hideProduct(id);
+            return ResponseEntity.ok(ApiResponse.success(hidden, "Sản phẩm được ẩn"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
     }
 
 }

@@ -32,8 +32,13 @@ public class SecurityConfig {
                     "/api/categories",
                     "/api/cart/**"
                 ).permitAll()
-                // Tạo/sửa/xóa sản phẩm: cần xác thực
-                .anyRequest().authenticated()
+                    .requestMatchers(
+                            "/api/products/*/approve",
+                            "/api/products/*/reject",
+                            "/api/products/*/hide",
+                            "/api/products/stats"
+                    ).hasRole("ADMIN")
+               .anyRequest().authenticated()
             )
             .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
