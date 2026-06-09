@@ -25,7 +25,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -38,7 +38,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/vouchers/store/{storeId}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vouchers/{voucherId}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vouchers").permitAll()
-                        // Authenticated endpoints
+                        .requestMatchers(HttpMethod.PATCH, "/api/stores/**").authenticated()
                         .requestMatchers("/api/stores/has-store").authenticated()
                         .requestMatchers("/api/stores/register").authenticated()
                         .requestMatchers("/api/stores/my-store").authenticated()
@@ -51,4 +51,16 @@ public class SecurityConfig {
         return http.build();
     }
 
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 }

@@ -72,16 +72,16 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         // 4. Create StoreRole
-        String storeRoleId = UUID.randomUUID().toString();
-        StoreRole storeRole = StoreRole.builder()
-                .id(storeRoleId)
-                .storeRole("DEFAULT")
-                .status("ACTIVE")
-                .role("USER")
-                .createdBy(request.getUsername())
-                .updatedBy(request.getUsername())
-                .build();
-        storeRoleRepository.save(storeRole);
+//        String storeRoleId = UUID.randomUUID().toString();
+//        StoreRole storeRole = StoreRole.builder()
+//                .id(storeRoleId)
+//                .storeRole("DEFAULT")
+//                .status("ACTIVE")
+//                .role("USER")
+//                .createdBy(request.getUsername())
+//                .updatedBy(request.getUsername())
+//                .build();
+//        storeRoleRepository.save(storeRole);
 
         // 5. Create Permission
         String permissionId = UUID.randomUUID().toString();
@@ -100,7 +100,7 @@ public class AuthServiceImpl implements AuthService {
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .userId(userId)
-                .storeRoleId(storeRoleId)
+//                .storeRoleId(storeRoleId)
                 .role("USER")
                 .createdBy(request.getUsername())
                 .updatedBy(request.getUsername())

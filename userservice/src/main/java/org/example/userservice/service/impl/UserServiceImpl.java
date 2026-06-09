@@ -26,11 +26,13 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor //tự động inject repo qua constructor
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final StoreRoleRepository storeRoleRepository;
+
     @Override
     public UserDTO getProfile(String userId) {
         User user = userRepository.findById(userId)
@@ -41,18 +43,16 @@ public class UserServiceImpl implements UserService {
         String displayRole = account.getRole();
         String storeRoleId = account.getStoreRoleId();
 
-        if (storeRoleId != null) {
-            storeRoleRepository.findById(storeRoleId)
-                    .ifPresent(sr -> {
-                    });
-
-            // Check storerole có phải SELLER active không
-            boolean isSeller = storeRoleRepository.findById(storeRoleId)
-                    .map(sr -> "SELLER".equals(sr.getRole()) && "ACTIVE".equals(sr.getStatus()))
-                    .orElse(false);
-
-            if (isSeller) {
-                displayRole = "SELLER";
+        if (storeRoleId != null && !storeRoleId.isEmpty()) {
+            try {
+                boolean isSeller = storeRoleRepository.findById(storeRoleId)
+                        .map(sr -> "SELLER".equals(sr.getRole()) && "ACTIVE".equals(sr.getStatus()))
+                        .orElse(false);
+                if (isSeller) {
+                    displayRole = "SELLER";
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch StoreRole for user {}: {}", userId, e.getMessage());
             }
         }
 
@@ -66,7 +66,7 @@ public class UserServiceImpl implements UserService {
                 .address(user.getAddress())
                 .status(user.getStatus())
                 .rankId(user.getRankId())
-                .role(displayRole)       // SELLER / USER / ADMIN
+                .role(displayRole)
                 .storeRoleId(storeRoleId)
                 .build();
     }
@@ -158,9 +158,6 @@ public class UserServiceImpl implements UserService {
         user.setImage(imageUrl);
         userRepository.save(user);
     }
-
-    @Autowired
-    private StoreRoleRepository storeRoleRepository;
 
     @Override
     @Transactional
