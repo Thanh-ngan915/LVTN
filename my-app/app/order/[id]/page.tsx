@@ -64,6 +64,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
       confirmed: { label: 'Đã xác nhận', icon: '✅', className: styles.statusConfirmed },
       shipping: { label: 'Đang giao hàng', icon: '🚚', className: styles.statusShipping },
       delivered: { label: 'Đã giao hàng', icon: '📦', className: styles.statusDelivered },
+      completed: { label: 'Hoàn thành', icon: '✅', className: styles.statusCompleted },
       cancelled: { label: 'Đã hủy', icon: '❌', className: styles.statusCancelled },
     };
     return map[status] || map['pending'];
@@ -82,8 +83,9 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
       { key: 'confirmed', label: 'Đã xác nhận', icon: '✅' },
       { key: 'shipping', label: 'Đang giao hàng', icon: '🚚' },
       { key: 'delivered', label: 'Đã giao hàng', icon: '📦' },
+      { key: 'completed', label: 'Hoàn thành', icon: '✅' },
     ];
-    const statusOrder = ['pending', 'confirmed', 'shipping', 'delivered'];
+    const statusOrder = ['pending', 'confirmed', 'shipping', 'delivered', 'completed'];
     const currentIdx = statusOrder.indexOf(status);
 
     return steps.map((step, idx) => ({

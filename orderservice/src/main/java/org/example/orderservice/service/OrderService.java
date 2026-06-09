@@ -8,6 +8,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -472,8 +473,8 @@ public class OrderService {
                 headers.set("Authorization", "Bearer " + bearerToken);
             }
 
-            String url = STORE_SERVICE_BASE_URL + "/stores/my-store";
-            System.out.println("DEBUG → calling: " + url + " | userId=" + userId);
+            String url = STORE_SERVICE_BASE_URL + "/stores/my-store?userId=" + userId;
+            System.out.println("DEBUG → calling: " + url);
 
             ResponseEntity<StoreDTO> resp = restTemplate.exchange(
                     url, HttpMethod.GET,
@@ -575,7 +576,7 @@ public class OrderService {
         String storeId = getStoreIdByUserId(userId, token);
         List<Order> all = orderRepository.findByStoreId(storeId);
         float revenue = all.stream()
-                .filter(o -> "completed".equals(o.getStatus()))
+                .filter(o -> "completed".equals(o.getStatus()) && "paid".equals(o.getPaymentStatus()))
                 .map(Order::getPay).reduce(0f, Float::sum);
         return SellerOrderStatsDTO.builder()
                 .totalRevenue(revenue)
@@ -740,16 +741,33 @@ public class OrderService {
                 .createdAt(refund.getCreatedAt() != null ? refund.getCreatedAt().toString() : null)
                 .products(itemDTOs).build();
     }
+
+    @Scheduled(fixedDelay = 30_000)
+    @Transactional
+    public void autoAdvanceOrderStatus() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(1);
+
+        // shipping → delivered
+        List<Order> shippingOrders = orderRepository.findByStatusAndUpdateAtBefore("shipping", cutoff);
+        for (Order order : shippingOrders) {
+            order.setStatus("delivered");
+            order.setUpdateAt(LocalDateTime.now());
+            if ("COD".equals(order.getPaymentMethod())) {
+                order.setPaymentStatus("paid");
+            }
+            orderRepository.save(order);
+            saveOrderFlow(String.valueOf(order.getId()), "delivered", "system",
+                    "Tự động xác nhận giao hàng thành công");
+        }
+
+        // delivered → completed
+        List<Order> deliveredOrders = orderRepository.findByStatusAndUpdateAtBefore("delivered", cutoff);
+        for (Order order : deliveredOrders) {
+            order.setStatus("completed");
+            order.setUpdateAt(LocalDateTime.now());
+            orderRepository.save(order);
+            saveOrderFlow(String.valueOf(order.getId()), "completed", "system",
+                    "Tự động hoàn tất đơn hàng");
+        }
+    }
 }
-//                .id(d.getId())
-//                .userId(d.getUserId())
-//                .recipientName(d.getRecipientName())
-//                .phone(d.getPhone())
-//                .province(d.getProvince())
-//                .district(d.getDistrict())
-//                .ward(d.getWard())
-//                .addressDetail(d.getAddressDetail())
-//                .isDefault(d.getIsDefault())
-//                .build();
-//    }
-//}

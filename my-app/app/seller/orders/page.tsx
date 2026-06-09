@@ -131,13 +131,10 @@ export default function SellerOrdersPage() {
     const [modal, setModal] = useState<ConfirmModal | null>(null);
     const [note, setNote] = useState("");
     const [submitting, setSubmitting] = useState(false);
-    const [userId, setUserId] = useState("");
 
-    useEffect(() => {
-        setUserId(getUserId());
-    }, []);
 
     const fetchOrders = useCallback(async (status: string) => {
+        const userId = getUserId();
         if (!userId) return;
         console.log("Fetching with userId:", userId);
         setLoading(true);
@@ -155,9 +152,10 @@ export default function SellerOrdersPage() {
         } finally {
             setLoading(false);
         }
-    }, [userId]);
+    }, []);
 
     const fetchStats = useCallback(async () => {
+        const userId = getUserId();
         if (!userId) return;
         try {
             const res = await fetch(`${API_BASE}/api/seller/orders/stats`, {
@@ -166,15 +164,15 @@ export default function SellerOrdersPage() {
             const json: ApiResponse<SellerOrderStatsDTO> = await res.json();
             if (res.ok && json.success) setStats(json.data ?? null);
         } catch { /* stats không critical */ }
-    }, [userId]);
+    }, []);
 
     useEffect(() => {
-        if (!userId) return;
         fetchOrders(activeTab);
         fetchStats();
-    }, [activeTab, userId, fetchOrders, fetchStats]);
+    }, [activeTab, fetchOrders, fetchStats]);
 
     async function handleUpdateStatus() {
+        const userId = getUserId();
         if (!modal) return;
         setSubmitting(true);
         try {

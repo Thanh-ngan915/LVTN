@@ -225,6 +225,12 @@
   border: 1.5px solid rgba(39, 174, 96, 0.7);
 }
 
+.statusCompleted {
+    background: rgba(39, 174, 96, 0.95);
+    color: #fff;
+    border: 1.5px solid rgba(39, 174, 96, 0.7);
+}
+
 .statusCancelled {
   background: rgba(231, 76, 60, 0.9);
   color: #fff;
