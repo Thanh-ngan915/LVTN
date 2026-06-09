@@ -31,7 +31,10 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Public endpoints - không cần auth
+                        .requestMatchers(HttpMethod.GET, "/api/stores/promotions/active").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/stores/{storeId}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/stores").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vouchers/store/{storeId}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vouchers/{voucherId}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vouchers").permitAll()
@@ -39,7 +42,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/stores/has-store").authenticated()
                         .requestMatchers("/api/stores/register").authenticated()
                         .requestMatchers("/api/stores/my-store").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/stores/{storeId}").permitAll()
                         .requestMatchers("/api/stores/**").authenticated()
                         .requestMatchers("/api/vouchers/**").authenticated()
                         .anyRequest().authenticated()

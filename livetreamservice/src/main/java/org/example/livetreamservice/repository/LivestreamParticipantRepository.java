@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface LivestreamParticipantRepository extends JpaRepository<LivestreamParticipant, Long> {
     List<LivestreamParticipant> findByRoomId(Long roomId);
     List<LivestreamParticipant> findByRoomIdAndStatus(Long roomId, String status);
+    long countByRoomId(Long roomId);
     Optional<LivestreamParticipant> findByRoomIdAndUserId(Long roomId, String userId);
     Optional<LivestreamParticipant> findByRoomIdAndUsername(Long roomId, String username);
     List<LivestreamParticipant> findByUserIdAndStatus(String userId, String status);

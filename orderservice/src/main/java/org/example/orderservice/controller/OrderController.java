@@ -154,6 +154,20 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.success(ratings, "OK"));
     }
 
+    /**
+     * Lấy thống kê đơn hàng theo phòng Livestream
+     * GET /api/orders/livestream/{roomId}/stats
+     */
+    @GetMapping("/livestream/{roomId}/stats")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getLivestreamStats(@PathVariable Long roomId) {
+        try {
+            java.util.Map<String, Object> stats = orderService.getLivestreamStats(roomId);
+            return ResponseEntity.ok(ApiResponse.success(stats, "Lấy thống kê thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ApiResponse.error("Lỗi lấy thống kê: " + e.getMessage()));
+        }
+    }
+
 }
 //    public ResponseEntity<ApiResponse<Page<RatingDTO>>> getRatingsByProduct(
 //            @PathVariable Integer productId,

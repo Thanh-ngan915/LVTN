@@ -167,8 +167,8 @@ public class LivestreamRoomController {
                 return ResponseEntity.status(403).body("Only host can end the room");
             }
             
-            roomService.endRoom(roomName);
-            return ResponseEntity.ok("Room ended successfully");
+            java.util.Map<String, Object> stats = roomService.endRoom(roomName);
+            return ResponseEntity.ok(stats);
         } catch (Exception e) {
             log.error("Error ending room: ", e);
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());

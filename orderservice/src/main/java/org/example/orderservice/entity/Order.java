@@ -62,6 +62,9 @@ public class Order {
     @Column(name = "payment_status", length = 20)
     private String paymentStatus; // pending, paid
 
+    @Column(name = "livestream_room_id")
+    private Long livestreamRoomId;
+
     @Column(name = "update_at")
     private LocalDateTime updateAt;
 

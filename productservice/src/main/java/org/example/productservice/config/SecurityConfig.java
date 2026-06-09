@@ -25,12 +25,14 @@ public class SecurityConfig {
                 // Đọc sản phẩm: public
                 .requestMatchers(
                     "/api/products",
-                    "/api/products/{id}",
+                    "/api/products/*",
                     "/api/products/category/**",
                     "/api/products/search",
                     "/api/products/store/**",
+                    "/api/products/store/*/**",
                     "/api/categories",
-                    "/api/cart/**"
+                    "/api/categories/**",
+                    "/api/cart/count"
                 ).permitAll()
                     .requestMatchers(
                             "/api/products/*/approve",
@@ -38,7 +40,11 @@ public class SecurityConfig {
                             "/api/products/*/hide",
                             "/api/products/stats"
                     ).hasRole("ADMIN")
-               .anyRequest().authenticated()
+//               .anyRequest().authenticated()
+                // Giỏ hàng cần xác thực (trừ /count)
+                .requestMatchers("/api/cart/**").authenticated()
+                // Tạo/sửa/xóa sản phẩm: cần xác thực
+                .anyRequest().authenticated()
             )
             .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 

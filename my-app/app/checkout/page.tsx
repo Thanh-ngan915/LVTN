@@ -204,7 +204,8 @@ function CheckoutContent() {
           productPriceAfter: item.priceAfter,
           productName: item.productName,
           productImage: item.productImage || undefined,
-        })) : undefined
+        })) : undefined,
+        livestreamRoomId: searchParams.get('livestreamRoomId') ? Number(searchParams.get('livestreamRoomId')) : undefined,
       };
       const res = await createOrder(request);
       if (res.success) {

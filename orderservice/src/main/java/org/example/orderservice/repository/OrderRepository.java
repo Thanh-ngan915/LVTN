@@ -19,4 +19,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     List<Order> findByStoreId(String storeId);
     List<Order> findByStoreIdAndStatus(String storeId, String status);
     long countByStoreIdAndStatus(String storeId, String status);
+    
+    List<Order> findByLivestreamRoomId(Long livestreamRoomId);
+    long countByLivestreamRoomId(Long livestreamRoomId);
 }

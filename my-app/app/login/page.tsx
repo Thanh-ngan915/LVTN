@@ -155,6 +155,12 @@ export default function LoginPage() {
               />
             </div>
 
+            <div style={{ textAlign: "right", marginBottom: "12px", marginTop: "-8px" }}>
+              <Link href="/forgot-password" style={{ color: "#8b5cf6", fontSize: "0.85rem", textDecoration: "none", fontWeight: 600 }}>
+                Quên mật khẩu?
+              </Link>
+            </div>
+
             <button type="submit" className={`${styles.btnPrimary} ${loading ? styles.btnLoading : ""}`} disabled={loading}>
               <span className={styles.btnText}>ĐĂNG NHẬP</span>
               {loading && <span className={styles.loader}></span>}
