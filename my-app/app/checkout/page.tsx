@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import {
@@ -9,11 +9,13 @@ import {
   VoucherDTO,
   OrderRequestDTO,
   OrderItemRequestDTO,
+  calculateShippingFee,
+  ShippingFeeResponseDTO,
 } from '../services/orderService';
 import { getCart, removeMultipleFromCart, CartItemDTO } from '../services/cartService';
 import styles from './checkout.module.css';
 
-const SHIPPING_FEE = 30000;
+const DEFAULT_SHIPPING_FEE = 30000;
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -68,6 +70,11 @@ function CheckoutContent() {
   // Payment
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'VNPAY'>('COD');
 
+  // Shipping fee state (GHTK)
+  const [shippingFeeData, setShippingFeeData] = useState<ShippingFeeResponseDTO | null>(null);
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const shippingDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // UI State
   const [placing, setPlacing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -105,6 +112,54 @@ function CheckoutContent() {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
+  // Tính phí vận chuyển qua GHTK khi địa chỉ thay đổi
+  const fetchShippingFee = useCallback(async (
+    prov: string, dist: string, ward: string, addr: string, subtotalValue: number
+  ) => {
+    if (!prov.trim() || !dist.trim()) {
+      setShippingFeeData(null);
+      return;
+    }
+    setShippingLoading(true);
+    try {
+      const res = await calculateShippingFee({
+        province: prov.trim(),
+        district: dist.trim(),
+        ward: ward.trim() || undefined,
+        address: addr.trim() || undefined,
+        storeId: actualStoreId || undefined,
+        weight: 500,
+        value: subtotalValue,
+      });
+      if (res.success && res.data) {
+        setShippingFeeData(res.data);
+      } else {
+        setShippingFeeData(null);
+      }
+    } catch (e) {
+      console.error('Lỗi tính phí ship:', e);
+      setShippingFeeData(null);
+    } finally {
+      setShippingLoading(false);
+    }
+  }, [actualStoreId]);
+
+  // subtotal phục vụ tính giả và fee (khai báo sau callback nhưng React hoàn toàn ổn)
+  const subtotal = isCartCheckout
+    ? checkoutItems.reduce((sum, item) => sum + (item.priceAfter || 0) * item.quantity, 0)
+    : priceAfter * quantity;
+
+  // Debounce khi người dùng nhập địa chỉ
+  useEffect(() => {
+    if (shippingDebounceRef.current) clearTimeout(shippingDebounceRef.current);
+    shippingDebounceRef.current = setTimeout(() => {
+      fetchShippingFee(province, district, ward, addressDetail, subtotal);
+    }, 800);
+    return () => {
+      if (shippingDebounceRef.current) clearTimeout(shippingDebounceRef.current);
+    };
+  }, [province, district, ward, addressDetail, subtotal, fetchShippingFee]);
+
   // Calculate discount from voucher
   const calcDiscount = useCallback(
     (voucher: VoucherDTO | null, subtotal: number): number => {
@@ -122,13 +177,11 @@ function CheckoutContent() {
     []
   );
 
-  const subtotal = isCartCheckout 
-    ? checkoutItems.reduce((sum, item) => sum + (item.priceAfter || 0) * item.quantity, 0)
-    : priceAfter * quantity;
   const platformDiscount = calcDiscount(selectedPlatformVoucher, subtotal);
   const shopDiscount = calcDiscount(selectedShopVoucher, subtotal);
   const discount = platformDiscount + shopDiscount;
-  const shippingFee = subtotal >= 500000 ? 0 : SHIPPING_FEE;
+  // Phí vận chuyển: dùng giá từ GHTK nếu có, ngược lại dùng mặc định
+  const shippingFee = shippingFeeData ? shippingFeeData.fee : DEFAULT_SHIPPING_FEE;
   const total = subtotal - discount + shippingFee;
 
   const handleApplyVoucherCode = () => {
@@ -598,9 +651,27 @@ function CheckoutContent() {
               )}
 
               <div className={styles.summaryRow}>
-                <span className={styles.summaryLabel}>Phí vận chuyển</span>
+                <span className={styles.summaryLabel}>
+                  Phí vận chuyển
+                  {shippingFeeData && (
+                    <span style={{ display: 'block', fontSize: '0.75rem', color: '#888', fontWeight: 400 }}>
+                      {shippingFeeData.serviceLabel || shippingFeeData.service}
+                      {shippingFeeData.deliveryDays ? ` · ${shippingFeeData.deliveryDays} ngày` : ''}
+                      {shippingFeeData.fromGhtk ? ' 🚚 GHTK' : ''}
+                    </span>
+                  )}
+                  {shippingLoading && (
+                    <span style={{ display: 'block', fontSize: '0.75rem', color: '#aaa' }}>⏳ Đang tính...</span>
+                  )}
+                </span>
                 <span className={`${styles.summaryValue} ${shippingFee === 0 ? styles.freeShip : ''}`}>
-                  {shippingFee === 0 ? '🎉 Miễn phí' : formatPrice(shippingFee)}
+                  {shippingLoading ? (
+                    <span style={{ color: '#aaa' }}>--</span>
+                  ) : shippingFee === 0 ? (
+                    '🎉 Miễn phí'
+                  ) : (
+                    formatPrice(shippingFee)
+                  )}
                 </span>
               </div>
 

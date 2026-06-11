@@ -33,6 +33,10 @@ public class Order {
     @Column(name = "pay", nullable = false)
     private Float pay;
 
+    @Column(name = "shipping_fee", nullable = false)
+    @Builder.Default
+    private Float shippingFee = 0f;
+
     @Column(name = "voucher_id")
     private Integer voucherId;
 
@@ -80,6 +84,7 @@ public class Order {
         if (this.total == null) this.total = 0f;
         if (this.discount == null) this.discount = 0f;
         if (this.pay == null) this.pay = 0f;
+        if (this.shippingFee == null) this.shippingFee = 0f;
         if (this.paymentMethod == null) this.paymentMethod = "COD";
         if (this.paymentStatus == null) this.paymentStatus = "pending";
     }

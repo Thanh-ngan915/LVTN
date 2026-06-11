@@ -2,6 +2,7 @@ package org.example.orderservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.orderservice.dto.*;
+import org.example.orderservice.service.GhtkService;
 import org.example.orderservice.service.OrderService;
 import org.example.orderservice.service.RatingService;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ public class OrderController {
 
     private final OrderService orderService;
     private final RatingService ratingService;
+    private final GhtkService ghtkService;
     /**
      * Tạo đơn hàng mới (Mua Ngay)
      * POST /api/orders
@@ -124,6 +126,22 @@ public class OrderController {
             return ResponseEntity.ok(ApiResponse.success(order, "Hủy đơn hàng thành công"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * Tính phí vận chuyển qua GHTK API
+     * POST /api/orders/shipping-fee
+     */
+    @PostMapping("/shipping-fee")
+    public ResponseEntity<ApiResponse<ShippingFeeResponseDTO>> calculateShippingFee(
+            @RequestBody ShippingFeeRequestDTO request
+    ) {
+        try {
+            ShippingFeeResponseDTO result = ghtkService.calculateShippingFee(request);
+            return ResponseEntity.ok(ApiResponse.success(result, "Tính phí vận chuyển thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ApiResponse.error("Lỗi tính phí vận chuyển: " + e.getMessage()));
         }
     }
 

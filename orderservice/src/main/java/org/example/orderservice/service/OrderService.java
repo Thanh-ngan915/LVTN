@@ -32,6 +32,7 @@ public class OrderService {
     private final OrderFlowRepository orderFlowRepository;
     private final OrderRefundRepository orderRefundRepository;
     private final ProductOrderRefundRepository productOrderRefundRepository;
+    private final GhtkService ghtkService;
     @Value("${store.service.url:http://localhost:8090}/api")
     private String STORE_SERVICE_BASE_URL;
 
@@ -120,15 +121,36 @@ public class OrderService {
         }
 
         float totalDiscount = platformDiscount + shopDiscount;
-        float pay = Math.max(0f, total - totalDiscount);
 
-        // 6. Tạo đơn hàng
+        // 6. Tính phí vận chuyển thực tế qua GHTK
+        float shippingFee;
+        try {
+            ShippingFeeRequestDTO shippingReq = ShippingFeeRequestDTO.builder()
+                    .province(request.getProvince())
+                    .district(request.getDistrict())
+                    .ward(request.getWard())
+                    .address(request.getAddressDetail())
+                    .storeId(request.getStoreId())
+                    .weight(500) // mặc định 500g
+                    .value(total)
+                    .build();
+            ShippingFeeResponseDTO shippingResult = ghtkService.calculateShippingFee(shippingReq);
+            shippingFee = shippingResult.getFee() != null ? shippingResult.getFee() : 30_000f;
+        } catch (Exception e) {
+            log.warn("Không thể tính phí GHTK, dùng phí mặc định: {}", e.getMessage());
+            shippingFee = 30_000f;
+        }
+
+        float pay = Math.max(0f, total - totalDiscount + shippingFee);
+
+        // 7. Tạo đơn hàng
         Order order = Order.builder()
                 .userId(userId)
                 .storeId(request.getStoreId())
                 .total(total)
                 .discount(totalDiscount)
                 .pay(pay)
+                .shippingFee(shippingFee)
                 .voucherId(platformVoucher != null ? platformVoucher.getId() : null)
                 .shopVoucherId(shopVoucherDTO != null ? shopVoucherDTO.getId() : null)
                 .shopDiscount(shopDiscount)
@@ -140,7 +162,7 @@ public class OrderService {
                 .build();
         order = orderRepository.save(order);
 
-        // 7. Tạo product order item
+        // 8. Tạo product order item
         List<ProductOrder> savedItems = new ArrayList<>();
         if (requestItems != null && !requestItems.isEmpty()) {
             for (OrderItemRequestDTO item : requestItems) {
@@ -348,7 +370,7 @@ public class OrderService {
     }
 
 
-    private static final float SHIPPING_FEE = 30000f;
+    private static final float SHIPPING_FEE = 30000f; // Phí mặc định (fallback)
 
     private OrderResponseDTO toOrderResponseDTO(Order order, DeliveryInformation delivery, List<ProductOrder> items) {
         List<OrderResponseDTO.ProductOrderItemDTO> itemDTOs = items.stream()
@@ -404,7 +426,7 @@ public class OrderService {
             }
         }
 
-        float shippingFee = order.getTotal() >= 500000f ? 0f : SHIPPING_FEE;
+        float shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0f;
         boolean rated = !ratingRepository.findByOrderId(order.getId()).isEmpty();
 
         return OrderResponseDTO.builder()
