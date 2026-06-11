@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./orders.module.css";
+import StoreSidebar from "../../components/StoreSidebar";
 
 interface DeliveryInformationDTO {
     id?: number;
@@ -64,7 +65,6 @@ interface ConfirmModal {
     action: "confirmed" | "cancelled" | "shipping";
 }
 
-// Dùng relative path → Next.js proxy (next.config.ts) xử lý
 const API_BASE = "";
 
 const STATUS_TABS = [
@@ -132,11 +132,9 @@ export default function SellerOrdersPage() {
     const [note, setNote] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-
     const fetchOrders = useCallback(async (status: string) => {
         const userId = getUserId();
         if (!userId) return;
-        console.log("Fetching with userId:", userId);
         setLoading(true);
         setError("");
         try {
@@ -218,190 +216,189 @@ export default function SellerOrdersPage() {
     }
 
     return (
-        <div className={styles.wrapper}>
-            {/* Topbar */}
-            <div className={styles.topbar}>
-                <div className={styles.topbarLeft}>
-                    <button className={styles.btnBack} onClick={() => router.push("/my-store")}>
-                        ← Quay lại
-                    </button>
+        <div className={styles.page}>
+            <StoreSidebar />
+
+            <main className={styles.main}>
+                {/* Topbar */}
+                <div className={styles.topbar}>
                     <div>
-                        <h1 className={styles.pageTitle}>Quản lý đơn hàng</h1>
+                        <h1 className={styles.pageTitle}>📋 Quản lý đơn hàng</h1>
                         <p className={styles.pageSubtitle}>
                             {stats?.totalOrders ?? 0} đơn hàng · Doanh thu {fmtVND(stats?.totalRevenue)}
                         </p>
                     </div>
+                    <button className={styles.btnRefresh} onClick={() => fetchOrders(activeTab)}>
+                        🔄 Làm mới
+                    </button>
                 </div>
-                <button className={styles.btnRefresh} onClick={() => fetchOrders(activeTab)}>
-                    🔄 Làm mới
-                </button>
-            </div>
 
-            {/* Stats */}
-            {stats && (
-                <div className={styles.statsRow}>
-                    <div className={styles.statCard}>
-                        <div className={styles.statIcon}>💰</div>
-                        <div>
-                            <div className={`${styles.statNum} ${styles.statAccent}`}>{fmtVND(stats.totalRevenue)}</div>
-                            <div className={styles.statLabel}>Doanh thu</div>
+                {/* Stats */}
+                {stats && (
+                    <div className={styles.statsRow}>
+                        <div className={styles.statCard}>
+                            <div className={styles.statIcon}>💰</div>
+                            <div>
+                                <div className={`${styles.statNum} ${styles.statAccent}`}>{fmtVND(stats.totalRevenue)}</div>
+                                <div className={styles.statLabel}>Doanh thu</div>
+                            </div>
+                        </div>
+                        <div className={styles.statCard}>
+                            <div className={styles.statIcon}>📋</div>
+                            <div>
+                                <div className={styles.statNum}>{stats.totalOrders}</div>
+                                <div className={styles.statLabel}>Tổng đơn</div>
+                            </div>
+                        </div>
+                        <div className={styles.statCard}>
+                            <div className={styles.statIcon}>⏳</div>
+                            <div>
+                                <div className={`${styles.statNum} ${styles.statWarning}`}>{stats.pendingCount}</div>
+                                <div className={styles.statLabel}>Chờ xác nhận</div>
+                            </div>
+                        </div>
+                        <div className={styles.statCard}>
+                            <div className={styles.statIcon}>🚚</div>
+                            <div>
+                                <div className={`${styles.statNum} ${styles.statInfo}`}>{stats.shippingCount}</div>
+                                <div className={styles.statLabel}>Đang giao</div>
+                            </div>
+                        </div>
+                        <div className={styles.statCard}>
+                            <div className={styles.statIcon}>✅</div>
+                            <div>
+                                <div className={`${styles.statNum} ${styles.statSuccess}`}>{stats.completedCount}</div>
+                                <div className={styles.statLabel}>Hoàn thành</div>
+                            </div>
                         </div>
                     </div>
-                    <div className={styles.statCard}>
-                        <div className={styles.statIcon}>📋</div>
-                        <div>
-                            <div className={styles.statNum}>{stats.totalOrders}</div>
-                            <div className={styles.statLabel}>Tổng đơn</div>
-                        </div>
+                )}
+
+                {/* Filter */}
+                <div className={styles.filterBar}>
+                    <div className={styles.tabs}>
+                        {STATUS_TABS.map((tab) => {
+                            const count = tabCount(tab.key);
+                            return (
+                                <button
+                                    key={tab.key}
+                                    className={`${styles.tabBtn} ${activeTab === tab.key ? styles.tabActive : ""}`}
+                                    onClick={() => setActiveTab(tab.key)}
+                                >
+                                    {tab.label}
+                                    {count != null && count > 0 && (
+                                        <span className={styles.tabBadge}>{count}</span>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
-                    <div className={styles.statCard}>
-                        <div className={styles.statIcon}>⏳</div>
-                        <div>
-                            <div className={`${styles.statNum} ${styles.statWarning}`}>{stats.pendingCount}</div>
-                            <div className={styles.statLabel}>Chờ xác nhận</div>
-                        </div>
-                    </div>
-                    <div className={styles.statCard}>
-                        <div className={styles.statIcon}>🚚</div>
-                        <div>
-                            <div className={`${styles.statNum} ${styles.statInfo}`}>{stats.shippingCount}</div>
-                            <div className={styles.statLabel}>Đang giao</div>
-                        </div>
-                    </div>
-                    <div className={styles.statCard}>
-                        <div className={styles.statIcon}>✅</div>
-                        <div>
-                            <div className={`${styles.statNum} ${styles.statSuccess}`}>{stats.completedCount}</div>
-                            <div className={styles.statLabel}>Hoàn thành</div>
-                        </div>
+                    <div className={styles.searchBox}>
+                        <span className={styles.searchIcon}>🔍</span>
+                        <input
+                            className={styles.searchInput}
+                            placeholder="Tìm theo mã đơn, tên, SĐT…"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
                     </div>
                 </div>
-            )}
 
-            {/* Filter */}
-            <div className={styles.filterBar}>
-                <div className={styles.tabs}>
-                    {STATUS_TABS.map((tab) => {
-                        const count = tabCount(tab.key);
-                        return (
-                            <button
-                                key={tab.key}
-                                className={`${styles.tabBtn} ${activeTab === tab.key ? styles.tabActive : ""}`}
-                                onClick={() => setActiveTab(tab.key)}
-                            >
-                                {tab.label}
-                                {count != null && count > 0 && (
-                                    <span className={styles.tabBadge}>{count}</span>
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
-                <div className={styles.searchBox}>
-                    <span className={styles.searchIcon}>🔍</span>
-                    <input
-                        className={styles.searchInput}
-                        placeholder="Tìm theo mã đơn, tên, SĐT…"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                </div>
-            </div>
+                {/* Error */}
+                {error && <div className={styles.errorBanner}>⚠️ {error}</div>}
 
-            {/* Error */}
-            {error && <div className={styles.errorBanner}>⚠️ {error}</div>}
-
-            {/* Table */}
-            <div className={styles.tableSection}>
-                {loading ? (
-                    <div className={styles.empty}><div className={styles.spinner} /></div>
-                ) : filtered.length === 0 ? (
-                    <div className={styles.empty}>
-                        <div className={styles.emptyIcon}>📭</div>
-                        <p className={styles.emptyText}>Không có đơn hàng nào</p>
-                    </div>
-                ) : (
-                    <div className={styles.tableWrap}>
-                        <table className={styles.table}>
-                            <thead>
-                            <tr>
-                                <th>Mã đơn</th>
-                                <th>Khách hàng</th>
-                                <th>Sản phẩm</th>
-                                <th>Tổng tiền</th>
-                                <th>Thanh toán</th>
-                                <th>Trạng thái</th>
-                                <th>Ngày đặt</th>
-                                <th>Thao tác</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {filtered.map((order) => (
-                                <tr key={order.id}>
-                                    <td><span className={styles.orderId}>#{order.id}</span></td>
-                                    <td>
-                                        <div className={styles.customerCell}>
-                                            <div className={styles.avatar}>{initials(order.deliveryInformation?.recipientName)}</div>
-                                            <div>
-                                                <div className={styles.customerName}>{order.deliveryInformation?.recipientName ?? "—"}</div>
-                                                <div className={styles.customerId}>{order.deliveryInformation?.phone ?? ""}</div>
+                {/* Table */}
+                <div className={styles.tableSection}>
+                    {loading ? (
+                        <div className={styles.empty}><div className={styles.spinner} /></div>
+                    ) : filtered.length === 0 ? (
+                        <div className={styles.empty}>
+                            <div className={styles.emptyIcon}>📭</div>
+                            <p className={styles.emptyText}>Không có đơn hàng nào</p>
+                        </div>
+                    ) : (
+                        <div className={styles.tableWrap}>
+                            <table className={styles.table}>
+                                <thead>
+                                <tr>
+                                    <th>Mã đơn</th>
+                                    <th>Khách hàng</th>
+                                    <th>Sản phẩm</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Thanh toán</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày đặt</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {filtered.map((order) => (
+                                    <tr key={order.id}>
+                                        <td><span className={styles.orderId}>#{order.id}</span></td>
+                                        <td>
+                                            <div className={styles.customerCell}>
+                                                <div className={styles.avatar}>{initials(order.deliveryInformation?.recipientName)}</div>
+                                                <div>
+                                                    <div className={styles.customerName}>{order.deliveryInformation?.recipientName ?? "—"}</div>
+                                                    <div className={styles.customerId}>{order.deliveryInformation?.phone ?? ""}</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td><span className={styles.itemCount}>{order.items?.length ?? 0} sản phẩm</span></td>
-                                    <td><span className={styles.amount}>{fmtVND(order.pay)}</span></td>
-                                    <td>
+                                        </td>
+                                        <td><span className={styles.itemCount}>{order.items?.length ?? 0} sản phẩm</span></td>
+                                        <td><span className={styles.amount}>{fmtVND(order.pay)}</span></td>
+                                        <td>
                                             <span className={`${styles.payBadge} ${order.paymentStatus === "paid" ? styles.payPaid : styles.payPending}`}>
                                                 {order.paymentStatus === "paid" ? "Đã thanh toán" : "COD"}
                                             </span>
-                                    </td>
-                                    <td>
+                                        </td>
+                                        <td>
                                             <span className={`${styles.statusBadge} ${styles[`status_${order.status}` as keyof typeof styles] ?? ""}`}>
                                                 {STATUS_LABEL[order.status ?? ""] ?? order.status}
                                             </span>
-                                    </td>
-                                    <td><span className={styles.dateText}>{fmtDate(order.createdAt)}</span></td>
-                                    <td>
-                                        <div className={styles.actions}>
-                                            <button
-                                                className={styles.btnView}
-                                                onClick={() => router.push(`/my-store/orders/${order.id}`)}
-                                            >
-                                                Xem
-                                            </button>
-                                            {order.status === "pending" && (
-                                                <>
-                                                    <button
-                                                        className={styles.btnConfirm}
-                                                        onClick={() => setModal({ orderId: order.id!, action: "confirmed" })}
-                                                    >
-                                                        Xác nhận
-                                                    </button>
-                                                    <button
-                                                        className={styles.btnReject}
-                                                        onClick={() => setModal({ orderId: order.id!, action: "cancelled" })}
-                                                    >
-                                                        ✕
-                                                    </button>
-                                                </>
-                                            )}
-                                            {order.status === "confirmed" && (
+                                        </td>
+                                        <td><span className={styles.dateText}>{fmtDate(order.createdAt)}</span></td>
+                                        <td>
+                                            <div className={styles.actions}>
                                                 <button
-                                                    className={styles.btnShip}
-                                                    onClick={() => setModal({ orderId: order.id!, action: "shipping" })}
+                                                    className={styles.btnView}
+                                                    onClick={() => router.push(`/seller/orders/${order.id}`)}
                                                 >
-                                                    Giao hàng
+                                                    Xem
                                                 </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
+                                                {order.status === "pending" && (
+                                                    <>
+                                                        <button
+                                                            className={styles.btnConfirm}
+                                                            onClick={() => setModal({ orderId: order.id!, action: "confirmed" })}
+                                                        >
+                                                            Xác nhận
+                                                        </button>
+                                                        <button
+                                                            className={styles.btnReject}
+                                                            onClick={() => setModal({ orderId: order.id!, action: "cancelled" })}
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {order.status === "confirmed" && (
+                                                    <button
+                                                        className={styles.btnShip}
+                                                        onClick={() => setModal({ orderId: order.id!, action: "shipping" })}
+                                                    >
+                                                        Giao hàng
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </main>
 
             {/* Modal */}
             {modal && (
