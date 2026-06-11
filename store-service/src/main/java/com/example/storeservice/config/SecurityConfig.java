@@ -46,8 +46,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/vouchers/**").authenticated()
                         .requestMatchers("/api/wallet/store/**").permitAll()
                         .requestMatchers("/api/wallet/**").authenticated()
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

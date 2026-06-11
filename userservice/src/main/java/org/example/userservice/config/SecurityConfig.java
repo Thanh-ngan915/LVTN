@@ -22,6 +22,7 @@ import java.util.Collections;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final JwtTokenFilter jwtTokenFilter;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -35,15 +36,15 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/users/admin/**").hasRole("ADMIN")
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/users/*/send-order-email").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/users/*/send-order-email")
+                        .permitAll()
                         .requestMatchers("/api/users/admin/**").hasAnyRole("ADMIN", "SERVICE")
                         .requestMatchers("/api/users/**").authenticated()
-                        .anyRequest().authenticated()
-                );
-        http.addFilterBefore(jwtTokenFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                        .anyRequest().authenticated());
+        http.addFilterBefore(jwtTokenFilter,
+                org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
