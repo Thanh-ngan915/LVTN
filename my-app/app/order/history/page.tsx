@@ -72,6 +72,7 @@ export default function OrderHistoryPage() {
             case 'confirmed': return { label: '✅ Đã xác nhận',  cls: styles.statusConfirmed };
             case 'shipping':  return { label: '🚚 Đang giao',    cls: styles.statusShipping };
             case 'delivered': return { label: '📦 Đã giao',      cls: styles.statusDelivered };
+            case 'completed': return { label: '✅ Hoàn thành',      cls: styles.statusDelivered };
             case 'cancelled': return { label: '❌ Đã hủy',       cls: styles.statusCancelled };
             default:          return { label: status,             cls: '' };
         }
@@ -83,6 +84,7 @@ export default function OrderHistoryPage() {
         { key: 'confirmed', label: 'Đã xác nhận' },
         { key: 'shipping',  label: 'Đang giao' },
         { key: 'delivered', label: 'Đã giao' },
+        { key: 'completed', label: 'Hoàn thành' },
         { key: 'cancelled', label: 'Đã hủy' },
     ];
 
@@ -178,7 +180,7 @@ export default function OrderHistoryPage() {
                                                     Hủy đơn
                                                 </button>
                                             )}
-                                            {order.status === 'delivered' && (
+                                            {order.status === 'completed' && (
                                                 order.rated
                                                     ? <span className={styles.ratedBadge}> ✓ Đã đánh giá</span>
                                                     : <button className={styles.btnReview} onClick={() => setReviewOrder({

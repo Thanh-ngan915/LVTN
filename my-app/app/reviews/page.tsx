@@ -30,7 +30,7 @@ export default function ReviewsPage() {
                 return r.json();
             })
             .then(data => {
-                const doneOrders = (data.data || []).filter((o: Order) => o.status === "delivered");
+                const doneOrders = (data.data || []).filter((o: Order) => o.status === "completed");
                 setOrders(doneOrders);
             })
             .catch((e) => {

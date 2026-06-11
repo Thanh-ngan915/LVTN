@@ -1,8 +1,8 @@
 import styles from "../admin/dashboard/dashboard.module.css";
 
 interface Props {
-    activeSection: "dashboard" | "users" | "shops" | "products";
-    setActiveSection: (s: "dashboard" | "users" | "shops" | "products") => void;
+    activeSection: "dashboard" | "users" | "shops" | "products" |"withdrawals";
+    setActiveSection: (s: "dashboard" | "users" | "shops" | "products" | "withdrawals") => void;
     adminUser: any;
     onLogout: () => void;
 }
@@ -37,6 +37,12 @@ export default function Sidebar({ activeSection, setActiveSection, adminUser, on
                     onClick={() => setActiveSection("products")}
                 >
                     <span>📦</span> Sản phẩm
+                </button>
+                <button
+                    className={`${styles.navItem} ${activeSection === "withdrawals" ? styles.navActive : ""}`}
+                    onClick={() => setActiveSection("withdrawals")}
+                >
+                    <span>💸</span> Rút tiền
                 </button>
             </nav>
             <div className={styles.sidebarFooter}>

@@ -115,7 +115,7 @@ export default function MyStorePage() {
     const [categories, setCategories] = useState<{ shortname: string; name: string }[]>([]);
     const [activeTab, setActiveTab] = useState<"active" | "deleted">("active");
     const [deletedProducts, setDeletedProducts] = useState<Product[]>([]);
-    const [activeSection, setActiveSection] = useState<"products" | "vouchers" | "ratings" | "promotions">("products");
+    const [activeSection, setActiveSection] = useState<"products" | "vouchers" | "ratings" | "promotions"| "orders" | "wallet">("products");
     const [vouchers, setVouchers] = useState<Voucher[]>([]);
     const [voucherLoading, setVoucherLoading] = useState(false);
     const [showVoucherModal, setShowVoucherModal] = useState(false);
@@ -493,6 +493,11 @@ export default function MyStorePage() {
                         className={`${styles.navItem} ${activeSection === "vouchers" ? styles.navActive : ""}`}
                         onClick={() => { setActiveSection("vouchers"); fetchVouchers(); }}>
                         <span>🎟️</span> Voucher
+                    </button>
+                    <button
+                        className={`${styles.navItem} ${activeSection === "wallet" ? styles.navActive : ""}`}
+                        onClick={() => router.push("/my-store/wallet")}>
+                        <span>💰</span> Ví của shop
                     </button>
                     <button
                         className={`${styles.navItem} ${activeSection === "ratings" ? styles.navActive : ""}`}

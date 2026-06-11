@@ -1,6 +1,7 @@
 package org.example.orderservice.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.orderservice.dto.*;
 import org.example.orderservice.entity.*;
 import org.example.orderservice.repository.*;
@@ -8,6 +9,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -17,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -37,6 +40,7 @@ public class OrderService {
     // Có thể override bằng env var STORE_SERVICE_URL khi chạy Docker
     @Value("${store.service.url:http://localhost:8090}/api/vouchers")
     private String STORE_SERVICE_URL;
+    private final SettlementRepository settlementRepository;
 
     /**
      * Tạo đơn hàng mới (Mua ngay)
@@ -473,8 +477,8 @@ public class OrderService {
                 headers.set("Authorization", "Bearer " + bearerToken);
             }
 
-            String url = STORE_SERVICE_BASE_URL + "/stores/my-store";
-            System.out.println("DEBUG → calling: " + url + " | userId=" + userId);
+            String url = STORE_SERVICE_BASE_URL + "/stores/my-store?userId=" + userId;
+            System.out.println("DEBUG → calling: " + url);
 
             ResponseEntity<StoreDTO> resp = restTemplate.exchange(
                     url, HttpMethod.GET,
@@ -576,7 +580,7 @@ public class OrderService {
         String storeId = getStoreIdByUserId(userId, token);
         List<Order> all = orderRepository.findByStoreId(storeId);
         float revenue = all.stream()
-                .filter(o -> "completed".equals(o.getStatus()))
+                .filter(o -> "completed".equals(o.getStatus()) && "paid".equals(o.getPaymentStatus()))
                 .map(Order::getPay).reduce(0f, Float::sum);
         return SellerOrderStatsDTO.builder()
                 .totalRevenue(revenue)
@@ -742,6 +746,98 @@ public class OrderService {
                 .products(itemDTOs).build();
     }
 
+    @Scheduled(fixedDelay = 30_000)
+    @Transactional
+    public void autoAdvanceOrderStatus() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(1);
+
+        // shipping → delivered
+        List<Order> shippingOrders = orderRepository.findByStatusAndUpdateAtBefore("shipping", cutoff);
+        for (Order order : shippingOrders) {
+            order.setStatus("delivered");
+            order.setUpdateAt(LocalDateTime.now());
+            if ("COD".equals(order.getPaymentMethod())) {
+                order.setPaymentStatus("paid");
+            }
+            orderRepository.save(order);
+            saveOrderFlow(String.valueOf(order.getId()), "delivered", "system",
+                    "Tự động xác nhận giao hàng thành công");
+        }
+
+        // delivered → completed
+        List<Order> deliveredOrders = orderRepository.findByStatusAndUpdateAtBefore("delivered", cutoff);
+        for (Order order : deliveredOrders) {
+            order.setStatus("completed");
+            order.setUpdateAt(LocalDateTime.now());
+            orderRepository.save(order);
+
+            // Tính phí sàn 5% và gọi sang store-service
+            double grossAmount = order.getPay();
+            double commissionFee = grossAmount * 0.05;
+            double netAmount = grossAmount - commissionFee;
+
+            // Lưu settlement record
+            Settlement settlement = settlementRepository.save(Settlement.builder()
+                    .orderId(String.valueOf(order.getId()))
+                    .storeId(order.getStoreId())
+                    .grossAmount(grossAmount)
+                    .commissionFee(commissionFee)
+                    .netAmount(netAmount)
+                    .status("PENDING")
+                    .createdBy("system")
+                    .build());
+
+            // Gọi API sang store-service để cộng pending balance
+            try {
+                String url = STORE_SERVICE_BASE_URL + "/wallet/store/"
+                        + order.getStoreId() + "/credit-pending"
+                        + "?amount=" + netAmount
+                        + "&referenceId=" + order.getId();
+                restTemplate.postForEntity(url, null, Void.class);
+                settlement.setStatus("CREDITED");
+                settlement.setUpdateAt(LocalDateTime.now());
+                settlementRepository.save(settlement);
+            } catch (Exception e) {
+                log.error("Failed to credit wallet for order {}: {}", order.getId(), e.getMessage());
+            }
+
+            saveOrderFlow(String.valueOf(order.getId()), "completed", "system",
+                    "Tự động hoàn tất đơn hàng");
+        }
+    }
+
+    @Scheduled(fixedDelay = 60_000) // chạy mỗi 60 giây
+    @Transactional
+    public void releasePendingSettlements() {
+        // Sau 3 ngày mới release → seller mới rút được tiền
+        // Đổi minusDays(3) thành minusMinutes(2) nếu muốn test nhanh
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(2);
+
+        List<Settlement> pendingList = settlementRepository
+                .findByStatusAndCreatedAtBefore("CREDITED", cutoff);
+
+        for (Settlement s : pendingList) {
+            try {
+                String url = STORE_SERVICE_BASE_URL + "/wallet/store/"
+                        + s.getStoreId() + "/release-pending"
+                        + "?amount=" + s.getNetAmount()
+                        + "&referenceId=" + s.getId();
+                restTemplate.postForEntity(url, null, Void.class);
+
+                s.setStatus("SETTLED");
+                s.setSettledAt(LocalDateTime.now());
+                s.setUpdatedBy("system");
+                settlementRepository.save(s);
+
+                log.info("Released settlement {} for store {}, amount {}",
+                        s.getId(), s.getStoreId(), s.getNetAmount());
+            } catch (Exception e) {
+                // Giữ nguyên PENDING, vòng sau 60s sẽ retry tự động
+                log.error("Failed to release settlement {}: {}", s.getId(), e.getMessage());
+            }
+        }
+    }
+
     // =========================================================================
     // LIVESTREAM — thống kê đơn hàng
     // =========================================================================
@@ -762,15 +858,3 @@ public class OrderService {
         return stats;
     }
 }
-//                .id(d.getId())
-//                .userId(d.getUserId())
-//                .recipientName(d.getRecipientName())
-//                .phone(d.getPhone())
-//                .province(d.getProvince())
-//                .district(d.getDistrict())
-//                .ward(d.getWard())
-//                .addressDetail(d.getAddressDetail())
-//                .isDefault(d.getIsDefault())
-//                .build();
-//    }
-//}

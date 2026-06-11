@@ -3,11 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./ratings.module.css";
+import StoreSidebar from "../../components/StoreSidebar";
 import ReplyModal from "../../components/ReplyModal";
-
-interface RatingMaterialDTO {
-    url: string;
-}
 
 interface RatingReplyDTO {
     id: number;
@@ -85,7 +82,6 @@ export default function ShopRatingsPage() {
     const handleReplySuccess = () => {
         setSelectedRating(null);
         showToast("✅ Phản hồi thành công!");
-        // Refresh lại danh sách
         const { token } = getAuth();
         fetch(`/api/ratings/store/${storeId}`, {
             headers: { Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}` },
@@ -114,41 +110,13 @@ export default function ShopRatingsPage() {
 
     return (
         <div className={styles.page}>
-            {/* Sidebar */}
-            <aside className={styles.sidebar}>
-                <div className={styles.sidebarLogo} onClick={() => router.push("/")}>
-                    <span>✦</span> ANVI
-                </div>
-                <nav className={styles.sidebarNav}>
-                    <button className={styles.navItem} onClick={() => router.push("/my-store")}>
-                        <span>📦</span> Sản phẩm
-                    </button>
-                    <button className={styles.navItem}><span>📋</span> Đơn hàng</button>
-                    <button className={styles.navItem} onClick={() => router.push("/my-store")}>
-                        <span>🎟️</span> Voucher
-                    </button>
-                    <button className={styles.navItem} onClick={() => router.push("/my-store/promotions")}>
-                        <span>🎉</span> Khuyến mãi
-                    </button>
-                    <button className={`${styles.navItem} ${styles.navActive}`}>
-                        <span>⭐</span> Đánh giá
-                        {pending > 0 && <span className={styles.badge}>{pending}</span>}
-                    </button>
-                    <button className={styles.navItem}><span>📊</span> Thống kê</button>
-                </nav>
-                <div className={styles.sidebarFooter}>
-                    <button className={styles.navItem} onClick={() => router.push("/profile")}>
-                        <span>←</span> Trang cá nhân
-                    </button>
-                </div>
-            </aside>
+            <StoreSidebar />
 
-            {/* Main */}
             <main className={styles.main}>
                 <header className={styles.topbar}>
                     <div>
                         <h1 className={styles.pageTitle}>⭐ Quản lý đánh giá</h1>
-                        <p className={styles.pageSub}>
+                        <p className={styles.pageSubtitle}>
                             {pending > 0
                                 ? `${pending} đánh giá chưa được phản hồi`
                                 : "Tất cả đánh giá đã được phản hồi ✓"}
@@ -156,7 +124,6 @@ export default function ShopRatingsPage() {
                     </div>
                 </header>
 
-                {/* Filter tabs */}
                 <div className={styles.tabs}>
                     {[
                         { key: "all",     label: `Tất cả (${ratings.length})` },
@@ -166,14 +133,13 @@ export default function ShopRatingsPage() {
                         <button
                             key={tab.key}
                             className={`${styles.tab} ${filter === tab.key ? styles.tabActive : ""}`}
-                            onClick={() => setFilter(tab.key as any)}
+                            onClick={() => setFilter(tab.key as "all" | "pending" | "replied")}
                         >
                             {tab.label}
                         </button>
                     ))}
                 </div>
 
-                {/* Rating list */}
                 {filtered.length === 0 ? (
                     <div className={styles.empty}>
                         <div className={styles.emptyIcon}>💬</div>
@@ -183,7 +149,6 @@ export default function ShopRatingsPage() {
                     <div className={styles.ratingList}>
                         {filtered.map(rating => (
                             <div key={rating.id} className={styles.ratingCard}>
-                                {/* Customer info */}
                                 <div className={styles.cardHeader}>
                                     <div className={styles.avatar}>
                                         {rating.userImage
@@ -206,12 +171,10 @@ export default function ShopRatingsPage() {
                                     </span>
                                 </div>
 
-                                {/* Customer comment */}
                                 {rating.comment && (
                                     <p className={styles.comment}>"{rating.comment}"</p>
                                 )}
 
-                                {/* Customer images */}
                                 {rating.materialUrls?.length > 0 && (
                                     <div className={styles.imageRow}>
                                         {rating.materialUrls.map((url, i) => (
@@ -220,7 +183,6 @@ export default function ShopRatingsPage() {
                                     </div>
                                 )}
 
-                                {/* Shop reply */}
                                 {rating.replies?.length > 0 && (
                                     <div className={styles.replyBox}>
                                         <div className={styles.replyLabel}>Phản hồi của shop</div>
@@ -236,7 +198,6 @@ export default function ShopRatingsPage() {
                                     </div>
                                 )}
 
-                                {/* Reply button */}
                                 {!rating.isReply && (
                                     <div className={styles.cardFooter}>
                                         <button
@@ -253,7 +214,6 @@ export default function ShopRatingsPage() {
                 )}
             </main>
 
-            {/* Reply Modal */}
             {selectedRating && (
                 <ReplyModal
                     ratingId={selectedRating.id}

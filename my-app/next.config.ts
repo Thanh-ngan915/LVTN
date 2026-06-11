@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/admin/:path*',
-        destination: 'http://localhost:8085/api/admin/:path*',
+        destination: `${USER_SVC}/api/admin/:path*`,
       },
       {
         source: '/api/products/:path*',
@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/api/auth/:path*',
-        destination: 'http://localhost:8085/api/auth/:path*',
+        destination: `${USER_SVC}/api/auth/:path*`,
       },
       {
         source: '/api/cart',
@@ -69,12 +69,16 @@ const nextConfig: NextConfig = {
          destination: `${GATEWAY_URL}/api/stores`,
       },
       {
+            source: '/api/:path*',
+            destination: `${GATEWAY_URL}/api/:path*`,
+      },
+      {
          source: '/api/vouchers/:path*',
          destination: `${GATEWAY_URL}/api/vouchers/:path*`,
       },
       {
-        source: '/api/seller/:path*',
-        destination: 'http://localhost:8088/api/seller/:path*',
+         source: '/api/seller/:path*',
+         destination: `${ORDER_SVC}/api/seller/:path*`,
       },
       // Livestream service - direct (trước rule catch-all)
       {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./promotions.module.css";
+import StoreSidebar from "../../components/StoreSidebar";
 import {
     SalePromotionDTO,
     getSalePromotions,
@@ -96,15 +97,15 @@ export default function PromotionsPage() {
 
     return (
         <div className={styles.page}>
-            <div className={styles.main}>
+            <StoreSidebar />
+
+            <main className={styles.main}>
 
                 {/* Topbar */}
                 <div className={styles.topbar}>
-                    <div className={styles.titleGroup}>
-                        <button className={styles.backBtn} onClick={() => router.push("/my-store")}>
-                            ← Quay lại
-                        </button>
-                        <h1 className={styles.pageTitle}>Quản lý khuyến mãi</h1>
+                    <div>
+                        <h1 className={styles.pageTitle}>🏷️ Quản lý khuyến mãi</h1>
+                        <p className={styles.pageSubtitle}>Tạo và quản lý các chương trình khuyến mãi</p>
                     </div>
                     <button className={styles.btnCreate} onClick={() => router.push("/my-store/promotions/create")}>
                         + Tạo chương trình KM
@@ -114,13 +115,13 @@ export default function PromotionsPage() {
                 {/* Tabs */}
                 <div className={styles.tabs}>
                     <button
-                        className={`${styles.tabBtn} ${!showDeleted ? styles.tabActive : styles.tabInactive}`}
+                        className={`${styles.tabBtn} ${!showDeleted ? styles.tabActive : ""}`}
                         onClick={() => setShowDeleted(false)}
                     >
                         Đang hoạt động ({promotions.length})
                     </button>
                     <button
-                        className={`${styles.tabBtn} ${showDeleted ? styles.tabActive : styles.tabInactive}`}
+                        className={`${styles.tabBtn} ${showDeleted ? styles.tabActive : ""}`}
                         onClick={() => setShowDeleted(true)}
                     >
                         Đã xóa ({deletedPromotions.length})
@@ -188,7 +189,7 @@ export default function PromotionsPage() {
                         })}
                     </div>
                 )}
-            </div>
+            </main>
         </div>
     );
 }

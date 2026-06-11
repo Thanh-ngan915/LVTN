@@ -12,4 +12,5 @@ import java.util.List;
 public interface WalletTransactionRepository extends JpaRepository<WalletTransaction, String> {
     List<WalletTransaction> findByWalletIdOrderByCreatedAtDesc(String walletId);
     Page<WalletTransaction> findByWalletId(String walletId, Pageable pageable);
+    boolean existsByReferenceIdAndReferenceType(String referenceId, String type);
 }
