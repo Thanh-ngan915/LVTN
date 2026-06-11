@@ -80,6 +80,11 @@ const nextConfig: NextConfig = {
          source: '/api/seller/:path*',
          destination: `${ORDER_SVC}/api/seller/:path*`,
       },
+      // Livestream service - direct (trước rule catch-all)
+      {
+        source: '/api/livestream/:path*',
+        destination: `${LIVESTREAM_SVC}/api/livestream/:path*`,
+      },
       {
         source: '/api/:path*',
         destination: `${GATEWAY_URL}/api/:path*`,

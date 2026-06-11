@@ -14,4 +14,6 @@ public class CreateRoomRequest {
     private String description;
     private String thumbnail;
     private Integer maxViewers;
+    private String storeId;
+    private String storeName;
 }

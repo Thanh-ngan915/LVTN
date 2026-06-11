@@ -21,6 +21,8 @@ public class RoomResponse {
     private Integer currentViewers;
     private Integer maxViewers;
     private String thumbnail;
+    private String storeId;
+    private String storeName;
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
     private LocalDateTime createdAt;

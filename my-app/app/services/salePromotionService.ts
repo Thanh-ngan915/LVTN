@@ -30,6 +30,8 @@ export interface ProductPromotionDTO {
     quantity: number;
     bought: number;
     isDelete: boolean;
+    startDate?: string;
+    endDate?: string;
 }
 
 export interface ProductPromotionRequestDTO {
@@ -143,4 +145,13 @@ export async function removeProductFromPromotion(storeId: string, salePromotionI
         headers: getAuthHeaders(),
     });
     if (!res.ok) throw new Error('Lỗi xóa sản phẩm khỏi KM');
+}
+
+export async function getActiveProductPromotions(): Promise<ProductPromotionDTO[]> {
+    const res = await fetch(`${API_BASE}/api/stores/promotions/active`, {
+        headers: getAuthHeaders(),
+        cache: 'no-store',
+    });
+    if (!res.ok) throw new Error('Lỗi lấy sản phẩm khuyến mãi hoạt động');
+    return res.json();
 }

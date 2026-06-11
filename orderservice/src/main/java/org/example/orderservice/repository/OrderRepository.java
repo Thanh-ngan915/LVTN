@@ -22,4 +22,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     List<Order> findByStoreIdAndStatus(String storeId, String status);
     long countByStoreIdAndStatus(String storeId, String status);
     List<Order> findByStatusAndUpdateAtBefore(String status, LocalDateTime updateAt);
+
+    List<Order> findByLivestreamRoomId(Long livestreamRoomId);
+    long countByLivestreamRoomId(Long livestreamRoomId);
 }

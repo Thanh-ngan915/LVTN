@@ -87,13 +87,13 @@ public class VNPayController {
 
         if (paymentStatus == 1) {
             // Thanh toán thành công – cập nhật paymentStatus của đơn hàng
-            updateOrderPaymentStatus(orderInfo, "paid");
+            updateOrderPaymentStatus(orderInfo, "paid", transactionNo);
             return ResponseEntity.ok(
                     ApiResponse.success(transactionNo,
                             "Thanh toán thành công! Mã GD: " + transactionNo));
         } else if (paymentStatus == 0) {
             // Thanh toán thất bại / bị huỷ
-            updateOrderPaymentStatus(orderInfo, "failed");
+            updateOrderPaymentStatus(orderInfo, "failed", null);
             return ResponseEntity.ok(
                     ApiResponse.<String>builder()
                             .success(false)
@@ -114,7 +114,7 @@ public class VNPayController {
      * Cập nhật paymentStatus cho đơn hàng dựa vào vnp_OrderInfo
      * vnp_OrderInfo format: "Thanh toan don hang #<orderId>"
      */
-    private void updateOrderPaymentStatus(String orderInfo, String status) {
+    private void updateOrderPaymentStatus(String orderInfo, String status, String transactionNo) {
         if (orderInfo == null)
             return;
         try {
@@ -126,6 +126,20 @@ public class VNPayController {
                 order.setPaymentStatus(status);
                 if ("paid".equals(status)) {
                     order.setStatus("confirmed");
+                    try {
+                        org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+                        java.util.Map<String, String> body = new java.util.HashMap<>();
+                        body.put("orderId", orderId.toString());
+                        body.put("transactionNo", transactionNo);
+                        
+                        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+                        headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+                        org.springframework.http.HttpEntity<java.util.Map<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(body, headers);
+                        
+                        restTemplate.postForEntity("http://localhost:8085/api/users/" + order.getUserId() + "/send-order-email", requestEntity, String.class);
+                    } catch (Exception ex) {
+                        System.err.println("[VNPay] Lỗi gửi email: " + ex.getMessage());
+                    }
                 }
                 orderRepository.save(order);
             });

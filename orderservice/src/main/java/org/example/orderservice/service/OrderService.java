@@ -136,6 +136,7 @@ public class OrderService {
                 .status("pending")
                 .paymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : "COD")
                 .paymentStatus("pending")
+                .livestreamRoomId(request.getLivestreamRoomId())
                 .build();
         order = orderRepository.save(order);
 
@@ -835,5 +836,25 @@ public class OrderService {
                 log.error("Failed to release settlement {}: {}", s.getId(), e.getMessage());
             }
         }
+    }
+
+    // =========================================================================
+    // LIVESTREAM — thống kê đơn hàng
+    // =========================================================================
+
+    public java.util.Map<String, Object> getLivestreamStats(Long livestreamRoomId) {
+        long totalOrders = orderRepository.countByLivestreamRoomId(livestreamRoomId);
+        List<Order> orders = orderRepository.findByLivestreamRoomId(livestreamRoomId);
+
+        // Tính tổng doanh thu của các đơn hàng KHÔNG bị hủy
+        float totalRevenue = orders.stream()
+                .filter(o -> !"cancelled".equals(o.getStatus()))
+                .map(Order::getPay)
+                .reduce(0f, Float::sum);
+
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("totalOrders", totalOrders);
+        stats.put("totalRevenue", totalRevenue);
+        return stats;
     }
 }

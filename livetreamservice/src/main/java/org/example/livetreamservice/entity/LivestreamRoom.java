@@ -43,6 +43,12 @@ public class LivestreamRoom {
     @Column(columnDefinition = "TEXT")
     private String thumbnail;
 
+    @Column(name = "store_id")
+    private String storeId;
+
+    @Column(name = "store_name")
+    private String storeName;
+
     @Column(name = "started_at")
     private LocalDateTime startedAt;
 

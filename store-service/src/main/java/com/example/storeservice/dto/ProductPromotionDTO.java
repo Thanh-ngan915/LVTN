@@ -14,4 +14,6 @@ public class ProductPromotionDTO {
     private Integer quantity;
     private Integer bought;
     private Boolean isDelete;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
 }

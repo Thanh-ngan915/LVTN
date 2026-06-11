@@ -25,6 +25,9 @@ public class OrderRequestDTO {
 
     private String paymentMethod; // COD, VNPAY
 
+    // ID của phòng livestream nếu đơn hàng được đặt từ livestream
+    private Long livestreamRoomId;
+
     // Product metadata
     private String productName;
     private String productImage;
