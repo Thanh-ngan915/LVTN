@@ -10,6 +10,7 @@ import ConfirmModal from "../../components/ConfirmModal";
 import ShopTable from "../../components/ShopTable";
 import { StoreDTO } from "../../services/storeService";
 import ProductTable from "../../components/ProductTable";
+import WithdrawalTable from "../../components/WithdrawalTable";
 
 interface UserDTO {
     id: string; username: string; fullName: string; email: string;
@@ -27,6 +28,7 @@ interface ProductDTO {
     currentQuantity: number;
     imageUrls: string[];
     createdBy: string;
+    description: string;
 }
 
 interface ProductStats {
@@ -37,7 +39,7 @@ interface ProductStats {
 }
 
 
-type Section = "dashboard" | "users" | "shops" | "products";
+type Section = "dashboard" | "users" | "shops" | "products" | "withdrawals";
 
 export default function AdminDashboardPage() {
     interface AdminUser {
@@ -215,6 +217,13 @@ export default function AdminDashboardPage() {
                         products={products}
                         loading={loadingProducts}
                         onRefresh={fetchProducts}
+                        authHeader={authHeader}
+                        showToast={showToast}
+                    />
+                )}
+
+                {activeSection === "withdrawals" && (
+                    <WithdrawalTable
                         authHeader={authHeader}
                         showToast={showToast}
                     />
