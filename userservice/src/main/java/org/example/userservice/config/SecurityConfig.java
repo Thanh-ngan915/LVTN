@@ -32,9 +32,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+//                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/users/admin/**").hasRole("ADMIN")
+//                        .requestMatchers("/api/users/admin/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/users/*/send-order-email").permitAll()
                         .requestMatchers("/api/users/admin/**").hasAnyRole("ADMIN", "SERVICE")
                         .requestMatchers("/api/users/**").authenticated()
