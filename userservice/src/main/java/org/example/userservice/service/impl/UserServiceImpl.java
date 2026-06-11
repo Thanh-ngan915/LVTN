@@ -182,7 +182,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream()
-                .map(user -> getProfile(user.getId()))
+                .map(user -> {
+                    try {
+                        return getProfile(user.getId());
+                    } catch (Exception e) {
+                        log.warn("Skipping user {} due to error: {}", user.getId(), e.getMessage());
+                        return null;
+                    }
+                })
+                .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
