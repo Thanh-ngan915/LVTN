@@ -56,6 +56,12 @@ public class WithdrawalRequest {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column
+    private String vnpayTransactionCode;
+
+    @Column
+    private String vnpayFailReason;
+
     @PrePersist
     public void prePersist() {
         this.id = UUID.randomUUID().toString();

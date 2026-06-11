@@ -1,6 +1,7 @@
 package org.example.orderservice.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.orderservice.dto.*;
 import org.example.orderservice.entity.*;
 import org.example.orderservice.repository.*;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -38,6 +40,7 @@ public class OrderService {
     // Có thể override bằng env var STORE_SERVICE_URL khi chạy Docker
     @Value("${store.service.url:http://localhost:8090}/api/vouchers")
     private String STORE_SERVICE_URL;
+    private final SettlementRepository settlementRepository;
 
     /**
      * Tạo đơn hàng mới (Mua ngay)
@@ -766,8 +769,71 @@ public class OrderService {
             order.setStatus("completed");
             order.setUpdateAt(LocalDateTime.now());
             orderRepository.save(order);
+
+            // Tính phí sàn 5% và gọi sang store-service
+            double grossAmount = order.getPay();
+            double commissionFee = grossAmount * 0.05;
+            double netAmount = grossAmount - commissionFee;
+
+            // Lưu settlement record
+            Settlement settlement = settlementRepository.save(Settlement.builder()
+                    .orderId(String.valueOf(order.getId()))
+                    .storeId(order.getStoreId())
+                    .grossAmount(grossAmount)
+                    .commissionFee(commissionFee)
+                    .netAmount(netAmount)
+                    .status("PENDING")
+                    .createdBy("system")
+                    .build());
+
+            // Gọi API sang store-service để cộng pending balance
+            try {
+                String url = STORE_SERVICE_BASE_URL + "/wallet/store/"
+                        + order.getStoreId() + "/credit-pending"
+                        + "?amount=" + netAmount
+                        + "&referenceId=" + order.getId();
+                restTemplate.postForEntity(url, null, Void.class);
+                settlement.setStatus("CREDITED");
+                settlement.setUpdateAt(LocalDateTime.now());
+                settlementRepository.save(settlement);
+            } catch (Exception e) {
+                log.error("Failed to credit wallet for order {}: {}", order.getId(), e.getMessage());
+            }
+
             saveOrderFlow(String.valueOf(order.getId()), "completed", "system",
                     "Tự động hoàn tất đơn hàng");
+        }
+    }
+
+    @Scheduled(fixedDelay = 60_000) // chạy mỗi 60 giây
+    @Transactional
+    public void releasePendingSettlements() {
+        // Sau 3 ngày mới release → seller mới rút được tiền
+        // Đổi minusDays(3) thành minusMinutes(2) nếu muốn test nhanh
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(2);
+
+        List<Settlement> pendingList = settlementRepository
+                .findByStatusAndCreatedAtBefore("CREDITED", cutoff);
+
+        for (Settlement s : pendingList) {
+            try {
+                String url = STORE_SERVICE_BASE_URL + "/wallet/store/"
+                        + s.getStoreId() + "/release-pending"
+                        + "?amount=" + s.getNetAmount()
+                        + "&referenceId=" + s.getId();
+                restTemplate.postForEntity(url, null, Void.class);
+
+                s.setStatus("SETTLED");
+                s.setSettledAt(LocalDateTime.now());
+                s.setUpdatedBy("system");
+                settlementRepository.save(s);
+
+                log.info("Released settlement {} for store {}, amount {}",
+                        s.getId(), s.getStoreId(), s.getNetAmount());
+            } catch (Exception e) {
+                // Giữ nguyên PENDING, vòng sau 60s sẽ retry tự động
+                log.error("Failed to release settlement {}: {}", s.getId(), e.getMessage());
+            }
         }
     }
 }
