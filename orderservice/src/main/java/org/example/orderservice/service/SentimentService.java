@@ -44,7 +44,7 @@ public class SentimentService {
     private String hfApiKey;
 
     private static final String API_URL =
-            "https://router.huggingface.co/hf-inference/models/5CD-AI/Vietnamese-Sentiment-visobert/pipeline/text-classification";
+            "https://router.huggingface.co/hf-inference/models/wonrax/phobert-base-vietnamese-sentiment";
 
     public SentimentResultDTO analyze(String comment, Double stars) {
         log.info("HF API KEY: '{}'", hfApiKey);
@@ -120,9 +120,9 @@ public class SentimentService {
             }
 
             String sentiment = switch (topLabel) {
-                case "POS" -> "positive";
-                case "NEG" -> "negative";
-                case "NEU" -> "neutral";
+                case "pos" -> "positive";
+                case "neg" -> "negative";
+                case "neu" -> "neutral";
                 default    -> "neutral";
             };
 
@@ -139,19 +139,22 @@ public class SentimentService {
                     .build();
 
         } catch (Exception e) {
-            log.warn("Sentiment analysis failed: {}", e.getMessage());
-            return SentimentResultDTO.error("Không thể phân tích lúc này");
+            log.error("Sentiment analysis failed", e);
+            return SentimentResultDTO.error(e.getMessage());
         }
     }
 
     private boolean checkMatch(String sentiment, Double stars) {
         if (stars >= 4.0 && sentiment.equals("negative")) return false;
+        if (stars >= 4.0 && sentiment.equals("neutral")) return false;
         if (stars <= 2.0 && sentiment.equals("positive")) return false;
         return true;
     }
 
     private String buildReason(String sentiment, Double stars, boolean isMatch) {
         if (isMatch) return "Bình luận phù hợp với số sao";
+        if (stars >= 4.0 && sentiment.equals("neutral"))
+            return "Bình luận không tích cực nhưng chọn " + stars.intValue() + " sao";
         if (stars >= 4.0) return "Bình luận tiêu cực nhưng chọn " + stars.intValue() + " sao";
         return "Bình luận tích cực nhưng chỉ chọn " + stars.intValue() + " sao";
     }
