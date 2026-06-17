@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import styles from "./orderdetail.module.css";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import StoreSidebar from "../../../components/StoreSidebar";
 
 interface DeliveryInformationDTO {
     id?: number;
@@ -83,17 +82,6 @@ const PROGRESS_STEPS = [
     { key: "completed", label: "Hoàn thành" },
 ];
 
-const NAV_ITEMS = [
-    { icon: "🏠", label: "Dashboard",  path: "/seller/dashboard" },
-    { icon: "📦", label: "Sản phẩm",   path: "/seller/products" },
-    { icon: "🛒", label: "Đơn hàng",   path: "/seller/orders" },
-    { icon: "↩️", label: "Hoàn trả",   path: "/seller/orders/refunds" },
-    { icon: "📊", label: "Thống kê",   path: "/seller/stats" },
-    { icon: "⚙️", label: "Cài đặt",   path: "/seller/settings" },
-];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function fmtVND(n?: number) {
     if (n == null) return "—";
     return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(n);
@@ -112,7 +100,12 @@ function initials(name?: string) {
 
 function getUserId(): string {
     if (typeof window === "undefined") return "";
-    return localStorage.getItem("userId") ?? "";
+    try {
+        const user = JSON.parse(localStorage.getItem("user") ?? "{}");
+        return user.userId ?? "";
+    } catch {
+        return "";
+    }
 }
 
 function progressIndex(status?: string): number {
@@ -140,8 +133,12 @@ export default function OrderDetailPage() {
         setLoading(true);
         setError("");
         try {
+            const token = localStorage.getItem("token");
             const res = await fetch(`${API_BASE}/api/seller/orders/${orderId}`, {
-                headers: { "X-User-Id": userId },
+                headers: {
+                    "X-User-Id": userId,
+                    "Authorization": `Bearer ${token}`
+                },
             });
             const json: ApiResponse<OrderResponseDTO> = await res.json();
             if (!res.ok || !json.success) throw new Error(json.message ?? "Không thể tải đơn hàng");
@@ -155,12 +152,18 @@ export default function OrderDetailPage() {
 
     const fetchFlow = useCallback(async () => {
         try {
+            const token = localStorage.getItem("token");
             const res = await fetch(`${API_BASE}/api/seller/orders/${orderId}/flow`, {
-                headers: { "X-User-Id": userId },
+                headers: {
+                    "X-User-Id": userId,
+                    "Authorization": `Bearer ${token ?? ""}`,
+                },
             });
             const json: ApiResponse<OrderFlowDTO[]> = await res.json();
-            if (res.ok && json.success) setFlow(json.data ?? []);
-        } catch { /* không critical */ }
+            if (res.ok && json.success) {
+                setFlow(Array.isArray(json.data) ? json.data : []);
+            }
+        } catch {  }
     }, [orderId, userId]);
 
     useEffect(() => {
@@ -214,29 +217,7 @@ export default function OrderDetailPage() {
 
     return (
         <div className={styles.page}>
-            <aside className={styles.sidebar}>
-                <div className={styles.sidebarLogo} onClick={() => router.push("/seller/dashboard")}>
-                    Shop<span>.</span>
-                </div>
-                <nav className={styles.sidebarNav}>
-                    {NAV_ITEMS.map((item) => (
-                        <button
-                            key={item.path}
-                            className={`${styles.navItem} ${item.path === "/seller/orders" ? styles.navActive : ""}`}
-                            onClick={() => router.push(item.path)}
-                        >
-                            <span>{item.icon}</span>
-                            {item.label}
-                        </button>
-                    ))}
-                </nav>
-                <div className={styles.sidebarFooter}>
-                    <button className={styles.navItem} onClick={() => router.push("/")}>
-                        <span>🚪</span> Đăng xuất
-                    </button>
-                </div>
-            </aside>
-
+            <StoreSidebar />
             <main className={styles.main}>
                 <div className={styles.topbar}>
                     <div className={styles.titleGroup}>

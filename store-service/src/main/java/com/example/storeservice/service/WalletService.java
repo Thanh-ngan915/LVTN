@@ -6,4 +6,5 @@ public interface WalletService {
     void debitAvailableBalance(String storeId, Double amount, String referenceId);
     void completeWithdrawal(String withdrawalRequestId);
     void failWithdrawal(String withdrawalRequestId, String failReason);
+    void rejectWithdrawal(String withdrawalRequestId, String reason);
 }

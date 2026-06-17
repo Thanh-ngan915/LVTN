@@ -180,4 +180,33 @@ public class WalletServiceImpl implements WalletService {
 
         log.info("Withdrawal {} failed, reason: {}", withdrawalRequestId, failReason);
     }
+
+    @Override
+    @Transactional
+    public void rejectWithdrawal(String withdrawalRequestId, String reason) {
+        WithdrawalRequest req = withdrawalRequestRepository.findById(withdrawalRequestId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu"));
+
+        Wallet wallet = walletRepository.findById(req.getWalletId()).orElseThrow();
+        Double availableBefore = wallet.getAvailableBalance();
+        wallet.setReservedBalance(wallet.getReservedBalance() - req.getAmount());
+        wallet.setAvailableBalance(availableBefore + req.getAmount());
+        walletRepository.save(wallet);
+
+        walletTransactionRepository.save(WalletTransaction.builder()
+                .walletId(wallet.getId())
+                .type("WITHDRAWAL_REJECTED")
+                .direction("IN")
+                .amount(req.getAmount())
+                .balanceBefore(availableBefore)
+                .balanceAfter(wallet.getAvailableBalance())
+                .referenceId(req.getId())
+                .referenceType("WITHDRAWAL")
+                .status("REJECTED")
+                .note("Bị từ chối: " + reason)
+                .createdBy("admin")
+                .build());
+
+        log.info("Withdrawal {} rejected, reason: {}", withdrawalRequestId, reason);
+    }
 }

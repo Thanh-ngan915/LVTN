@@ -45,7 +45,20 @@ export default function SellerChatPage() {
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     const activeCustomer = customers.find(c => c.customerId === activeCustomerId) || null;
+    const [shopName, setShopName] = useState<string>('');
 
+// Thêm useEffect đọc storeName từ chatIndex
+    useEffect(() => {
+        if (!sellerStoreId || customers.length === 0) return;
+
+        // Lấy storeName từ bất kỳ customer nào (vì storeName giống nhau)
+        const firstCustomerId = customers[0].customerId;
+        const indexRef = ref(db, `chatIndex/${sellerStoreId}/${firstCustomerId}/storeName`);
+        onValue(indexRef, (snapshot) => {
+            const name = snapshot.val();
+            if (name) setShopName(name);
+        }, { onlyOnce: true });
+    }, [sellerStoreId, customers]);
     // Lấy storeId động từ localStorage hoặc API
     useEffect(() => {
         const stored = localStorage.getItem("user");
@@ -221,7 +234,7 @@ export default function SellerChatPage() {
                                     <div>
                                         <h3 className={styles.activeShopName}>{activeCustomer.customerName}</h3>
                                         <p className={styles.activeShopStatus} style={{ color: '#e8572a' }}>
-                                            Đang kết nối hội thoại
+                                            Đang chat với: {activeCustomer.customerName}
                                         </p>
                                     </div>
                                 </div>

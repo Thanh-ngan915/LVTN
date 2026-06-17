@@ -26,4 +26,6 @@ public class RatingDTO {
     // Replies
     private List<RatingReplyDTO> replies;
     private String comment;
+
+    private SentimentResultDTO sentimentResult;
 }

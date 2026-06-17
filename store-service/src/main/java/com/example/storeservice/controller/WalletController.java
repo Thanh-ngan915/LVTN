@@ -156,6 +156,30 @@
             }
         }
 
+        // Admin từ chối rút tiền
+        @PutMapping("/admin/withdrawals/{id}/reject")
+        public ResponseEntity<Map<String, String>> rejectWithdrawal(
+                @PathVariable String id,
+                @RequestParam String reason) {
+            WithdrawalRequest req = withdrawalRequestRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu"));
+            if (!"PENDING".equals(req.getStatus()))
+                throw new RuntimeException("Yêu cầu này đã được xử lý rồi");
+
+            req.setStatus("REJECTED");
+            req.setVnpayFailReason(reason);
+            req.setProcessedAt(LocalDateTime.now());
+            req.setProcessedBy("admin");
+            withdrawalRequestRepository.save(req);
+
+            walletService.rejectWithdrawal(id, reason);
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "REJECTED",
+                    "reason", reason
+            ));
+        }
+
         // Seller xem lịch sử rút tiền của mình
         @GetMapping("/me/withdrawals")
         public ResponseEntity<Page<WithdrawalRequest>> getMyWithdrawals(

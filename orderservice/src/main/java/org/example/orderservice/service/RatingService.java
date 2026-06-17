@@ -26,9 +26,10 @@ public class RatingService {
     private final OrderRepository orderRepository;
     private final UserLocalRepository userLocalRepository;
     private final RestTemplate restTemplate;
-
+    private final SentimentService sentimentService;
     @Value("${store-service.url:http://localhost:8090}")
     private String storeServiceUrl;
+
 
     /**
      * Lấy đánh giá theo productId (phân trang)
@@ -72,19 +73,39 @@ public class RatingService {
     /**
      * Tạo đánh giá mới
      */
-    @Transactional
     public RatingDTO createRating(RatingRequestDTO request, String username) {
         // Kiểm tra order tồn tại
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
 
-        // Kiểm tra đã đánh giá chưa
         List<Rating> existingRatings = ratingRepository.findByOrderId(request.getOrderId());
         if (!existingRatings.isEmpty()) {
             throw new RuntimeException("Bạn đã đánh giá đơn hàng này rồi");
         }
 
-        // Tạo rating
+        // Phân tích sentiment TRƯỚC khi mở transaction
+        SentimentResultDTO sentiment = sentimentService.analyze(
+                request.getComment(), request.getStars()
+        );
+        log.info("Sentiment result: analyzed={}, isMatch={}, sentiment={}",
+                sentiment.isAnalyzed(), sentiment.getIsMatch(), sentiment.getSentiment());
+
+        if (sentiment.isAnalyzed() && !sentiment.getIsMatch()) {
+            return RatingDTO.builder()
+                    .sentimentResult(sentiment)
+                    .build();
+        }
+
+        // Chỉ vào transaction khi hợp lệ
+        return saveRating(request, username, sentiment);
+    }
+
+    // Method @Transactional riêng - chỉ lo việc lưu DB
+    @Transactional
+    public RatingDTO saveRating(RatingRequestDTO request, String username, SentimentResultDTO sentiment) {
+        Order order = orderRepository.findById(request.getOrderId())
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+
         Rating rating = Rating.builder()
                 .storeId(request.getStoreId() != null ? request.getStoreId() : order.getStoreId())
                 .orderId(request.getOrderId())
@@ -96,30 +117,30 @@ public class RatingService {
         rating = ratingRepository.save(rating);
 
         if (request.getComment() != null && !request.getComment().isEmpty()) {
-            RatingMaterial commentMaterial = RatingMaterial.builder()
-                    .url("text:" + request.getComment())  // ← prefix để phân biệt
+            ratingMaterialRepository.save(RatingMaterial.builder()
+                    .url("text:" + request.getComment())
                     .ratingId(rating.getId())
                     .ratingReplyId(null)
                     .createdBy(username)
                     .updatedBy(username)
-                    .build();
-            ratingMaterialRepository.save(commentMaterial);
+                    .build());
         }
-        // Lưu materials (nếu có)
+
         if (request.getMaterialUrls() != null && !request.getMaterialUrls().isEmpty()) {
             for (String url : request.getMaterialUrls()) {
-                RatingMaterial material = RatingMaterial.builder()
+                ratingMaterialRepository.save(RatingMaterial.builder()
                         .url(url)
                         .ratingId(rating.getId())
                         .ratingReplyId(null)
                         .createdBy(username)
                         .updatedBy(username)
-                        .build();
-                ratingMaterialRepository.save(material);
+                        .build());
             }
         }
 
-        return toRatingDTO(rating);
+        RatingDTO dto = toRatingDTO(rating);
+        dto.setSentimentResult(sentiment);
+        return dto;
     }
 
     /**
