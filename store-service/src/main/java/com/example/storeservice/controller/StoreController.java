@@ -99,4 +99,11 @@ public class StoreController {
             @RequestParam String status) {
         return ResponseEntity.ok(storeService.updateStoreStatus(storeId, status));
     }
+
+    @PatchMapping("/my-store")
+    public ResponseEntity<StoreDTO> updateMyStore(
+            @RequestParam String userId,
+            @RequestBody StoreDTO dto) {
+        return ResponseEntity.ok(storeService.updateMyStore(userId, dto));
+    }
 }
