@@ -153,6 +153,21 @@ public class ProductServiceImpl implements ProductService {
                 .updatedBy(productDTO.getCreatedBy())
                 .updateAt(new Timestamp(System.currentTimeMillis()))
                 .build();
+
+        if (productDTO.getImageUrls() != null) {
+            if (productDTO.getImageUrls().size() > 5) {
+                throw new RuntimeException("Tối đa 5 ảnh cho mỗi sản phẩm");
+            }
+            java.util.Set<ProductImage> images = productDTO.getImageUrls().stream()
+                    .map(url -> ProductImage.builder()
+                            .id(java.util.UUID.randomUUID().toString())
+                            .url(url)
+                            .product(product)
+                            .build())
+                    .collect(Collectors.toSet());
+            product.setImages(images);
+        }
+
         return toDTO(productRepository.save(product));
     }
 
@@ -179,6 +194,27 @@ public class ProductServiceImpl implements ProductService {
         product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
         int sold = product.getSold() != null ? product.getSold() : 0;
         product.setCurrentQuantity(dto.getInitQuantity() - sold);
+
+        if (dto.getImageUrls() != null) {
+            if (dto.getImageUrls().size() > 5) {
+                throw new RuntimeException("Tối đa 5 ảnh cho mỗi sản phẩm");
+            }
+            if (product.getImages() == null) {
+                product.setImages(new java.util.HashSet<>());
+            }
+            product.getImages().clear();
+
+            java.util.Set<ProductImage> images = dto.getImageUrls().stream()
+                    .map(url -> ProductImage.builder()
+                            .id(java.util.UUID.randomUUID().toString())
+                            .url(url)
+                            .product(product)
+                            .build())
+                    .collect(Collectors.toSet());
+
+            product.getImages().addAll(images);
+        }
+
         return toDTO(productRepository.save(product));
     }
 
