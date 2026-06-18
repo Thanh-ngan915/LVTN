@@ -174,3 +174,52 @@
 .uploadBtn:hover {
     background: rgba(255, 255, 255, 0.06);
 }
+
+.locationSelects {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.select {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 12px 10px;
+    color: #f1f5f9;
+    font-size: 13px;
+    font-family: 'Segoe UI', sans-serif;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    color-scheme: dark;
+}
+
+.select:focus {
+    border-color: #6366f1;
+}
+
+.select:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Style cho option dropdown */
+.select option {
+    background: #1e1e2e;
+    color: #f1f5f9;
+}
+
+.locationPreview {
+    font-size: 12px;
+    color: #a5b4fc;
+    font-weight: 500;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 4px 0 0;
+    line-height: 1.5;
+}

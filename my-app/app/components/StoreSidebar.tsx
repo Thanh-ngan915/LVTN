@@ -15,6 +15,7 @@ export default function StoreSidebar() {
         { icon: "🏷️", label: "Khuyến mãi", href: "/my-store/promotions" },
         { icon: "💰", label: "Ví của shop", href: "/my-store/wallet" },
         { icon: "💬", label: "Chat với khách", href: "/seller/chat" },
+        { icon: "🏪", label: "Hồ sơ shop",   href: "/my-store/profile" },
     ];
 
     return (

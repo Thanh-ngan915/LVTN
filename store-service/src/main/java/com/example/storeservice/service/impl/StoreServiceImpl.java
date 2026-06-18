@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -182,5 +183,19 @@ public class StoreServiceImpl implements StoreService {
                 .startDate(promotion.getStartDate())
                 .endDate(promotion.getEndDate())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public StoreDTO updateMyStore(String userId, StoreDTO dto) {
+        Store store = storeRepository.findByCreatedBy(userId)
+                .orElseThrow(() -> new RuntimeException("Chưa có shop"));
+        if (dto.getName() != null)        store.setName(dto.getName());
+        if (dto.getImage() != null)       store.setImage(dto.getImage());
+        if (dto.getLocation() != null)    store.setLocation(dto.getLocation());
+        if (dto.getDescription() != null) store.setDescription(dto.getDescription());
+        store.setUpdatedBy(userId);
+        store.setUpdateAt(LocalDateTime.now());
+        return toDTO(storeRepository.save(store));
     }
 }
