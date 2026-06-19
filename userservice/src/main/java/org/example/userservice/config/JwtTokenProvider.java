@@ -65,7 +65,6 @@ public class JwtTokenProvider {
                 .getSubject();
     }
 
-    // ✅ THÊM METHOD NÀY
     public String getRoleFromToken(String token) {
         return (String) Jwts.parserBuilder()
                 .setSigningKey(key())
