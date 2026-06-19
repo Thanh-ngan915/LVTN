@@ -11,10 +11,13 @@ export default function ProfilePage() {
     const router = useRouter();
     const [showShopModal, setShowShopModal] = useState(false);
     const [hasStore, setHasStore] = useState(false);
-    // const token = localStorage.getItem("token");
     const [uploading, setUploading] = useState(false);
     const [userRole, setUserRole] = useState<string|null>(null);
     const [storeRoleId, setStoreRoleId] = useState<string|null>(null);
+    // ✅ THÊM STATE WALLET
+    const [wallet, setWallet] = useState<any>(null);
+    const [walletLoading, setWalletLoading] = useState(true);
+
     const compressImage = (file: File, maxSizeMB = 2): Promise<File> => {
         return new Promise((resolve) => {
             const canvas = document.createElement("canvas");
@@ -23,7 +26,6 @@ export default function ProfilePage() {
             const url = URL.createObjectURL(file);
 
             img.onload = () => {
-                // Tính toán kích thước mới — giữ tỉ lệ, max 1200px
                 const MAX_PX = 1200;
                 let { width, height } = img;
                 if (width > MAX_PX || height > MAX_PX) {
@@ -41,14 +43,13 @@ export default function ProfilePage() {
                 ctx.drawImage(img, 0, 0, width, height);
                 URL.revokeObjectURL(url);
 
-                // Nén với quality 0.8, giảm dần nếu vẫn còn quá lớn
                 let quality = 0.8;
                 const tryCompress = () => {
                     canvas.toBlob((blob) => {
                         if (!blob) return resolve(file);
                         if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.2) {
                             quality -= 0.1;
-                            tryCompress(); // thử lại với quality thấp hơn
+                            tryCompress();
                         } else {
                             resolve(new File([blob], file.name, { type: "image/jpeg" }));
                         }
@@ -60,6 +61,7 @@ export default function ProfilePage() {
             img.src = url;
         });
     };
+
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -68,7 +70,7 @@ export default function ProfilePage() {
         const userId = storedUser ? JSON.parse(storedUser).userId : null;
         if (!userId) { alert("Vui lòng đăng nhập lại"); return; }
 
-        const token = localStorage.getItem("token"); // ✅ khai báo đúng chỗ
+        const token = localStorage.getItem("token");
 
         setUploading(true);
         try {
@@ -109,6 +111,7 @@ export default function ProfilePage() {
         }
     }, []);
 
+    // page.tsx - Thay phần fetch wallet
     useEffect(() => {
         const token = localStorage.getItem("token");
         const storedUser = localStorage.getItem("user");
@@ -122,10 +125,11 @@ export default function ProfilePage() {
         const userId = userData.userId;
 
         if (!userId) {
-           router.push("/login")
+            router.push("/login");
             return;
         }
 
+        // ✅ FETCH PROFILE
         fetch(`/api/users/${userId}/profile`, {
             method: "GET",
             headers: {
@@ -134,20 +138,19 @@ export default function ProfilePage() {
             },
         })
             .then((res) => {
-                console.log("Response status:", res.status);
                 if (res.status === 403) throw new Error("Hết phiên làm việc");
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 return res.json();
             })
             .then((data) => {
-                console.log("storeRoleId từ API:", data.storeRoleId);
-                console.log("Profile data:", data);
                 setUser(data);
                 setLoading(false);
                 setUserRole(data.role);
                 setStoreRoleId(data.storeRoleId);
                 fetch(`/api/stores/has-store?userId=${userId}`, {
-                    headers: { Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` }
+                    headers: {
+                        Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`
+                    }
                 })
                     .then(r => r.json())
                     .then(has => setHasStore(has))
@@ -158,6 +161,42 @@ export default function ProfilePage() {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
                 router.push("/login");
+            });
+
+        // ✅ FETCH WALLET - CẢI THIỆN PHẦN NÀY
+        fetch(`/api/users/wallet/${userId}/balance`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
+            },
+        })
+            .then((res) => {
+                console.log("Wallet response status:", res.status);
+                if (res.status === 404) {
+                    console.warn("Wallet endpoint not found");
+                    setWallet(null);
+                    return null;
+                }
+                if (!res.ok) {
+                    console.error("Wallet fetch failed:", res.status, res.statusText);
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then((data) => {
+                if (data) {
+                    setWallet({
+                        availableBalance: data.availableBalance ?? 0,
+                        totalReceived: data.totalReceived ?? 0,
+                    });
+                }
+                setWalletLoading(false);
+            })
+            .catch((err) => {
+                console.error("Wallet fetch error:", err);
+                setWallet(null);
+                setWalletLoading(false);
             });
     }, [router]);
 
@@ -228,7 +267,53 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                    {/* --- MỤC MỚI: GIAO HÀNG & ĐÁNH GIÁ --- */}
+                    {/* ✅ SECTION VÍ */}
+                    <div className={styles.walletSection}>
+                        <h2 className={styles.sectionTitle}>💰 Ví của tôi</h2>
+                        {walletLoading ? (
+                            <p>Đang tải ví...</p>
+                        ) : wallet ? (
+                            <div className={styles.walletGrid}>
+                                <div className={styles.walletCard}>
+                                    <div className={styles.walletLabel}>Số dư khả dụng</div>
+                                    <div className={styles.walletAmount}>
+                                        {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+                                            wallet.availableBalance || 0
+                                        )}
+                                    </div>
+                                </div>
+                                <div className={styles.walletCard}>
+                                    <div className={styles.walletLabel}>Tổng nhận được</div>
+                                    <div className={styles.walletAmount}>
+                                        {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+                                            wallet.totalReceived || 0
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <p>Chưa có dữ liệu ví</p>
+                        )}
+
+                        <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                            <button
+                                className={styles.btnEdit}
+                                onClick={() => router.push("/wallet")}
+                            >
+                                Xem chi tiết ví
+                            </button>
+                            <button
+                                className={styles.btnShop}
+                                onClick={() => router.push("/wallet/withdraw")}
+                                disabled={!wallet || wallet.availableBalance <= 0}
+                                style={{ opacity: (!wallet || wallet.availableBalance <= 0) ? 0.5 : 1 }}
+                            >
+                                💸 Rút tiền
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* GIAO HÀNG & ĐÁNH GIÁ */}
                     <div className={styles.orderSection}>
                         <h2 className={styles.sectionTitle}>Quản lý mua sắm</h2>
                         <div className={styles.orderGrid}>
@@ -277,7 +362,6 @@ export default function ProfilePage() {
                             </button>
                         )}
                         <button className={styles.btnLogout} onClick={handleLogout}>Đăng xuất</button>
-
                     </div>
                 </div>
             </div>

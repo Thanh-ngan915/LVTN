@@ -71,6 +71,7 @@ const STATUS_LABEL: Record<string, string> = {
     delivered: "Đã giao",
     completed: "Hoàn thành",
     cancelled: "Đã hủy",
+    complained: "Đang khiếu nại",
     refunded: "Hoàn trả",
 };
 

@@ -59,15 +59,17 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
   };
 
   const getStatusInfo = (status: string) => {
-    const map: Record<string, { label: string; icon: string; className: string }> = {
-      pending: { label: 'Chờ xác nhận', icon: '⏳', className: styles.statusPending },
-      confirmed: { label: 'Đã xác nhận', icon: '✅', className: styles.statusConfirmed },
-      shipping: { label: 'Đang giao hàng', icon: '🚚', className: styles.statusShipping },
-      delivered: { label: 'Đã giao hàng', icon: '📦', className: styles.statusDelivered },
-      completed: { label: 'Hoàn thành', icon: '✅', className: styles.statusCompleted },
-      cancelled: { label: 'Đã hủy', icon: '❌', className: styles.statusCancelled },
-    };
-    return map[status] || map['pending'];
+    switch (status) {
+      case 'pending': return { label: '⏳ Chờ xác nhận', cls: styles.statusPending };
+      case 'confirmed': return { label: '✅ Đã xác nhận', cls: styles.statusConfirmed };
+      case 'shipping': return { label: '🚚 Đang giao', cls: styles.statusShipping };
+      case 'delivered': return { label: '📦 Đã giao', cls: styles.statusDelivered };
+      case 'completed': return { label: '✅ Hoàn thành', cls: styles.statusDelivered };
+      case 'cancelled': return { label: '❌ Đã hủy', cls: styles.statusCancelled };
+      case 'complained': return { label: '🚨 Đang khiếu nại', cls: styles.statusCancelled };
+      case 'refunded': return { label: '💸 Đã hoàn tiền', cls: styles.statusCancelled };
+      default: return { label: status, cls: '' };
+    }
   };
 
   const getPaymentStatusInfo = (ps: string) => {

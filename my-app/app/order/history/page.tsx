@@ -7,6 +7,7 @@ import styles from './order-history.module.css';
 import { useEffect, useState, useCallback } from 'react';
 import ReviewModal from '../../components/ReviewModal';
 import { Order } from '../../services/orderService';
+import ComplaintModal from '../../components/ComplaintModal';
 
 export default function OrderHistoryPage() {
     const router = useRouter();
@@ -17,6 +18,7 @@ export default function OrderHistoryPage() {
     const [cancelling, setCancelling] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
     const [reviewOrder, setReviewOrder] = useState<Order | null>(null);
+    const [complaintOrderId, setComplaintOrderId] = useState<number | null>(null);
 
     const handleCancel = async () => {
         if (!cancelId) return;
@@ -74,6 +76,8 @@ export default function OrderHistoryPage() {
             case 'delivered': return { label: '📦 Đã giao',      cls: styles.statusDelivered };
             case 'completed': return { label: '✅ Hoàn thành',      cls: styles.statusDelivered };
             case 'cancelled': return { label: '❌ Đã hủy',       cls: styles.statusCancelled };
+            case 'complained': return { label: '🚨 Đang khiếu nại', cls: styles.statusCancelled };
+            case 'refunded': return { label: '💸 Đã hoàn tiền', cls: styles.statusCancelled };
             default:          return { label: status,             cls: '' };
         }
     };
@@ -181,28 +185,36 @@ export default function OrderHistoryPage() {
                                                 </button>
                                             )}
                                             {order.status === 'completed' && (
-                                                order.rated
-                                                    ? <span className={styles.ratedBadge}> ✓ Đã đánh giá</span>
-                                                    : <button className={styles.btnReview} onClick={() => setReviewOrder({
-                                                        id: Number(order.id),
-                                                        storeId: order.storeId,
-                                                        status: order.status,
-                                                        createdAt: order.createdAt,
-                                                        items: order.items.map(item => ({
-                                                            productId: item.productId,
-                                                            productName: item.productName || '',
-                                                            productImage: item.productImage || '',
-                                                            color: item.color || '',
-                                                            size: item.size || '',
-                                                            quantity: item.quantity,
-                                                            priceAfter: item.priceAfter,
-                                                        })),
-                                                        rated: order.rated
-                                                    })}>
-                                                        Đánh giá
+                                                <>
+                                                    <button
+                                                        className={styles.btnCancel}
+                                                        onClick={() => setComplaintOrderId(Number(order.id))}
+                                                    >
+                                                        🚨 Khiếu nại
                                                     </button>
+                                                    {order.rated
+                                                        ? <span className={styles.ratedBadge}>✓ Đã đánh giá</span>
+                                                        : <button className={styles.btnReview} onClick={() => setReviewOrder({
+                                                            id: Number(order.id),
+                                                            storeId: order.storeId,
+                                                            status: order.status,
+                                                            createdAt: order.createdAt,
+                                                            items: order.items.map(item => ({
+                                                                productId: item.productId,
+                                                                productName: item.productName || '',
+                                                                productImage: item.productImage || '',
+                                                                color: item.color || '',
+                                                                size: item.size || '',
+                                                                quantity: item.quantity,
+                                                                priceAfter: item.priceAfter,
+                                                            })),
+                                                            rated: order.rated
+                                                        })}>
+                                                            Đánh giá
+                                                        </button>
+                                                    }
+                                                </>
                                             )}
-
                                         </div>
                                     </div>
                                 </div>
@@ -222,6 +234,18 @@ export default function OrderHistoryPage() {
                         setReviewOrder(null);
                         setToast('✅ Đánh giá thành công');
                         setTimeout(() => setToast(null), 3000);
+                    }}
+                />
+
+            )}
+            {complaintOrderId !== null && (
+                <ComplaintModal
+                    orderId={complaintOrderId}
+                    onClose={() => setComplaintOrderId(null)}
+                    onSuccess={() => {
+                        setComplaintOrderId(null);
+                        setToast('✅ Gửi khiếu nại thành công! Chúng tôi sẽ xem xét trong 24h.');
+                        setTimeout(() => setToast(null), 4000);
                     }}
                 />
             )}

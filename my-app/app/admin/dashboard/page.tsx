@@ -11,6 +11,8 @@ import ShopTable from "../../components/ShopTable";
 import { StoreDTO } from "../../services/storeService";
 import ProductTable from "../../components/ProductTable";
 import WithdrawalTable from "../../components/WithdrawalTable";
+import ComplaintTable from "../../components/ComplaintTable";
+import RevenueTable from "../../components/RevenueTable";
 
 interface UserDTO {
     id: string; username: string; fullName: string; email: string;
@@ -39,7 +41,7 @@ interface ProductStats {
 }
 
 
-type Section = "dashboard" | "users" | "shops" | "products" | "withdrawals";
+type Section = "dashboard" | "users" | "shops" | "products" | "withdrawals" | "complaints" | "revenue"
 
 export default function AdminDashboardPage() {
     interface AdminUser {
@@ -130,10 +132,20 @@ export default function AdminDashboardPage() {
         }
     }, [token]);
 
-    const authHeader = () => ({
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-    });
+    const authHeader = () => {
+        let userId = adminUser?.userId || "";
+        if (!userId) {
+            try {
+                const u = localStorage.getItem("user");
+                if (u) userId = JSON.parse(u).userId;
+            } catch (e) {}
+        }
+        return {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "X-User-Id": userId,
+        };
+    };
 
     const fetchUsers = async () => {
         setLoadingUsers(true);
@@ -227,6 +239,17 @@ export default function AdminDashboardPage() {
                         authHeader={authHeader}
                         showToast={showToast}
                     />
+                )}
+
+                {activeSection === "complaints" && (
+                    <ComplaintTable
+                        authHeader={authHeader}
+                        showToast={showToast}
+                    />
+                )}
+
+                {activeSection === "revenue" && (
+                    <RevenueTable authHeader={authHeader} showToast={showToast} />
                 )}
             </main>
 

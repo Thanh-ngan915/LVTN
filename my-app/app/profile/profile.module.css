@@ -317,6 +317,43 @@
     box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5);
 }
 
+.walletSection {
+    margin: 20px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,165,0,0.1));
+    border-radius: 12px;
+    border: 1px solid rgba(255,215,0,0.3);
+}
+
+.walletGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.walletCard {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.walletLabel {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.walletAmount {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ff6b6b;
+}
+
 /* --- RESPONSIVE --- */
 @media (max-width: 640px) {
     .profileHeader { flex-direction: column; text-align: center; }

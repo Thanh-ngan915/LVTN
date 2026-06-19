@@ -638,3 +638,30 @@ detailFields::-webkit-scrollbar {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.dateInput {
+    padding: 9px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    font-family: "Sora", sans-serif;
+    width: 150px;
+    transition: border-color 0.2s;
+}
+.dateInput:focus { border-color: var(--accent); }
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 20px;
+}
+.pageInfo {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+}
