@@ -209,4 +209,79 @@ public class WalletServiceImpl implements WalletService {
 
         log.info("Withdrawal {} rejected, reason: {}", withdrawalRequestId, reason);
     }
+
+    @Override
+    @Transactional
+    public void refundToUser(String userId, Double amount, String referenceId) {
+        // Ví buyer nằm ở user-service hoặc chưa có?
+        // Tạm thời chỉ ghi transaction log, không cộng ví
+        // (nếu có UserWallet thì xử lý tương tự getOrCreateWallet)
+        log.info("[REFUND] userId={} amount={} referenceId={}", userId, amount, referenceId);
+
+        // Nếu sau này có ví buyer thì thêm logic vào đây
+    }
+
+    @Override
+    @Transactional
+    public void deductFromStore(String storeId, Double amount, String referenceId) {
+        Wallet wallet = getOrCreateWallet(storeId);
+
+        if (wallet.getAvailableBalance() < amount) {
+            log.warn("[PENALTY] Store {} không đủ số dư. available={} penalty={} → phạt tối đa số dư hiện có",
+                    storeId, wallet.getAvailableBalance(), amount);
+            amount = wallet.getAvailableBalance();
+        }
+
+        Double balanceBefore = wallet.getAvailableBalance();
+        wallet.setAvailableBalance(balanceBefore - amount);
+        walletRepository.save(wallet);
+
+        walletTransactionRepository.save(WalletTransaction.builder()
+                .walletId(wallet.getId())
+                .type("PENALTY")
+                .direction("OUT")
+                .amount(amount)
+                .balanceBefore(balanceBefore)
+                .balanceAfter(wallet.getAvailableBalance())
+                .referenceId(referenceId)
+                .referenceType("COMPLAINT")
+                .status("COMPLETED")
+                .note("Phạt vi phạm khiếu nại: " + referenceId)
+                .createdBy("system")
+                .build());
+
+        log.info("[PENALTY] Deducted {} from store {} for complaint {}", amount, storeId, referenceId);
+    }
+
+    @Override
+    @Transactional
+    public void cancelPendingBalance(String storeId, Double amount, String referenceId) {
+        Wallet wallet = getOrCreateWallet(storeId);
+
+        if (wallet.getPendingBalance() < amount) {
+            log.warn("[CANCEL PENDING] Store {} pending balance < amount. pending={} amount={} → cancel max pending",
+                    storeId, wallet.getPendingBalance(), amount);
+            amount = wallet.getPendingBalance();
+        }
+
+        Double balanceBefore = wallet.getPendingBalance();
+        wallet.setPendingBalance(balanceBefore - amount);
+        walletRepository.save(wallet);
+
+        walletTransactionRepository.save(WalletTransaction.builder()
+                .walletId(wallet.getId())
+                .type("CANCEL_PENDING")
+                .direction("OUT")
+                .amount(amount)
+                .balanceBefore(balanceBefore)
+                .balanceAfter(wallet.getPendingBalance())
+                .referenceId(referenceId)
+                .referenceType("COMPLAINT")
+                .status("COMPLETED")
+                .note("Thu hồi pending balance do hoàn tiền khiếu nại: " + referenceId)
+                .createdBy("system")
+                .build());
+
+        log.info("[CANCEL PENDING] Deducted {} from pending balance for store {}, complaint {}", amount, storeId, referenceId);
+    }
 }
