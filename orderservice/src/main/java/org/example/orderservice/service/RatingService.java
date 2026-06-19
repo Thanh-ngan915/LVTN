@@ -320,4 +320,43 @@ public class RatingService {
                 .userImage(userImage)
                 .build();
     }
+
+    public StoreRatingSummaryDTO getStoreRatingSummary(String storeId) {
+        Double avgStars = ratingRepository.averageStarsByStoreId(storeId);
+        Long total = ratingRepository.countByStoreId(storeId);
+        Long replied = ratingRepository.countRepliedByStoreId(storeId);
+        Long commentCount = ratingMaterialRepository.countRatingsWithCommentByStoreId(storeId);
+        Long lowStarPending = ratingRepository.countLowStarPendingByStoreId(storeId);
+
+        Map<Integer, Long> starCounts = new HashMap<>();
+        for (int i = 1; i <= 5; i++) starCounts.put(i, 0L);
+        for (Object[] row : ratingRepository.countByStoreIdGroupByStar(storeId)) {
+            starCounts.put(((Number) row[0]).intValue(), ((Number) row[1]).longValue());
+        }
+
+        List<DailyTrendDTO> trend = ratingRepository.getDailyTrendByStoreId(storeId).stream()
+                .map(row -> DailyTrendDTO.builder()
+                        .day(row[0].toString())
+                        .count(((Number) row[1]).longValue())
+                        .averageStars(((Number) row[2]).doubleValue())
+                        .build())
+                .collect(Collectors.toList());
+
+        long totalSafe = total != null ? total : 0L;
+        long repliedSafe = replied != null ? replied : 0L;
+        long commentSafe = commentCount != null ? commentCount : 0L;
+
+        return StoreRatingSummaryDTO.builder()
+                .averageStars(avgStars != null ? avgStars : 0.0)
+                .totalRatings(totalSafe)
+                .starCounts(starCounts)
+                .repliedCount(repliedSafe)
+                .pendingCount(totalSafe - repliedSafe)
+                .repliedRate(totalSafe > 0 ? repliedSafe * 100.0 / totalSafe : 0.0)
+                .commentCount(commentSafe)
+                .commentRate(totalSafe > 0 ? commentSafe * 100.0 / totalSafe : 0.0)
+                .lowStarPendingCount(lowStarPending != null ? lowStarPending : 0L)
+                .dailyTrend(trend)
+                .build();
+    }
 }
