@@ -17,4 +17,6 @@ public class LoginResponse {
     private String role;
     private String message;
     private String token;
+    /** Các section admin được phép xem: "ALL" hoặc "dashboard,shops,orders" */
+    private String permissions;
 }

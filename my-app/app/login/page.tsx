@@ -81,6 +81,7 @@ export default function LoginPage() {
                   userId: data.userId,
                   role: data.role,
                   storeRoleId: data.storeRoleId,
+                  permissions: data.permissions || "",  // "ALL" hoặc "dashboard,shops,orders"
               }));
           }
       }

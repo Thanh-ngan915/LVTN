@@ -73,10 +73,6 @@ const nextConfig: NextConfig = {
          destination: `${GATEWAY_URL}/api/stores`,
       },
       {
-         source: '/api/:path*',
-         destination: `${GATEWAY_URL}/api/:path*`,
-      },
-      {
          source: '/api/complaints/:path*',
          destination: `${GATEWAY_URL}/api/complaints/:path*`,
       },
@@ -93,14 +89,16 @@ const nextConfig: NextConfig = {
          destination: `${ORDER_SVC}/api/seller/:path*`,
       },
 
-      // Livestream service - direct (trước rule catch-all)
+      // Livestream service - direct
       {
         source: '/api/livestream/:path*',
         destination: `${LIVESTREAM_SVC}/api/livestream/:path*`,
       },
+
+      // Catch-all - phải đặt CUỐI CÙNG
       {
-        source: '/api/:path*',
-        destination: `${GATEWAY_URL}/api/:path*`,
+         source: '/api/:path*',
+         destination: `${GATEWAY_URL}/api/:path*`,
       },
     ];
   },

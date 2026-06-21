@@ -6,6 +6,9 @@ import org.example.orderservice.dto.ApiResponse;
 import org.example.orderservice.dto.ComplaintResponseDTO;
 import org.example.orderservice.service.ComplaintService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,17 +16,22 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/complaints/admin")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")  // Chỉ ADMIN mới được vào controller này
 public class AdminComplaintController {
 
     private final ComplaintService complaintService;
 
-    /** GET /api/admin/complaints/pending */
+    /** Lấy adminId từ JWT (SecurityContext), không dùng header thủ công */
+    private String getCurrentAdminId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) return null;
+        Object principal = auth.getPrincipal();
+        return principal instanceof String ? (String) principal : null;
+    }
+
+    /** GET /api/complaints/admin/pending */
     @GetMapping("/pending")
-    public ResponseEntity<ApiResponse<List<ComplaintResponseDTO>>> pending(
-            @RequestHeader(value = "X-User-Id", required = false) String adminId
-    ) {
-        if (adminId == null || adminId.isBlank())
-            return ResponseEntity.status(401).body(ApiResponse.error("Chưa đăng nhập"));
+    public ResponseEntity<ApiResponse<List<ComplaintResponseDTO>>> pending() {
         try {
             return ResponseEntity.ok(ApiResponse.success(
                     complaintService.getPendingComplaints(), "OK"));
@@ -32,15 +40,13 @@ public class AdminComplaintController {
         }
     }
 
-    /** POST /api/admin/complaints/{complaintId}/approve */
+    /** POST /api/complaints/admin/{complaintId}/approve */
     @PostMapping("/{complaintId}/approve")
     public ResponseEntity<ApiResponse<ComplaintResponseDTO>> approve(
             @PathVariable String complaintId,
-            @RequestBody AdminResolveDTO req,
-            @RequestHeader(value = "X-User-Id", required = false) String adminId
+            @RequestBody AdminResolveDTO req
     ) {
-        if (adminId == null || adminId.isBlank())
-            return ResponseEntity.status(401).body(ApiResponse.error("Chưa đăng nhập"));
+        String adminId = getCurrentAdminId();
         try {
             return ResponseEntity.ok(ApiResponse.success(
                     complaintService.approveComplaint(complaintId, adminId, req),
@@ -50,15 +56,13 @@ public class AdminComplaintController {
         }
     }
 
-    /** POST /api/admin/complaints/{complaintId}/reject */
+    /** POST /api/complaints/admin/{complaintId}/reject */
     @PostMapping("/{complaintId}/reject")
     public ResponseEntity<ApiResponse<ComplaintResponseDTO>> reject(
             @PathVariable String complaintId,
-            @RequestBody AdminResolveDTO req,
-            @RequestHeader(value = "X-User-Id", required = false) String adminId
+            @RequestBody AdminResolveDTO req
     ) {
-        if (adminId == null || adminId.isBlank())
-            return ResponseEntity.status(401).body(ApiResponse.error("Chưa đăng nhập"));
+        String adminId = getCurrentAdminId();
         try {
             return ResponseEntity.ok(ApiResponse.success(
                     complaintService.rejectComplaint(complaintId, adminId, req),

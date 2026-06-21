@@ -49,6 +49,7 @@ export default function AdminDashboardPage() {
         username: string;
         userId: string;
         role: string;
+        permissions: string;  // "ALL" hoặc "dashboard,shops,orders"
     }
 
     const router = useRouter();
@@ -78,11 +79,12 @@ export default function AdminDashboardPage() {
         }
     };
 
-    const fetchShops = async () => {
+    const fetchShops = async (tok?: string, uid?: string) => {
         setLoadingShops(true);
         try {
-            const res = await fetch("/api/stores", { headers: authHeader() });
-            if (res.status === 403) { router.push("/login"); return; }
+            const res = await fetch("/api/stores", { headers: authHeader(tok, uid) });
+            if (res.status === 401) { router.push("/login"); return; }
+            if (!res.ok) { setShops([]); return; }
             const data = await res.json();
             setShops(Array.isArray(data) ? data : []);
         } catch { setShops([]); }
@@ -120,20 +122,24 @@ export default function AdminDashboardPage() {
             return;
         }
         setToken(t);
-        if (u) setAdminUser(JSON.parse(u));
+        const parsedUser = u ? JSON.parse(u) : null;
+        if (parsedUser) setAdminUser(parsedUser);
+
+        // Đọc permissions từ localStorage
+        const perms: string = parsedUser?.permissions ?? "";
+        const hasAll = perms === "" || perms === "ALL";
+
+        // Truyền token và userId trực tiếp — không dùng state vì React chưa update khi gọi API
+        const uid = parsedUser?.userId || "";
+        if (hasAll || perms.split(",").includes("users")) fetchUsers(t, uid);
+        if (hasAll || perms.split(",").includes("products")) { fetchProductStats(); fetchProducts(); }
+        if (hasAll || perms.split(",").includes("shops")) fetchShops(t, uid);
     }, [router]);
 
-    useEffect(() => {
-        if (token) {
-            fetchUsers();
-            fetchProductStats();
-            fetchShops();
-            fetchProducts();
-        }
-    }, [token]);
-
-    const authHeader = () => {
-        let userId = adminUser?.userId || "";
+    /** Tạo auth header. Nếu truyền token/userId trực tiếp thì dùng đó, ngược lại lấy từ state */
+    const authHeader = (overrideToken?: string, overrideUserId?: string): HeadersInit => {
+        const tok = overrideToken || token || "";
+        let userId = overrideUserId || adminUser?.userId || "";
         if (!userId) {
             try {
                 const u = localStorage.getItem("user");
@@ -141,17 +147,18 @@ export default function AdminDashboardPage() {
             } catch (e) {}
         }
         return {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${tok}`,
             "Content-Type": "application/json",
             "X-User-Id": userId,
         };
     };
 
-    const fetchUsers = async () => {
+    const fetchUsers = async (tok?: string, uid?: string) => {
         setLoadingUsers(true);
         try {
-            const res = await fetch("/api/admin/users", { headers: authHeader() });
-            if (res.status === 403) { router.push("/login"); return; }
+            const res = await fetch("/api/admin/users", { headers: authHeader(tok, uid) });
+            if (res.status === 401) { router.push("/login"); return; }
+            if (!res.ok) { setUsers([]); return; }
             const data = await res.json();
             setUsers(Array.isArray(data) ? data : []);
         } catch { setUsers([]); }
@@ -201,6 +208,7 @@ export default function AdminDashboardPage() {
                     <DashboardStats
                     users={users}
                     productStats={productStats}
+                    authHeader={authHeader}
                     />)
                 }
 
