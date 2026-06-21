@@ -121,29 +121,27 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse login(LoginRequest request) {
-        // 1. Find account by username
         Account account = accountRepository.findById(request.getUsername())
                 .orElseThrow(() -> new InvalidCredentialsException("Tài khoản hoặc mật khẩu không chính xác"));
 
-        // 2. Compare password
         if (!passwordEncoder.matches(request.getPassword(), account.getPassword())) {
             throw new InvalidCredentialsException("Tài khoản hoặc mật khẩu không chính xác");
         }
 
-        // 3. Get user info
         User user = userRepository.findById(account.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 4. Generate JWT Token
+        String permissions = buildPermissionsClaim(account.getUserId());
+
         String token = jwtTokenProvider.generateToken(
                 account.getUsername(),
                 account.getUserId(),
                 account.getRole(),
                 user.getFullName(),
-                user.getImage()
+                user.getImage(),
+                permissions
         );
 
-        // 6. Build Response
         return LoginResponse.builder()
                 .username(account.getUsername())
                 .userId(account.getUserId())
@@ -152,7 +150,20 @@ public class AuthServiceImpl implements AuthService {
                 .role(account.getRole())
                 .message("Đăng nhập thành công!")
                 .token(token)
+                .permissions(permissions)  // Sections admin được phép: "ALL" hoặc "dashboard,shops,orders"
                 .build();
+    }
+
+    /** Gom các instance (trừ "DEFAULT") thành chuỗi phân quyền trang admin. "ALL" nếu có dòng instance=ALL. */
+    private String buildPermissionsClaim(String userId) {
+        java.util.List<Permission> perms = permissionRepository.findByUserId(userId);
+        boolean hasAll = perms.stream().anyMatch(p -> "ALL".equalsIgnoreCase(p.getInstance()));
+        if (hasAll) return "ALL";
+        return perms.stream()
+                .map(Permission::getInstance)
+                .filter(i -> i != null && !"DEFAULT".equalsIgnoreCase(i))
+                .distinct()
+                .collect(java.util.stream.Collectors.joining(","));
     }
 
     @Override

@@ -1,0 +1,102 @@
+.overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: #1e1e2e;
+    border-radius: 16px;
+    padding: 28px;
+    width: 90%;
+    max-width: 480px;
+    color: #fff;
+}
+
+.title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.label {
+    display: block;
+    font-size: 0.85rem;
+    color: #aaa;
+    margin-bottom: 8px;
+    margin-top: 16px;
+}
+
+.reasonGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.reasonBtn {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    background: #2a2a3e;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.reasonBtn:hover { border-color: #7c6af7; }
+
+.reasonActive {
+    border-color: #7c6af7;
+    background: #3d3580;
+}
+
+.textarea {
+    width: 100%;
+    background: #2a2a3e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #fff;
+    padding: 12px;
+    font-size: 0.9rem;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.textarea:focus { outline: none; border-color: #7c6af7; }
+
+.error {
+    color: #ff6b6b;
+    font-size: 0.85rem;
+    margin-top: 8px;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: flex-end;
+}
+
+.btnCancel {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #555;
+    background: transparent;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.btnSubmit {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    background: #7c6af7;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btnSubmit:disabled { opacity: 0.5; cursor: not-allowed; }

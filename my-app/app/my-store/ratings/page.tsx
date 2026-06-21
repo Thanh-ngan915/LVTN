@@ -30,9 +30,22 @@ interface RatingDTO {
     replies: RatingReplyDTO[];
 }
 
+interface StoreRatingSummaryDTO {
+    averageStars: number;
+    totalRatings: number;
+    starCounts: Record<string, number>;
+    repliedCount: number;
+    pendingCount: number;
+    repliedRate: number;
+    commentCount: number;
+    commentRate: number;
+    lowStarPendingCount: number;
+}
+
 export default function ShopRatingsPage() {
     const router = useRouter();
     const [ratings, setRatings] = useState<RatingDTO[]>([]);
+    const [summary, setSummary] = useState<StoreRatingSummaryDTO | null>(null);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<"all" | "pending" | "replied">("all");
     const [selectedRating, setSelectedRating] = useState<RatingDTO | null>(null);
@@ -46,9 +59,26 @@ export default function ShopRatingsPage() {
         return { token, userId };
     };
 
+    const authHeader = (token: string) =>
+        token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+
     const showToast = (msg: string) => {
         setToast(msg);
         setTimeout(() => setToast(null), 3000);
+    };
+
+    const loadRatingsAndSummary = (token: string, sid: string) => {
+        Promise.all([
+            fetch(`/api/ratings/store/${sid}`, {
+                headers: { Authorization: authHeader(token) },
+            }).then(r => r.json()),
+            fetch(`/api/ratings/store/${sid}/summary`, {
+                headers: { Authorization: authHeader(token) },
+            }).then(r => r.json()),
+        ]).then(([ratingsRes, summaryRes]) => {
+            setRatings(ratingsRes.data || []);
+            setSummary(summaryRes.data || null);
+        });
     };
 
     useEffect(() => {
@@ -56,17 +86,13 @@ export default function ShopRatingsPage() {
         if (!token || !userId) { router.push("/login"); return; }
 
         fetch(`/api/stores/my-store?userId=${userId}`, {
-            headers: { Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` },
+            headers: { Authorization: authHeader(token) },
         })
             .then(r => r.json())
             .then(store => {
                 setStoreId(store.id);
-                return fetch(`/api/ratings/store/${store.id}`, {
-                    headers: { Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` },
-                });
+                loadRatingsAndSummary(token, store.id);
             })
-            .then(r => r.json())
-            .then(data => setRatings(data.data || []))
             .catch(() => router.push("/my-store"))
             .finally(() => setLoading(false));
     }, [router]);
@@ -83,11 +109,7 @@ export default function ShopRatingsPage() {
         setSelectedRating(null);
         showToast("✅ Phản hồi thành công!");
         const { token } = getAuth();
-        fetch(`/api/ratings/store/${storeId}`, {
-            headers: { Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}` },
-        })
-            .then(r => r.json())
-            .then(data => setRatings(data.data || []));
+        if (token && storeId) loadRatingsAndSummary(token, storeId);
     };
 
     const StarDisplay = ({ count }: { count: number }) => (
@@ -123,6 +145,57 @@ export default function ShopRatingsPage() {
                         </p>
                     </div>
                 </header>
+
+                {summary && summary.lowStarPendingCount > 0 && (
+                    <div className={styles.warningBanner}>
+                        ⚠️ Có <strong>{summary.lowStarPendingCount}</strong> đánh giá 1-2 sao chưa được phản hồi — nên ưu tiên xử lý sớm
+                    </div>
+                )}
+
+                {summary && (
+                    <div className={styles.statsGrid}>
+                        <div className={styles.statCard}>
+                            <div className={styles.statValue}>{summary.totalRatings}</div>
+                            <div className={styles.statLabel}>Tổng đánh giá</div>
+                        </div>
+                        <div className={styles.statCard}>
+                            <div className={styles.statValue}>
+                                {summary.averageStars.toFixed(1)} <span style={{ color: "#f59e0b" }}>★</span>
+                            </div>
+                            <div className={styles.statLabel}>Điểm trung bình</div>
+                        </div>
+                        <div className={styles.statCard}>
+                            <div className={styles.statValue}>{summary.repliedRate.toFixed(0)}%</div>
+                            <div className={styles.statLabel}>Tỷ lệ phản hồi</div>
+                        </div>
+                        <div className={styles.statCard}>
+                            <div className={styles.statValue}>{summary.commentRate.toFixed(0)}%</div>
+                            <div className={styles.statLabel}>Có viết bình luận</div>
+                        </div>
+                    </div>
+                )}
+
+                {summary && summary.totalRatings > 0 && (
+                    <div className={styles.distributionBox}>
+                        <div className={styles.distributionTitle}>Phân bố theo số sao</div>
+                        {[5,4,3,2,1].map(star => {
+                            const count = summary.starCounts[star] ?? summary.starCounts[String(star)] ?? 0;
+                            const pct = summary.totalRatings > 0 ? (count / summary.totalRatings) * 100 : 0;
+                            return (
+                                <div key={star} className={styles.distributionRow}>
+                                    <span className={styles.distributionLabel}>{star} ★</span>
+                                    <div className={styles.distributionBarTrack}>
+                                        <div
+                                            className={styles.distributionBarFill}
+                                            style={{ width: `${pct}%` }}
+                                        />
+                                    </div>
+                                    <span className={styles.distributionCount}>{count}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
 
                 <div className={styles.tabs}>
                     {[

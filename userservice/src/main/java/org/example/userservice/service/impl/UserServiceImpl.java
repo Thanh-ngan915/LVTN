@@ -176,7 +176,16 @@ public class UserServiceImpl implements UserService {
         Account account = accountRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
         account.setStoreRoleId(storeRole.getId());
+        account.setRole("SELLER"); // Quan trọng: Cập nhật role ở account
         accountRepository.save(account);
+
+        // 3. Cập nhật role trong bảng User để hiển thị đúng là SELLER
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setRole("SELLER");
+        userRepository.save(user);
+
+        log.info("✅ User {} approved as SELLER for store {}", userId, storeId);
     }
 
     @Override

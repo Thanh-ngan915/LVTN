@@ -1,49 +1,56 @@
 import styles from "../admin/dashboard/dashboard.module.css";
 
+type SectionKey = "dashboard" | "users" | "shops" | "products" | "withdrawals" | "complaints" | "revenue";
+
 interface Props {
-    activeSection: "dashboard" | "users" | "shops" | "products" |"withdrawals";
-    setActiveSection: (s: "dashboard" | "users" | "shops" | "products" | "withdrawals") => void;
+    activeSection: SectionKey;
+    setActiveSection: (s: SectionKey) => void;
     adminUser: any;
     onLogout: () => void;
 }
 
+/** Danh sách tất cả menu items */
+const ALL_MENU_ITEMS: { key: SectionKey; icon: string; label: string }[] = [
+    { key: "dashboard",   icon: "📊", label: "Dashboard" },
+    { key: "users",       icon: "👥", label: "Người dùng" },
+    { key: "shops",       icon: "🛍️", label: "Quản lý Shop" },
+    { key: "products",    icon: "📦", label: "Sản phẩm" },
+    { key: "withdrawals", icon: "💸", label: "Rút tiền" },
+    { key: "complaints",  icon: "⚖️", label: "Khiếu nại" },
+    { key: "revenue",     icon: "💰", label: "Doanh thu" },
+];
+
+/**
+ * Kiểm tra xem admin có quyền xem section này không.
+ * permissions = "ALL" → xem tất cả
+ * permissions = "dashboard,shops,orders" → chỉ xem dashboard, shops
+ */
+function canAccess(section: SectionKey, permissions: string): boolean {
+    if (!permissions || permissions === "ALL") return true;
+    const allowed = permissions.split(",").map(s => s.trim().toLowerCase());
+    return allowed.includes(section.toLowerCase());
+}
+
 export default function Sidebar({ activeSection, setActiveSection, adminUser, onLogout }: Props) {
+    const permissions: string = adminUser?.permissions || "ALL";
+
+    const visibleItems = ALL_MENU_ITEMS.filter(item => canAccess(item.key, permissions));
+
     return (
         <aside className={styles.sidebar}>
             <div className={styles.sidebarHeader}>
                 <span className={styles.sidebarTitle}>Admin Panel</span>
             </div>
             <nav className={styles.nav}>
-                <button
-                    className={`${styles.navItem} ${activeSection === "dashboard" ? styles.navActive : ""}`}
-                    onClick={() => setActiveSection("dashboard")}
-                >
-                    <span>📊</span> Dashboard
-                </button>
-                <button
-                    className={`${styles.navItem} ${activeSection === "users" ? styles.navActive : ""}`}
-                    onClick={() => setActiveSection("users")}
-                >
-                    <span>👥</span> Người dùng
-                </button>
-                <button
-                    className={`${styles.navItem} ${activeSection === "shops" ? styles.navActive : ""}`}
-                    onClick={() => setActiveSection("shops")}
-                >
-                    <span>🛍️</span> Quản lý Shop
-                </button>
-                <button
-                    className={`${styles.navItem} ${activeSection === "products" ? styles.navActive : ""}`}
-                    onClick={() => setActiveSection("products")}
-                >
-                    <span>📦</span> Sản phẩm
-                </button>
-                <button
-                    className={`${styles.navItem} ${activeSection === "withdrawals" ? styles.navActive : ""}`}
-                    onClick={() => setActiveSection("withdrawals")}
-                >
-                    <span>💸</span> Rút tiền
-                </button>
+                {visibleItems.map(item => (
+                    <button
+                        key={item.key}
+                        className={`${styles.navItem} ${activeSection === item.key ? styles.navActive : ""}`}
+                        onClick={() => setActiveSection(item.key)}
+                    >
+                        <span>{item.icon}</span> {item.label}
+                    </button>
+                ))}
             </nav>
             <div className={styles.sidebarFooter}>
                 <div className={styles.adminInfo}>
@@ -52,7 +59,9 @@ export default function Sidebar({ activeSection, setActiveSection, adminUser, on
                     </div>
                     <div>
                         <div className={styles.adminName}>{adminUser?.fullName ?? "Admin"}</div>
-                        <div className={styles.adminRole}>Administrator</div>
+                        <div className={styles.adminRole}>
+                            {permissions === "ALL" ? "Quản trị viên" : "Quản lý"}
+                        </div>
                     </div>
                 </div>
                 <button className={styles.logoutBtn} onClick={onLogout}>🚪 Đăng xuất</button>
