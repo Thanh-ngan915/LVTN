@@ -52,13 +52,25 @@ public class OrderService {
                 requests.add(OrderStockDTO.builder().productId(po.getProductId()).quantity(po.getQuantity()).build());
             }
             if (!requests.isEmpty()) {
-                String url = PRODUCT_SERVICE_BASE_URL + "/api/products/update-stock?isCancel=" + isCancel;
+                // 1. Cập nhật tồn kho sản phẩm gốc (product-service)
+                String urlProduct = PRODUCT_SERVICE_BASE_URL + "/api/products/update-stock?isCancel=" + isCancel;
                 org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
                 headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
                 org.springframework.http.HttpEntity<List<OrderStockDTO>> requestEntity = new org.springframework.http.HttpEntity<>(requests, headers);
                 
-                restTemplate.postForEntity(url, requestEntity, String.class);
-                log.info("Successfully requested stock update for {} items at {}", requests.size(), url);
+                restTemplate.postForEntity(urlProduct, requestEntity, String.class);
+                log.info("Successfully requested stock update for {} items at {}", requests.size(), urlProduct);
+
+                // 2. Cập nhật số lượng đã bán của sản phẩm khuyến mãi (store-service)
+                try {
+                    // Extract base url of store-service by removing /api/vouchers from STORE_SERVICE_URL
+                    String storeBaseUrl = STORE_SERVICE_URL.replace("/api/vouchers", "");
+                    String urlPromotion = storeBaseUrl + "/api/stores/promotions/update-bought";
+                    restTemplate.postForEntity(urlPromotion, requestEntity, String.class);
+                    log.info("Successfully updated flash sale bought quantity for {} items", requests.size());
+                } catch (Exception e) {
+                    log.error("Failed to update flash sale bought quantity: {}", e.getMessage(), e);
+                }
             }
         } catch (Exception e) {
             log.error("Failed to update product stock: {}", e.getMessage(), e);

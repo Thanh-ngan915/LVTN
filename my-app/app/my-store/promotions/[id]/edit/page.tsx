@@ -22,7 +22,7 @@ export default function EditPromotionPage() {
     const [form, setForm] = useState<SalePromotionRequestDTO>({
         title: "",
         description: "",
-        type: "SALE",
+        type: "FLASH_SALE",
         startDate: "",
         endDate: "",
     });
@@ -155,9 +155,7 @@ export default function EditPromotionPage() {
                             <div className={`${styles.formField} ${styles.fullWidth}`}>
                                 <label>Loại khuyến mãi</label>
                                 <select name="type" value={form.type} onChange={handleChange}>
-                                    <option value="SALE">Giảm giá sản phẩm</option>
                                     <option value="FLASH_SALE">Flash Sale</option>
-                                    <option value="BUNDLE">Combo</option>
                                 </select>
                             </div>
 
