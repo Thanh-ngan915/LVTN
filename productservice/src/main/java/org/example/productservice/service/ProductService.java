@@ -1,6 +1,7 @@
 package org.example.productservice.service;
 
 import org.example.productservice.dto.CategoryDTO;
+import org.example.productservice.dto.OrderStockDTO;
 import org.example.productservice.dto.ProductDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,4 +28,5 @@ public interface ProductService {
     ProductDTO approveProduct(Integer id);
     ProductDTO rejectProduct(Integer id, String reason);
     ProductDTO hideProduct(Integer id);
+    void updateStockFromOrder(List<OrderStockDTO> items, boolean isCancel);
 }

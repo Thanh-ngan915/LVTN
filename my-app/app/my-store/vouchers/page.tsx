@@ -325,11 +325,18 @@ export default function VouchersPage() {
                                             <td className={styles.dateCell}>
                                                 {new Date(v.startDate).toLocaleDateString("vi-VN")}
                                                 <br />→ {new Date(v.endDate).toLocaleDateString("vi-VN")}
+                                                {new Date(v.endDate) < new Date() && <div style={{ color: "red", fontSize: "0.85em", marginTop: "4px", fontWeight: 600 }}>⏳ Hết hạn</div>}
                                             </td>
                                             <td>
+                                                {new Date(v.endDate) < new Date() ? (
+                                                    <span className={`${styles.statusBadge} ${styles.statusInactive}`}>
+                                                        ⏳ Hết hạn
+                                                    </span>
+                                                ) : (
                                                     <span className={`${styles.statusBadge} ${v.status === 1 ? styles.statusActive : styles.statusInactive}`}>
                                                         {v.status === 1 ? "✅ Đang dùng" : "🚫 Tắt"}
                                                     </span>
+                                                )}
                                             </td>
                                             <td>
                                                 <div className={styles.actions}>
@@ -372,6 +379,7 @@ export default function VouchersPage() {
                                             <td className={styles.dateCell}>
                                                 {new Date(v.startDate).toLocaleDateString("vi-VN")}
                                                 <br />→ {new Date(v.endDate).toLocaleDateString("vi-VN")}
+                                                {new Date(v.endDate) < new Date() && <div style={{ color: "red", fontSize: "0.85em", marginTop: "4px", fontWeight: 600 }}>⏳ Hết hạn</div>}
                                             </td>
                                             <td>
                                                 <button className={styles.btnEdit} onClick={() => handleRestore(v.id)}>

@@ -5,9 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.userservice.dto.PasswordRequest;
 import org.example.userservice.dto.UserDTO;
 import org.example.userservice.entity.Account;
+import org.example.userservice.entity.Permission;
 import org.example.userservice.entity.StoreRole;
 import org.example.userservice.entity.User;
 import org.example.userservice.repository.AccountRepository;
+import org.example.userservice.repository.PermissionRepository;
 import org.example.userservice.repository.StoreRoleRepository;
 import org.example.userservice.repository.UserRepository;
 import org.example.userservice.service.UserService;
@@ -32,6 +34,7 @@ public class UserServiceImpl implements UserService {
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final StoreRoleRepository storeRoleRepository;
+    private final PermissionRepository permissionRepository;
 
     @Override
     public UserDTO getProfile(String userId) {
@@ -216,14 +219,46 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String actualRole = role;
-        if ("USER".equals(role) && account.getStoreRoleId() != null) {
-            actualRole = "SELLER";
+        String actualRole;
+        if ("ADMIN".equals(role)) {
+            // Promote lên ADMIN: xóa storeRoleId, đặt role = ADMIN
+            actualRole = "ADMIN";
+            account.setStoreRoleId(null);
+
+            // Tự động tạo Permission "ALL" để JWT tiếp theo có PERM_ALL
+            permissionRepository.deleteByUserId(userId);
+            permissionRepository.save(Permission.builder()
+                    .id(java.util.UUID.randomUUID().toString())
+                    .instance("ALL")
+                    .permission("READ")
+                    .userId(userId)
+                    .createdBy("admin")
+                    .updatedBy("admin")
+                    .build());
+        } else {
+            // Demote về USER: xóa permission admin, đặt role
+            actualRole = (account.getStoreRoleId() != null && !account.getStoreRoleId().isBlank())
+                    ? "SELLER" : "USER";
+
+            // Xóa tất cả permission cũ và tạo lại permission mặc định
+            permissionRepository.deleteByUserId(userId);
+            permissionRepository.save(Permission.builder()
+                    .id(java.util.UUID.randomUUID().toString())
+                    .instance("DEFAULT")
+                    .permission("READ")
+                    .userId(userId)
+                    .createdBy("system")
+                    .updatedBy("system")
+                    .build());
         }
+
+        account.setRole(actualRole);
+        accountRepository.save(account);
 
         user.setRole(actualRole);
         userRepository.save(user);
-        accountRepository.updateRoleByUserId(userId, actualRole);
+
+        log.info("✅ changeUserRole: userId={} → role={} (actualRole={})", userId, role, actualRole);
     }
 
     @Override

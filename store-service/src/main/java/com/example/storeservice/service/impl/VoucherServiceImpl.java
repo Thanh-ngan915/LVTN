@@ -177,11 +177,7 @@ public class VoucherServiceImpl implements VoucherService {
         Voucher voucher = voucherRepository.findById(voucherId)
                 .orElseThrow(() -> new RuntimeException("Voucher không tồn tại"));
 
-        // Kiểm tra còn hạn không
-        if (voucher.getEndDate().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Voucher đã hết hạn, không thể khôi phục");
-        }
-
+        // Cho phép khôi phục voucher hết hạn để người dùng có thể gia hạn (edit) sau đó
         voucher.setStatus(1);
         voucher.setUpdatedBy(userId);
         voucher.setUpdateAt(LocalDateTime.now());
@@ -238,5 +234,25 @@ public class VoucherServiceImpl implements VoucherService {
                 .filter(v -> v.getEndDate() != null && v.getEndDate().isAfter(LocalDateTime.now()))
                 .map(this::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void useVoucher(String voucherId) {
+        Voucher voucher = voucherRepository.findById(voucherId)
+                .orElseThrow(() -> new RuntimeException("Voucher không tồn tại"));
+        
+        if (voucher.getCurrentQuantity() <= 0) {
+            throw new RuntimeException("Voucher đã hết lượt sử dụng");
+        }
+        
+        voucher.setCurrentQuantity(voucher.getCurrentQuantity() - 1);
+        if (voucher.getCurrentQuantity() == 0) {
+            // Optional: You could set it to inactive if you want, but it's up to logic.
+            // Let's not touch status, just let quantity be 0.
+        }
+        
+        voucher.setUpdateAt(LocalDateTime.now());
+        voucherRepository.save(voucher);
     }
 }

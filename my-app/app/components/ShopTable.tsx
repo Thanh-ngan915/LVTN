@@ -23,9 +23,10 @@ interface Props {
     onRefresh: () => void;
     authHeader: () => Record<string, string>;
     showToast: (msg: string) => void;
+    logActivity: (action: string, target: string, category?: string) => Promise<void>;
 }
 
-export default function ShopTable({ shops, loading, onRefresh, authHeader, showToast }: Props) {
+export default function ShopTable({ shops, loading, onRefresh, authHeader, showToast, logActivity }: Props) {
     const [search, setSearch] = useState("");
     const [filterStatus, setFilterStatus] = useState("ALL");
     const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -66,11 +67,16 @@ export default function ShopTable({ shops, loading, onRefresh, authHeader, showT
 
             const res = await fetch(endpoint, { method: "PATCH", headers: authHeader() });
             if (!res.ok) throw new Error();
+            const actionLabel =
+                action === "approve" ? "Duyệt shop" :
+                action === "ban"     ? "Khóa shop"  :
+                                      "Mở khóa shop";
             showToast(
                 action === "approve" ? "✅ Đã duyệt shop" :
                     action === "ban"     ? "🔒 Đã khóa shop"  :
                         "🔓 Đã mở khóa shop"
             );
+            await logActivity(actionLabel, confirm.label.replace(/["?]/g, "").trim(), "shop");
             onRefresh();
         } catch {
             showToast("❌ Thao tác thất bại");

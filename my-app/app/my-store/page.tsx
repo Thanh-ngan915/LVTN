@@ -73,6 +73,7 @@ export default function MyStorePage() {
     const [deletedProducts, setDeletedProducts] = useState<Product[]>([]);
     const [page, setPage]                   = useState(1);
     const [totalPages, setTotalPages]       = useState(1);
+    const [totalProducts, setTotalProducts] = useState(0);
     const [deletedPage, setDeletedPage]     = useState(1);
     const [deletedTotalPages, setDeletedTotalPages] = useState(1);
     const [uploadingImgs, setUploadingImgs] = useState(false);
@@ -98,6 +99,7 @@ export default function MyStorePage() {
         const data = await res.json();
         setProducts(data.data || []);
         setTotalPages(data.totalPages || 1);
+        setTotalProducts(data.totalElements || 0);
     };
 
     const fetchDeletedProducts = async (p = 1) => {
@@ -322,7 +324,7 @@ export default function MyStorePage() {
                 <div className={styles.statsRow}>
                     <div className={styles.statCard}>
                         <div className={styles.statIcon}>📦</div>
-                        <div><div className={styles.statNum}>{products.length}</div><div className={styles.statLabel}>Sản phẩm</div></div>
+                        <div><div className={styles.statNum}>{totalProducts}</div><div className={styles.statLabel}>Sản phẩm</div></div>
                     </div>
                     <div className={styles.statCard}>
                         <div className={styles.statIcon}>🛒</div>

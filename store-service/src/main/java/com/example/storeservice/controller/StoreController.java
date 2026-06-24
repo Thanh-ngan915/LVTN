@@ -106,4 +106,9 @@ public class StoreController {
             @RequestBody StoreDTO dto) {
         return ResponseEntity.ok(storeService.updateMyStore(userId, dto));
     }
+
+    @GetMapping("/by-user/{userId}")
+    public ResponseEntity<StoreDTO> getStoreByUserId(@PathVariable String userId) {
+        return ResponseEntity.ok(storeService.getStoreByUserId(userId));
+    }
 }

@@ -49,6 +49,7 @@
 .sidebarHeader {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
     padding: 24px 20px;
     border-bottom: 1px solid var(--sidebar-border);

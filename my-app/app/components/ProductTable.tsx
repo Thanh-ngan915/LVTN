@@ -24,9 +24,10 @@ interface Props {
     onRefresh: () => void;
     authHeader: () => Record<string, string>;
     showToast: (msg: string) => void;
+    logActivity: (action: string, target: string, category?: string) => Promise<void>;
 }
 
-export default function ProductTable({ products, loading, onRefresh, authHeader, showToast }: Props) {
+export default function ProductTable({ products, loading, onRefresh, authHeader, showToast, logActivity }: Props) {
     const [search, setSearch] = useState("");
     const [filterStatus, setFilterStatus] = useState("pending");
     const [actionLoading, setActionLoading] = useState<number | null>(null);
@@ -62,11 +63,17 @@ export default function ProductTable({ products, loading, onRefresh, authHeader,
 
             const res = await fetch(endpoint, { method: "PATCH", headers: authHeader() });
             if (!res.ok) throw new Error();
+            const actionLabel =
+                action === "approve" ? "Duyệt sản phẩm" :
+                action === "reject"  ? "Từ chối sản phẩm" :
+                                      "Ẩn sản phẩm";
             showToast(
                 action === "approve" ? "✅ Đã duyệt sản phẩm" :
                     action === "reject"  ? "❌ Đã từ chối sản phẩm" :
                         "🙈 Đã ẩn sản phẩm"
             );
+            const productName = products.find(p => p.id === productId)?.name ?? String(productId);
+            await logActivity(actionLabel, productName, "product");
             onRefresh();
         } catch {
             showToast("❌ Thao tác thất bại");

@@ -14,4 +14,5 @@ public interface VoucherService {
     void deleteVoucher(String userId, String storeId, String voucherId);
     void restoreVoucher(String userId, String storeId, String voucherId);
     List<VoucherDTO> getAllActiveVouchers();
+    void useVoucher(String voucherId);
 }

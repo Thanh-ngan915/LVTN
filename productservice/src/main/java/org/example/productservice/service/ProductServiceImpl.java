@@ -1,6 +1,7 @@
 package org.example.productservice.service;
 
 import org.example.productservice.dto.CategoryDTO;
+import org.example.productservice.dto.OrderStockDTO;
 import org.example.productservice.dto.ProductDTO;
 import org.example.productservice.model.Category;
 import org.example.productservice.model.Product;
@@ -313,5 +314,30 @@ public class ProductServiceImpl implements ProductService {
         product.setStatus("inactive");
         product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
         return toDTO(productRepository.save(product));
+    }
+
+    @Override
+    @Transactional
+    public void updateStockFromOrder(List<OrderStockDTO> items, boolean isCancel) {
+        if (items == null || items.isEmpty()) return;
+        for (OrderStockDTO item : items) {
+            Product product = productRepository.findById(item.getProductId())
+                    .orElse(null);
+            if (product != null) {
+                int currentSold = product.getSold() != null ? product.getSold() : 0;
+                int currentQty = product.getCurrentQuantity() != null ? product.getCurrentQuantity() : 0;
+                int qty = item.getQuantity() != null ? item.getQuantity() : 0;
+
+                if (isCancel) {
+                    product.setSold(Math.max(0, currentSold - qty));
+                    product.setCurrentQuantity(currentQty + qty);
+                } else {
+                    product.setSold(currentSold + qty);
+                    product.setCurrentQuantity(Math.max(0, currentQty - qty));
+                }
+                product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
+                productRepository.save(product);
+            }
+        }
     }
 }

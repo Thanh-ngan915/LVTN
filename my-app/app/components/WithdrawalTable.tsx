@@ -31,9 +31,10 @@ interface PageResponse {
 interface Props {
     authHeader: () => Record<string, string>;
     showToast: (msg: string) => void;
+    logActivity: (action: string, target: string, category?: string) => Promise<void>;
 }
 
-export default function WithdrawalTable({ authHeader, showToast }: Props) {
+export default function WithdrawalTable({ authHeader, showToast, logActivity }: Props) {
     const [data, setData] = useState<WithdrawalRequest[]>([]);
     const [loading, setLoading] = useState(false);
     const [filterStatus, setFilterStatus] = useState("PENDING");
@@ -90,6 +91,7 @@ export default function WithdrawalTable({ authHeader, showToast }: Props) {
                 } else {
                     showToast(`⚠️ VNPay thất bại: ${json.reason} — Đã hoàn tiền về ví seller`);
                 }
+                await logActivity("Duyệt rút tiền", `${formatCurrency(confirm?.action === "approve" ? (data.find(d => d.id === confirm.id)?.amount ?? 0) : 0)}`, "withdrawal");
             } else {
                 const res = await fetch(
                     `/api/wallet/admin/withdrawals/${confirm.id}/reject?reason=${encodeURIComponent(rejectReason)}`,
@@ -97,6 +99,7 @@ export default function WithdrawalTable({ authHeader, showToast }: Props) {
                 );
                 if (!res.ok) throw new Error();
                 showToast("❌ Đã từ chối yêu cầu");
+                await logActivity("Từ chối rút tiền", rejectReason || confirm.id, "withdrawal");
             }
 
             fetchData();

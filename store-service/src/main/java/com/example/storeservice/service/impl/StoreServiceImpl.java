@@ -137,7 +137,16 @@ public class StoreServiceImpl implements StoreService {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new RuntimeException("Shop không tồn tại"));
         store.setStatus(status.toLowerCase());
+        store.setUpdatedBy("ADMIN");
+        store.setUpdateAt(LocalDateTime.now());
         return toDTO(storeRepository.save(store));
+    }
+
+    @Override
+    public StoreDTO getStoreByUserId(String userId) {
+        Store store = storeRepository.findByCreatedBy(userId)
+                .orElseThrow(() -> new RuntimeException("User chưa có shop"));
+        return toDTO(store);
     }
 
     private StoreDTO toDTO(Store store) {
