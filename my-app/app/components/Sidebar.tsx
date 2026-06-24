@@ -1,4 +1,5 @@
 import styles from "../admin/dashboard/dashboard.module.css";
+import AdminNotificationBell from "./AdminNotificationBell";
 
 type SectionKey = "dashboard" | "users" | "shops" | "products" | "withdrawals" | "complaints" | "revenue";
 
@@ -40,6 +41,7 @@ export default function Sidebar({ activeSection, setActiveSection, adminUser, on
         <aside className={styles.sidebar}>
             <div className={styles.sidebarHeader}>
                 <span className={styles.sidebarTitle}>Admin Panel</span>
+                <AdminNotificationBell />
             </div>
             <nav className={styles.nav}>
                 {visibleItems.map(item => (
