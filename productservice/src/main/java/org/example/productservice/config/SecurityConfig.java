@@ -32,6 +32,7 @@ public class SecurityConfig {
                     "/api/categories/**",
                     "/api/cart/count"
                 ).permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/products/update-stock").permitAll()
                 // Admin
                 .requestMatchers(HttpMethod.PATCH,
                         "/api/products/*/approve",
