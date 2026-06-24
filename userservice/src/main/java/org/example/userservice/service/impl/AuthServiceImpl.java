@@ -8,6 +8,7 @@ import org.example.userservice.entity.PasswordResetToken;
 import org.example.userservice.entity.Permission;
 import org.example.userservice.entity.StoreRole;
 import org.example.userservice.entity.User;
+import org.example.userservice.exception.AccountBannedException;
 import org.example.userservice.exception.InvalidCredentialsException;
 import org.example.userservice.exception.UsernameAlreadyExistsException;
 import org.example.userservice.repository.AccountRepository;
@@ -130,6 +131,13 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userRepository.findById(account.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if ("BANNED".equalsIgnoreCase(user.getStatus())) {
+            log.warn("Attempted login to banned account: {}", account.getUsername());
+            throw new AccountBannedException(
+                    "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ với quản trị viên để biết thêm chi tiết."
+            );
+        }
 
         String permissions = buildPermissionsClaim(account.getUserId());
 
