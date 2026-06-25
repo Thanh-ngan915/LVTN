@@ -10,11 +10,13 @@ import java.util.Map;
 
 public interface ProductService {
     Page<ProductDTO> getAllProducts(Pageable pageable);
+    Page<ProductDTO> getAdminAllProducts(Pageable pageable);
     Page<ProductDTO> getProductsByCategory(String category, Pageable pageable);
     Page<ProductDTO> searchProducts(String keyword, Pageable pageable);
     ProductDTO getProductById(Integer id);
     List<CategoryDTO> getAllCategories();
     Page<ProductDTO> getProductsByStore(String storeId, Pageable pageable);
+    Page<ProductDTO> getManageProductsByStore(String storeId, Pageable pageable);
     Page<ProductDTO> getProductsByStoreAndCategory(String storeId, String category, Pageable pageable);
     Page<ProductDTO> searchProductsByStore(String storeId, String keyword, Pageable pageable);
     ProductDTO createProduct(ProductDTO dto);

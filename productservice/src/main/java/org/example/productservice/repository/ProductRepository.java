@@ -13,22 +13,29 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     Page<Product> findByCategoryShortname(String category, Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE p.isDelete = false OR p.isDelete IS NULL")
+    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.status = 'active'")
     Page<Product> findAllActive(Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.categoryShortname = :category")
+    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.status = 'active' AND p.categoryShortname = :category")
     Page<Product> findAllActiveByCategory(@Param("category") String category, Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.status = 'active' AND LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Product> searchByName(@Param("keyword") String keyword, Pageable pageable);
-    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.storeId = :storeId")
+    
+    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.status = 'active' AND p.storeId = :storeId")
     Page<Product> findAllActiveByStore(@Param("storeId") String storeId, Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.storeId = :storeId AND p.categoryShortname = :category")
+    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.status = 'active' AND p.storeId = :storeId AND p.categoryShortname = :category")
     Page<Product> findAllActiveByStoreAndCategory(@Param("storeId") String storeId, @Param("category") String category, Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.storeId = :storeId AND LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.status = 'active' AND p.storeId = :storeId AND LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Product> searchByStoreAndName(@Param("storeId") String storeId, @Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.storeId = :storeId")
+    Page<Product> findManageByStore(@Param("storeId") String storeId, Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE p.isDelete = false OR p.isDelete IS NULL")
+    Page<Product> findAllNotDeleted(Pageable pageable);
 
     @Query("SELECT p FROM Product p WHERE p.isDelete = true AND p.storeId = :storeId")
     Page<Product> findAllDeletedByStore(@Param("storeId") String storeId, Pageable pageable);

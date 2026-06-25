@@ -151,7 +151,7 @@ export default function MyStorePage() {
                 headers: { Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}` },
             });
             setDeletedProducts(prev => prev.filter(p => p.id !== id));
-            const res = await fetch(`/api/products/store/${store?.id}?size=100`, {
+            const res = await fetch(`/api/products/store/${store?.id}/manage?size=100`, {
                 headers: { Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}` },
             });
             const data = await res.json();
@@ -175,7 +175,7 @@ export default function MyStorePage() {
             .then(r => r.json())
             .then(async (storeData: Store) => {
                 setStore(storeData);
-                const res = await fetch(`/api/products/store/${storeData.id}?size=100`, {
+                const res = await fetch(`/api/products/store/${storeData.id}/manage?size=100`, {
                     headers: { Authorization: token!.startsWith("Bearer ") ? token! : `Bearer ${token}` },
                 });
                 const data = await res.json();

@@ -95,7 +95,7 @@ export default function AdminDashboardPage() {
             const size = 500;
 
             while (true) {
-                const res = await fetch(`/api/products?page=${page}&size=${size}`, { headers: authHeader() });
+                const res = await fetch(`/api/admin/products?page=${page}&size=${size}`, { headers: authHeader() });
                 const data = await res.json();
                 const items = Array.isArray(data.data) ? data.data : [];
                 allProducts = [...allProducts, ...items];
