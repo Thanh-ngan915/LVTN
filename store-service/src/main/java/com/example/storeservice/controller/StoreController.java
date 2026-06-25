@@ -39,7 +39,10 @@ public class StoreController {
         for (SalePromotion sp : activePromotions) {
             List<ProductPromotion> pps = productPromotionRepository.findBySalePromotionIdAndIsDelete(sp.getId(), false);
             for (ProductPromotion pp : pps) {
-                activeProductPromotions.add(ProductPromotionDTO.builder()
+                int bought = pp.getBought() != null ? pp.getBought() : 0;
+                int quantity = pp.getQuantity() != null ? pp.getQuantity() : 0;
+                if (bought < quantity) {
+                    activeProductPromotions.add(ProductPromotionDTO.builder()
                         .id(pp.getId())
                         .productId(pp.getProductId())
                         .salePromotionId(pp.getSalePromotionId())
@@ -52,9 +55,35 @@ public class StoreController {
                         .startDate(sp.getStartDate())
                         .endDate(sp.getEndDate())
                         .build());
+                }
             }
         }
         return ResponseEntity.ok(activeProductPromotions);
+    }
+
+    @PostMapping("/promotions/update-bought")
+    public ResponseEntity<Void> updateBoughtPromotions(@RequestBody List<com.example.storeservice.dto.OrderStockDTO> items) {
+        LocalDateTime now = LocalDateTime.now();
+        List<SalePromotion> activePromotions = salePromotionRepository.findAll().stream()
+                .filter(sp -> sp.getStatus() != null && sp.getStatus() == 1)
+                .filter(sp -> sp.getStartDate() != null && sp.getEndDate() != null)
+                .filter(sp -> !now.isBefore(sp.getStartDate()) && !now.isAfter(sp.getEndDate()))
+                .collect(Collectors.toList());
+
+        for (com.example.storeservice.dto.OrderStockDTO item : items) {
+            for (SalePromotion sp : activePromotions) {
+                List<ProductPromotion> pps = productPromotionRepository.findBySalePromotionIdAndIsDelete(sp.getId(), false);
+                for (ProductPromotion pp : pps) {
+                    if (pp.getProductId() != null && pp.getProductId().equals(item.getProductId())) {
+                        int currentBought = pp.getBought() != null ? pp.getBought() : 0;
+                        int qty = item.getQuantity() != null ? item.getQuantity() : 0;
+                        pp.setBought(currentBought + qty);
+                        productPromotionRepository.save(pp);
+                    }
+                }
+            }
+        }
+        return ResponseEntity.ok().build();
     }
 
     // Đăng ký shop mới

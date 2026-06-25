@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/vouchers/{voucherId}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vouchers").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/vouchers/*/use").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/stores/promotions/update-bought").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/api/stores/**").authenticated()
                         .requestMatchers("/api/stores/has-store").authenticated()
                         .requestMatchers("/api/stores/register").authenticated()
