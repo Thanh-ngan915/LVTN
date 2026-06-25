@@ -8,6 +8,7 @@ interface Message {
     role: "user" | "assistant";
     content: string;
     timestamp: Date;
+    images?: { product_id: string; url: string }[];
 }
 
 interface ChatSession {
@@ -116,7 +117,8 @@ export default function ChatbotPage() {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
                 content: data.reply,
-                timestamp: new Date()
+                timestamp: new Date(),
+                images: data.images || []
             }]);
         } catch (error) {
             console.error("Lỗi gửi tin nhắn:", error);
@@ -182,7 +184,22 @@ export default function ChatbotPage() {
                         )}
                         {messages.map((msg) => (
                             <div key={msg.id} className={`${styles.messageRow} ${msg.role === "user" ? styles.userRow : styles.botRow}`}>
-                                <div className={styles.bubble}><p>{msg.content}</p></div>
+                                <div className={styles.bubble}>
+                                    <p>{msg.content}</p>
+                                    {/* Hiển thị ảnh nếu có */}
+                                    {msg.images && msg.images.length > 0 && (
+                                        <div style={{ display: "flex", gap: "8px", marginTop: "8px", flexWrap: "wrap" }}>
+                                            {msg.images.map((img: { product_id: string; url: string }) => (
+                                                <img
+                                                    key={img.product_id}
+                                                    src={img.url}
+                                                    alt={`Sản phẩm ${img.product_id}`}
+                                                    style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "8px" }}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ))}
                         {loading && (

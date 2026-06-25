@@ -11,7 +11,6 @@ rag_chain = create_rag_chain(vector_db)
 
 @app.post("/api/ai/chat")
 async def chat_endpoint(payload: dict = Body(...)):
-    """Spring Boot sẽ gọi endpoint này"""
     message = payload.get("message", "")
     history_data = payload.get("history", [])
     formatted_history = ""
@@ -19,13 +18,19 @@ async def chat_endpoint(payload: dict = Body(...)):
         role = "Khách" if msg['role'] == "user" else "AI"
         formatted_history += f"{role}: {msg['content']}\n"
     try:
-        response = rag_chain.invoke({
+        result = rag_chain({
             "question": message,
             "chat_history": formatted_history
         })
-        return {"reply": response, "status": "success"}
+        return {
+            "reply": result["reply"],
+            "images": result["images"],
+            "status": "success"
+        }
     except Exception as e:
-        return {"reply": f"Lỗi xử lý AI: {str(e)}", "status": "error"}
+        if "503" in str(e):
+            return {"reply": "Hệ thống AI đang bận, vui lòng thử lại sau nhé! 🙏", "images": [], "status": "error"}
+        return {"reply": f"Lỗi xử lý AI: {str(e)}", "images": [], "status": "error"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)

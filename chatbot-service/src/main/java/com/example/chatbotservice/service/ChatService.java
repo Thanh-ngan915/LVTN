@@ -23,22 +23,20 @@ public class ChatService {
     private final RestTemplate restTemplate;
     private final String FASTAPI_URL = "http://127.0.0.1:8000/api/ai/chat";
 
-    public String processChat(String userId, String sessionId, String userMessage) {
-        // KIỂM TRA VÀ TẠO SESSION NẾU CHƯA CÓ TRONG BẢNG CHAT_SESSIONS
+    // Đổi return type từ String → Map<String, Object>
+    public Map<String, Object> processChat(String userId, String sessionId, String userMessage) {
+
         if (!chatSessionRepository.existsById(sessionId)) {
             ChatSession newSession = new ChatSession();
             newSession.setId(sessionId);
             newSession.setUserId(userId);
-            // Lấy 30 ký tự đầu của tin nhắn làm tiêu đề
             String title = userMessage.length() > 30 ? userMessage.substring(0, 30) + "..." : userMessage;
             newSession.setTitle(title);
             chatSessionRepository.save(newSession);
         }
 
-        // 1. Lưu tin nhắn User vào chat_messages
         saveMessage(userId, sessionId, userMessage, "user");
 
-        // 2. Lấy ngữ cảnh (giữ nguyên logic subList của Ngân là rất tốt)
         List<ChatHistory> history = chatHistoryRepository.findBySessionIdOrderByCreatedAtAsc(sessionId);
         int contextLimit = 10;
         List<ChatHistory> recentHistory = history.size() > contextLimit
@@ -53,28 +51,30 @@ public class ChatService {
                     return msg;
                 }).collect(Collectors.toList());
 
-        // 3. Chuẩn bị payload gửi sang FastAPI (Python)
         Map<String, Object> body = new HashMap<>();
         body.put("message", userMessage);
         body.put("history", context);
 
         try {
-            // Gửi request sang Python
             Map<String, Object> fastApiResponse = restTemplate.postForObject(FASTAPI_URL, body, Map.class);
 
             if (fastApiResponse != null && fastApiResponse.containsKey("reply")) {
                 String aiReply = fastApiResponse.get("reply").toString();
+                Object images = fastApiResponse.getOrDefault("images", List.of()); // 👈
 
-                // 4. Lưu câu trả lời của AI vào DB
                 saveMessage(userId, sessionId, aiReply, "assistant");
-                return aiReply;
+
+                Map<String, Object> result = new HashMap<>();
+                result.put("reply", aiReply);
+                result.put("images", images); // 👈
+                return result;
             }
-            return "Lỗi: Bộ não AI phản hồi không đúng định dạng.";
+
+            return new HashMap<>(Map.of("reply", "Lỗi: Bộ não AI phản hồi không đúng định dạng.", "images", List.of()));
 
         } catch (Exception e) {
-            // Log lỗi chi tiết để Ngân dễ debug khi làm luận văn
             System.err.println("Lỗi kết nối FastAPI: " + e.getMessage());
-            return "Lỗi: Không thể kết nối với bộ não AI (FastAPI đang tắt?)";
+            return new HashMap<>(Map.of("reply", "Lỗi: Không thể kết nối với bộ não AI.", "images", List.of()));
         }
     }
 

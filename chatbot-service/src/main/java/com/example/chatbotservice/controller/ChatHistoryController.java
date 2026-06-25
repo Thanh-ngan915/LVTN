@@ -24,21 +24,21 @@ public class ChatHistoryController {
     private final ChatHistoryRepository chatHistoryRepository;
 
     @PostMapping()
-    public ResponseEntity<Map<String, String>> chat(@RequestBody Map<String, String> request) {
+    public ResponseEntity<Map<String, Object>> chat(@RequestBody Map<String, String> request) {
         String userId = request.get("userId");
         String userMessage = request.get("message");
         String sessionId = request.get("sessionId");
 
-        // Nếu client không gửi sessionId (Chat mới), tạo một UUID mới
         if (sessionId == null || sessionId.isEmpty()) {
             sessionId = UUID.randomUUID().toString();
         }
 
-        String aiReply = chatService.processChat(userId, sessionId, userMessage);
+        Map<String, Object> result = chatService.processChat(userId, sessionId, userMessage);
 
-        Map<String, String> response = new HashMap<>();
-        response.put("reply", aiReply);
-        response.put("sessionId", sessionId); // Trả về sessionId để Frontend lưu lại cho lượt chat kế tiếp
+        Map<String, Object> response = new HashMap<>();
+        response.put("reply", result.get("reply"));
+        response.put("images", result.get("images"));
+        response.put("sessionId", sessionId);
 
         return ResponseEntity.ok(response);
     }
