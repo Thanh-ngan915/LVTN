@@ -311,7 +311,6 @@ export interface RatingDTO {
     comment: string;
     createdAt: string;
 }
-//đánh giá đơn hàng
 export async function submitRating(
     request: RatingRequestDTO
 ): Promise<OrderApiResponse<RatingDTO>> {
@@ -325,5 +324,47 @@ export async function submitRating(
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.message || 'Đánh giá thất bại');
+    return data;
+}
+
+// =====================================================================
+// GHTK Shipping Fee
+// =====================================================================
+
+export interface ShippingFeeRequestDTO {
+    province: string;
+    district: string;
+    ward?: string;
+    address?: string;
+    storeId?: string;
+    weight?: number;
+    value?: number;
+}
+
+export interface ShippingFeeResponseDTO {
+    fee: number;
+    insuranceFee: number;
+    service: string;
+    deliveryDays: number;
+    serviceLabel: string;
+    message: string;
+    fromGhtk: boolean;
+}
+
+/**
+ * Tính phí vận chuyển qua GHTK API (gọi backend orderservice)
+ */
+export async function calculateShippingFee(
+    request: ShippingFeeRequestDTO
+): Promise<OrderApiResponse<ShippingFeeResponseDTO>> {
+    const res = await fetch(`${API_BASE}/api/orders/shipping-fee`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+        },
+        body: JSON.stringify(request),
+    });
+    const data = await res.json();
     return data;
 }

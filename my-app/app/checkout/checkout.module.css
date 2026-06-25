@@ -857,3 +857,36 @@
     flex-direction: column;
   }
 }
+
+/* ===== SHIPPING FEE LOADING ===== */
+@keyframes shimmer {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
+.shippingLoading {
+  animation: shimmer 1.2s ease-in-out infinite;
+  color: #aaa;
+  font-style: italic;
+}
+
+.ghtkBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #ee4d2d, #ff7849);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
