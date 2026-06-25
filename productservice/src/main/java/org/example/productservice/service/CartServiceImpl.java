@@ -176,7 +176,7 @@ public class CartServiceImpl implements CartService {
 
                 // Lấy ảnh đầu tiên
                 if (product.getImages() != null && !product.getImages().isEmpty()) {
-                    builder.productImage(product.getImages().get(0).getUrl());
+                    builder.productImage(product.getImages().iterator().next().getUrl());
                 }
 
                 // Lấy tên danh mục

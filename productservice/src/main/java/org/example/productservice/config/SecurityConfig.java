@@ -3,6 +3,7 @@ package org.example.productservice.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -22,25 +23,23 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Đọc sản phẩm: public
-                .requestMatchers(
+                .requestMatchers(HttpMethod.GET,
                     "/api/products",
-                    "/api/products/*",
-                    "/api/products/category/**",
-                    "/api/products/search",
-                    "/api/products/store/**",
-                    "/api/products/store/*/**",
+                    "/api/products/**",
                     "/api/categories",
                     "/api/categories/**",
                     "/api/cart/count"
                 ).permitAll()
-                    .requestMatchers(
-                            "/api/products/*/approve",
-                            "/api/products/*/reject",
-                            "/api/products/*/hide",
-                            "/api/products/stats"
-                    ).hasRole("ADMIN")
-//               .anyRequest().authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/products/update-stock").permitAll()
+                // Admin
+                .requestMatchers(HttpMethod.PATCH,
+                        "/api/products/*/approve",
+                        "/api/products/*/reject",
+                        "/api/products/*/hide"
+                ).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/products/stats").hasRole("ADMIN")
                 // Giỏ hàng cần xác thực (trừ /count)
                 .requestMatchers("/api/cart/**").authenticated()
                 // Tạo/sửa/xóa sản phẩm: cần xác thực

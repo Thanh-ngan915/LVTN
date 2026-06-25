@@ -54,8 +54,18 @@ export default function LoginPage() {
           password: formData.password.trim(),
         }),
       });
+        const data = await response.json();
+        console.log(data)
 
-      if (!response.ok) {
+        if (data.errorCode === "ACCOUNT_BANNED") {
+            setMessage({
+                text: data.message,
+                type: "error",
+            });
+            return;
+        }
+
+        if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: "Lỗi không xác định" }));
         let errorMsg = "Tài khoản hoặc mật khẩu không chính xác.";
         if (errorData.message) {
@@ -66,9 +76,6 @@ export default function LoginPage() {
         setMessage({ text: errorMsg, type: "error" });
         return;
       }
-
-      const data = await response.json();
-        console.log(data)
 
       // Save JWT Token
       if (data.token) {
@@ -81,6 +88,7 @@ export default function LoginPage() {
                   userId: data.userId,
                   role: data.role,
                   storeRoleId: data.storeRoleId,
+                  permissions: data.permissions || "",  // "ALL" hoặc "dashboard,shops,orders"
               }));
           }
       }

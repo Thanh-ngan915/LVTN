@@ -11,10 +11,15 @@ export default function ProfilePage() {
     const router = useRouter();
     const [showShopModal, setShowShopModal] = useState(false);
     const [hasStore, setHasStore] = useState(false);
-    // const token = localStorage.getItem("token");
     const [uploading, setUploading] = useState(false);
     const [userRole, setUserRole] = useState<string|null>(null);
     const [storeRoleId, setStoreRoleId] = useState<string|null>(null);
+    const [wallet, setWallet] = useState<any>(null);
+    const [walletLoading, setWalletLoading] = useState(true);
+
+    const [shopStatus, setShopStatus] = useState<string | null>(null);
+    const [shopLoading, setShopLoading] = useState(false);
+
     const compressImage = (file: File, maxSizeMB = 2): Promise<File> => {
         return new Promise((resolve) => {
             const canvas = document.createElement("canvas");
@@ -23,7 +28,6 @@ export default function ProfilePage() {
             const url = URL.createObjectURL(file);
 
             img.onload = () => {
-                // Tính toán kích thước mới — giữ tỉ lệ, max 1200px
                 const MAX_PX = 1200;
                 let { width, height } = img;
                 if (width > MAX_PX || height > MAX_PX) {
@@ -41,14 +45,13 @@ export default function ProfilePage() {
                 ctx.drawImage(img, 0, 0, width, height);
                 URL.revokeObjectURL(url);
 
-                // Nén với quality 0.8, giảm dần nếu vẫn còn quá lớn
                 let quality = 0.8;
                 const tryCompress = () => {
                     canvas.toBlob((blob) => {
                         if (!blob) return resolve(file);
                         if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.2) {
                             quality -= 0.1;
-                            tryCompress(); // thử lại với quality thấp hơn
+                            tryCompress();
                         } else {
                             resolve(new File([blob], file.name, { type: "image/jpeg" }));
                         }
@@ -60,6 +63,7 @@ export default function ProfilePage() {
             img.src = url;
         });
     };
+
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -68,7 +72,7 @@ export default function ProfilePage() {
         const userId = storedUser ? JSON.parse(storedUser).userId : null;
         if (!userId) { alert("Vui lòng đăng nhập lại"); return; }
 
-        const token = localStorage.getItem("token"); // ✅ khai báo đúng chỗ
+        const token = localStorage.getItem("token");
 
         setUploading(true);
         try {
@@ -77,7 +81,7 @@ export default function ProfilePage() {
             formData.append("file", compressed);
             formData.append("upload_preset", "kltn_user_avatar");
 
-            const cloudRes = await fetch("https://api.cloudinary.com/v1_1/dqghfi8be/image/upload",
+            const cloudRes = await fetch("https://api.anthropic.com/v1_1/dqghfi8be/image/upload",
                 { method: "POST", body: formData });
             const cloudData = await cloudRes.json();
             if (!cloudRes.ok) throw new Error("Upload Cloudinary thất bại");
@@ -98,6 +102,50 @@ export default function ProfilePage() {
             alert("Upload thất bại, thử lại!");
         } finally {
             setUploading(false);
+        }
+    };
+
+    // ✅ FUNCTION FETCH SHOP STATUS - XÓA CHECK storeRoleId/hasStore
+    const fetchShopStatus = async (userId: string, token: string) => {
+        setShopLoading(true);
+        try {
+            const response = await fetch(`/api/stores/by-user/${userId}`, {
+                headers: {
+                    Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
+                },
+            });
+
+            // ✅ Handle 404 - User chưa có shop (không throw error)
+            if (response.status === 404) {
+                console.warn("User chưa có shop");
+                setShopStatus(null);
+                setShopLoading(false);
+                return;
+            }
+
+            // ✅ Handle 403 - User không có quyền
+            if (response.status === 403) {
+                console.warn("User không có quyền truy cập shop");
+                setShopStatus(null);
+                setShopLoading(false);
+                return;
+            }
+
+            // ✅ Handle other errors
+            if (!response.ok) {
+                console.error(`Shop fetch failed with status: ${response.status}`);
+                setShopStatus(null);
+                setShopLoading(false);
+                return;
+            }
+
+            const shopData = await response.json();
+            setShopStatus(shopData.status); // "pending", "active", "banned"
+        } catch (err) {
+            console.error("Shop status fetch error:", err);
+            setShopStatus(null);
+        } finally {
+            setShopLoading(false);
         }
     };
 
@@ -122,10 +170,11 @@ export default function ProfilePage() {
         const userId = userData.userId;
 
         if (!userId) {
-           router.push("/login")
+            router.push("/login");
             return;
         }
 
+        // ✅ FETCH PROFILE
         fetch(`/api/users/${userId}/profile`, {
             method: "GET",
             headers: {
@@ -134,20 +183,23 @@ export default function ProfilePage() {
             },
         })
             .then((res) => {
-                console.log("Response status:", res.status);
                 if (res.status === 403) throw new Error("Hết phiên làm việc");
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 return res.json();
             })
             .then((data) => {
-                console.log("storeRoleId từ API:", data.storeRoleId);
-                console.log("Profile data:", data);
                 setUser(data);
                 setLoading(false);
                 setUserRole(data.role);
                 setStoreRoleId(data.storeRoleId);
+
+                // ✅ FETCH SHOP STATUS SAU KHI SET storeRoleId
+                fetchShopStatus(userId, token);
+
                 fetch(`/api/stores/has-store?userId=${userId}`, {
-                    headers: { Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}` }
+                    headers: {
+                        Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`
+                    }
                 })
                     .then(r => r.json())
                     .then(has => setHasStore(has))
@@ -159,6 +211,43 @@ export default function ProfilePage() {
                 localStorage.removeItem("user");
                 router.push("/login");
             });
+
+        // ✅ FETCH WALLET
+        fetch(`/api/users/wallet/${userId}/balance`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
+            },
+        })
+            .then((res) => {
+                console.log("Wallet response status:", res.status);
+                if (res.status === 404) {
+                    console.warn("Wallet endpoint not found");
+                    setWallet(null);
+                    return null;
+                }
+                if (!res.ok) {
+                    console.error("Wallet fetch failed:", res.status, res.statusText);
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then((data) => {
+                if (data) {
+                    setWallet({
+                        availableBalance: data.availableBalance ?? 0,
+                        totalReceived: data.totalReceived ?? 0,
+                    });
+                }
+                setWalletLoading(false);
+            })
+            .catch((err) => {
+                console.error("Wallet fetch error:", err);
+                setWallet(null);
+                setWalletLoading(false);
+            });
+
     }, [router]);
 
     const handleLogout = () => {
@@ -228,7 +317,86 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                    {/* --- MỤC MỚI: GIAO HÀNG & ĐÁNH GIÁ --- */}
+                    {/* ✅ SECTION VÍ */}
+                    <div className={styles.walletSection}>
+                        <h2 className={styles.sectionTitle}>💰 Ví của tôi</h2>
+                        {walletLoading ? (
+                            <p>Đang tải ví...</p>
+                        ) : wallet ? (
+                            <div className={styles.walletGrid}>
+                                <div className={styles.walletCard}>
+                                    <div className={styles.walletLabel}>Số dư khả dụng</div>
+                                    <div className={styles.walletAmount}>
+                                        {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+                                            wallet.availableBalance || 0
+                                        )}
+                                    </div>
+                                </div>
+                                <div className={styles.walletCard}>
+                                    <div className={styles.walletLabel}>Tổng nhận được</div>
+                                    <div className={styles.walletAmount}>
+                                        {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+                                            wallet.totalReceived || 0
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <p>Chưa có dữ liệu ví</p>
+                        )}
+
+                        <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                            <button
+                                className={styles.btnEdit}
+                                onClick={() => router.push("/wallet")}
+                            >
+                                Xem chi tiết ví
+                            </button>
+                            <button
+                                className={styles.btnShop}
+                                onClick={() => router.push("/wallet/withdraw")}
+                                disabled={!wallet || wallet.availableBalance <= 0}
+                                style={{ opacity: (!wallet || wallet.availableBalance <= 0) ? 0.5 : 1 }}
+                            >
+                                💸 Rút tiền
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* ✅ SECTION TRẠNG THÁI SHOP */}
+                    {storeRoleId && (
+                        <div className={styles.shopStatusSection}>
+                            <h2 className={styles.sectionTitle}>📦 Trạng thái Shop</h2>
+                            {shopLoading ? (
+                                <p>Đang tải trạng thái shop...</p>
+                            ) : (
+                                <div style={{
+                                    padding: "12px 16px",
+                                    borderRadius: "8px",
+                                    marginBottom: "16px",
+                                    border: "1px solid var(--border-color)",
+                                }}>
+                                    {shopStatus === "pending" && (
+                                        <p style={{ color: "#f59e0b", margin: 0, fontWeight: 500 }}>
+                                            ⏳ Shop đang chờ duyệt
+                                        </p>
+                                    )}
+                                    {shopStatus === "active" && (
+                                        <p style={{ color: "#10b981", margin: 0, fontWeight: 500 }}>
+                                            ✅ Shop đang hoạt động
+                                        </p>
+                                    )}
+                                    {shopStatus === "banned" && (
+                                        <p style={{ color: "#ef4444", margin: 0, fontWeight: 500 }}>
+                                            🔒 Shop đã bị khóa
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* GIAO HÀNG & ĐÁNH GIÁ */}
                     <div className={styles.orderSection}>
                         <h2 className={styles.sectionTitle}>Quản lý mua sắm</h2>
                         <div className={styles.orderGrid}>
@@ -264,9 +432,31 @@ export default function ProfilePage() {
                                 🛡️ Trang Admin
                             </button>
                         ) : storeRoleId ? (
-                            <button className={styles.btnShop} onClick={() => router.push("/my-store")}>
-                                🏪 Quản lý shop
-                            </button>
+                            <>
+                                {shopStatus === "banned" ? (
+                                    <button
+                                        className={styles.btnShop}
+                                        disabled
+                                        style={{ opacity: 0.5, cursor: "not-allowed" }}
+                                    >
+                                        🔒 Shop đã bị khóa
+                                    </button>
+                                ) : shopStatus === "active" ? (
+                                    <button
+                                        className={styles.btnShop}
+                                        onClick={() => router.push("/my-store")}
+                                    >
+                                        🏪 Quản lý shop
+                                    </button>
+                                ) : (
+                                    <button
+                                        className={styles.btnShop}
+                                        style={{ opacity: 0.7, cursor: "default" }}
+                                    >
+                                        ⏳ Shop đang chờ duyệt
+                                    </button>
+                                )}
+                            </>
                         ) : hasStore ? (
                             <button className={styles.btnShop} style={{ opacity: 0.7, cursor: "default" }}>
                                 ⏳ Shop đang chờ duyệt
@@ -277,7 +467,6 @@ export default function ProfilePage() {
                             </button>
                         )}
                         <button className={styles.btnLogout} onClick={handleLogout}>Đăng xuất</button>
-
                     </div>
                 </div>
             </div>

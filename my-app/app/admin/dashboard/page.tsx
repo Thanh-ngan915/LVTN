@@ -11,6 +11,9 @@ import ShopTable from "../../components/ShopTable";
 import { StoreDTO } from "../../services/storeService";
 import ProductTable from "../../components/ProductTable";
 import WithdrawalTable from "../../components/WithdrawalTable";
+import ComplaintTable from "../../components/ComplaintTable";
+import RevenueTable from "../../components/RevenueTable";
+import { AdminActivityProvider, useAdminActivity } from "../../components/AdminActivityContext";
 
 interface UserDTO {
     id: string; username: string; fullName: string; email: string;
@@ -39,14 +42,15 @@ interface ProductStats {
 }
 
 
-type Section = "dashboard" | "users" | "shops" | "products" | "withdrawals";
+type Section = "dashboard" | "users" | "shops" | "products" | "withdrawals" | "complaints" | "revenue"
 
-export default function AdminDashboardPage() {
+function AdminDashboardContent() {
     interface AdminUser {
         fullName: string;
         username: string;
         userId: string;
         role: string;
+        permissions: string;  // "ALL" hoặc "dashboard,shops,orders"
     }
 
     const router = useRouter();
@@ -60,6 +64,7 @@ export default function AdminDashboardPage() {
     } | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
+    const { logActivity } = useAdminActivity();
     const [productStats, setProductStats] = useState<ProductStats | null>(null);
     const [shops, setShops] = useState<StoreDTO[]>([]);
     const [loadingShops, setLoadingShops] = useState(false);
@@ -76,11 +81,12 @@ export default function AdminDashboardPage() {
         }
     };
 
-    const fetchShops = async () => {
+    const fetchShops = async (tok?: string, uid?: string) => {
         setLoadingShops(true);
         try {
-            const res = await fetch("/api/stores", { headers: authHeader() });
-            if (res.status === 403) { router.push("/login"); return; }
+            const res = await fetch("/api/stores", { headers: authHeader(tok, uid) });
+            if (res.status === 401) { router.push("/login"); return; }
+            if (!res.ok) { setShops([]); return; }
             const data = await res.json();
             setShops(Array.isArray(data) ? data : []);
         } catch { setShops([]); }
@@ -118,31 +124,77 @@ export default function AdminDashboardPage() {
             return;
         }
         setToken(t);
-        if (u) setAdminUser(JSON.parse(u));
+        const parsedUser = u ? JSON.parse(u) : null;
+        if (parsedUser) setAdminUser(parsedUser);
+
+        // Đọc permissions từ localStorage
+        const perms: string = parsedUser?.permissions ?? "";
+        const hasAll = perms === "" || perms === "ALL";
+
+        // Truyền token và userId trực tiếp — không dùng state vì React chưa update khi gọi API
+        const uid = parsedUser?.userId || "";
+        if (hasAll || perms.split(",").includes("users")) fetchUsers(t, uid);
+        if (hasAll || perms.split(",").includes("products")) { fetchProductStats(); fetchProducts(); }
+        if (hasAll || perms.split(",").includes("shops")) fetchShops(t, uid);
     }, [router]);
 
-    useEffect(() => {
-        if (token) {
-            fetchUsers();
-            fetchProductStats();
-            fetchShops();
-            fetchProducts();
+    /** Tạo auth header. Luôn đọc token và userId từ localStorage để tránh stale closure */
+    const authHeader = (overrideToken?: string, overrideUserId?: string): Record<string, string> => {
+        let tok = overrideToken;
+        let userId = overrideUserId;
+        // Luôn fallback về localStorage để tránh stale state trong closure
+        if (!tok || !userId) {
+            try {
+                const storedToken = localStorage.getItem("token");
+                const storedUser = localStorage.getItem("user");
+                if (!tok) tok = storedToken || token || "";
+                if (!userId) userId = storedUser ? JSON.parse(storedUser).userId : (adminUser?.userId || "");
+            } catch (e) {
+                tok = tok || token || "";
+                userId = userId || adminUser?.userId || "";
+            }
         }
-    }, [token]);
+        return {
+            Authorization: `Bearer ${tok}`,
+            "Content-Type": "application/json",
+            "X-User-Id": userId || "",
+        };
+    };
 
-    const authHeader = () => ({
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-    });
-
-    const fetchUsers = async () => {
+    const fetchUsers = async (tok?: string, uid?: string) => {
         setLoadingUsers(true);
         try {
-            const res = await fetch("/api/admin/users", { headers: authHeader() });
-            if (res.status === 403) { router.push("/login"); return; }
+            // Luôn đọc lại từ localStorage để tránh stale closure
+            const storedToken = tok || localStorage.getItem("token") || token || "";
+            const storedUser = uid || (() => {
+                try { return JSON.parse(localStorage.getItem("user") || "{}").userId || adminUser?.userId || ""; }
+                catch { return adminUser?.userId || ""; }
+            })();
+            const headers: HeadersInit = {
+                Authorization: `Bearer ${storedToken}`,
+                "Content-Type": "application/json",
+                "X-User-Id": storedUser,
+            };
+            const res = await fetch("/api/admin/users", { headers });
+            if (res.status === 401) { router.push("/login"); return; }
+            if (res.status === 403) {
+                // Token cũ không có permissions — yêu cầu đăng nhập lại
+                showToast("⚠️ Phiên đăng nhập hết hạn hoặc không đủ quyền. Vui lòng đăng xuất và đăng nhập lại.");
+                setUsers([]);
+                return;
+            }
+            if (!res.ok) {
+                const errBody = await res.text().catch(() => "");
+                console.error("fetchUsers failed:", res.status, errBody);
+                setUsers([]);
+                return;
+            }
             const data = await res.json();
             setUsers(Array.isArray(data) ? data : []);
-        } catch { setUsers([]); }
+        } catch (e) {
+            console.error("fetchUsers error:", e);
+            setUsers([]);
+        }
         finally { setLoadingUsers(false); }
     };
 
@@ -159,11 +211,32 @@ export default function AdminDashboardPage() {
             const endpoint = type === "role"
                 ? `/api/admin/users/${userId}/role?role=${value}`
                 : `/api/admin/users/${userId}/status?status=${value}`;
-            const res = await fetch(endpoint, { method: "PATCH", headers: authHeader() });
-            if (!res.ok) throw new Error();
+            // Đọc token và userId mới nhất từ localStorage
+            const currentToken = localStorage.getItem("token") || token || "";
+            const currentUserId = (() => {
+                try { return JSON.parse(localStorage.getItem("user") || "{}").userId || adminUser?.userId || ""; }
+                catch { return adminUser?.userId || ""; }
+            })();
+            const patchHeaders: HeadersInit = {
+                Authorization: `Bearer ${currentToken}`,
+                "Content-Type": "application/json",
+                "X-User-Id": currentUserId,
+            };
+            const res = await fetch(endpoint, { method: "PATCH", headers: patchHeaders });
+            if (!res.ok) {
+                const errText = await res.text().catch(() => "");
+                console.error("Action failed:", res.status, errText);
+                throw new Error(errText || `HTTP ${res.status}`);
+            }
+            const actionLabel = type === "role" ? `Đổi role thành ${value}` : (value === "BANNED" ? "Khóa tài khoản" : "Mở tài khoản");
             showToast(type === "role" ? "✅ Đã cập nhật role" : "✅ Đã cập nhật trạng thái");
-            fetchUsers();
-        } catch { showToast("❌ Thao tác thất bại"); }
+            await logActivity(actionLabel, confirmModal.label, "user");
+            // Refresh với credentials mới nhất
+            fetchUsers(currentToken, currentUserId);
+        } catch (e) {
+            console.error("handleConfirmAction error:", e);
+            showToast("❌ Thao tác thất bại");
+        }
         finally { setActionLoading(false); setConfirmModal(null); }
     };
 
@@ -189,6 +262,7 @@ export default function AdminDashboardPage() {
                     <DashboardStats
                     users={users}
                     productStats={productStats}
+                    authHeader={authHeader}
                     />)
                 }
 
@@ -209,6 +283,7 @@ export default function AdminDashboardPage() {
                         onRefresh={fetchShops}
                         authHeader={authHeader}
                         showToast={showToast}
+                        logActivity={logActivity}
                     />
                 )}
 
@@ -219,6 +294,7 @@ export default function AdminDashboardPage() {
                         onRefresh={fetchProducts}
                         authHeader={authHeader}
                         showToast={showToast}
+                        logActivity={logActivity}
                     />
                 )}
 
@@ -226,7 +302,20 @@ export default function AdminDashboardPage() {
                     <WithdrawalTable
                         authHeader={authHeader}
                         showToast={showToast}
+                        logActivity={logActivity}
                     />
+                )}
+
+                {activeSection === "complaints" && (
+                    <ComplaintTable
+                        authHeader={authHeader}
+                        showToast={showToast}
+                        logActivity={logActivity}
+                    />
+                )}
+
+                {activeSection === "revenue" && (
+                    <RevenueTable authHeader={authHeader} showToast={showToast} />
                 )}
             </main>
 
@@ -239,5 +328,31 @@ export default function AdminDashboardPage() {
                 />
             )}
         </div>
+    );
+}
+
+export default function AdminDashboardPage() {
+    const [adminUser, setAdminUser] = useState<{ userId: string; fullName: string; username: string; role: string; permissions: string } | null>(null);
+    const [token, setToken] = useState<string | null>(null);
+    const router = useRouter();
+
+    useEffect(() => {
+        const t = localStorage.getItem("token");
+        const u = localStorage.getItem("user");
+        if (!t) { router.push("/login"); return; }
+        setToken(t);
+        if (u) setAdminUser(JSON.parse(u));
+    }, [router]);
+
+    const authHeader = (): Record<string, string> => {
+        const tok = localStorage.getItem("token") || token || "";
+        const uid = (() => { try { return JSON.parse(localStorage.getItem("user") || "{}").userId || ""; } catch { return ""; } })();
+        return { Authorization: `Bearer ${tok}`, "Content-Type": "application/json", "X-User-Id": uid };
+    };
+
+    return (
+        <AdminActivityProvider adminUser={adminUser} authHeader={authHeader}>
+            <AdminDashboardContent />
+        </AdminActivityProvider>
     );
 }

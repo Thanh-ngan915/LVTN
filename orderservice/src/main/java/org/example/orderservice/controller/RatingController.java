@@ -126,4 +126,15 @@ public class RatingController {
                 .totalPages(result.getTotalPages())
                 .build());
     }
+
+    @GetMapping("/store/{storeId}/summary")
+    public ResponseEntity<ApiResponse<StoreRatingSummaryDTO>> getStoreRatingSummary(
+            @PathVariable String storeId) {
+        try {
+            return ResponseEntity.ok(ApiResponse.success(
+                    ratingService.getStoreRatingSummary(storeId), "Lấy thống kê thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ApiResponse.error("Lỗi: " + e.getMessage()));
+        }
+    }
 }

@@ -317,27 +317,23 @@ export default function ProductDetailPage() {
     router.push(`/checkout?${params.toString()}`);
   };
 
-  const handleOpenChat = () => {
-        // 1. Kiểm tra đăng nhập giống các luồng mua hàng khác
+    const handleOpenChat = () => {
         const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
         if (!userStr) {
             showToast('⚠️ Vui lòng đăng nhập để chat với Shop');
             return;
         }
 
-        // 2. Chuẩn bị các tham số cần thiết
         const storeId = product?.storeId || '';
-        const storeName = shopProfile?.fullName || storeId;
+        const storeName = shopProfile?.store?.name || shopProfile?.name || storeId;
 
-        // 3. Tạo URL kèm query parameters
         const params = new URLSearchParams({
             storeId: String(storeId),
             storeName: String(storeName)
         });
 
-        // 4. Điều hướng sang trang chat riêng biệt
         router.push(`/chat?${params.toString()}`);
-  };
+    };
 
   const handleSubmitComment = async () => {
     if (!commentText.trim()) return;

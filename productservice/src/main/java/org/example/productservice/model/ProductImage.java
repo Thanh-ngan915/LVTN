@@ -16,6 +16,8 @@ public class ProductImage {
     @Column(name = "id", length = 50)
     private String id;
 
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
@@ -28,4 +30,5 @@ public class ProductImage {
 
     @Column(name = "created_at")
     private Timestamp createdAt;
+
 }

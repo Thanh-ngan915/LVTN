@@ -27,6 +27,68 @@ export default function EditProfilePage() {
     const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
     const router = useRouter();
 
+    interface Province { code: number; name: string; }
+    interface District { code: number; name: string; }
+    interface Ward     { code: number; name: string; }
+
+// Thêm states (sau const [saving, setSaving])
+    const [provinces,   setProvinces]   = useState<Province[]>([]);
+    const [districts,   setDistricts]   = useState<District[]>([]);
+    const [wards,       setWards]       = useState<Ward[]>([]);
+    const [selProvince, setSelProvince] = useState("");
+    const [selDistrict, setSelDistrict] = useState("");
+    const [selWard,     setSelWard]     = useState("");
+    const [street,      setStreet]      = useState("");
+    useEffect(() => {
+        fetch("https://provinces.open-api.vn/api/p/")
+            .then(r => r.json())
+            .then(setProvinces);
+    }, []);
+
+// Thêm handlers (trước handleSubmit)
+    const buildAddress = (st: string, w: string, d: string, p: string) => {
+        const parts = [st, w, d, p].filter(Boolean);
+        setForm(prev => ({ ...prev, address: parts.join(", ") }));
+    };
+
+    const handleProvinceChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const code = e.target.value;
+        setSelProvince(code);
+        setSelDistrict(""); setSelWard("");
+        setDistricts([]); setWards([]);
+        if (!code) return;
+        const data = await fetch(`https://provinces.open-api.vn/api/p/${code}?depth=2`).then(r => r.json());
+        setDistricts(data.districts ?? []);
+        buildAddress(street, "", "", data.name);
+    };
+
+    const handleDistrictChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const code = e.target.value;
+        setSelDistrict(code); setSelWard(""); setWards([]);
+        if (!code) return;
+        const data = await fetch(`https://provinces.open-api.vn/api/d/${code}?depth=2`).then(r => r.json());
+        setWards(data.wards ?? []);
+        const pName = provinces.find(p => p.code === Number(selProvince))?.name ?? "";
+        buildAddress(street, "", data.name, pName);
+    };
+
+    const handleWardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const code = e.target.value;
+        setSelWard(code);
+        const ward = wards.find(w => w.code === Number(code));
+        const dist = districts.find(d => d.code === Number(selDistrict));
+        const prov = provinces.find(p => p.code === Number(selProvince));
+        buildAddress(street, ward?.name ?? "", dist?.name ?? "", prov?.name ?? "");
+    };
+
+    const handleStreetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setStreet(e.target.value);
+        const ward = wards.find(w => w.code === Number(selWard));
+        const dist = districts.find(d => d.code === Number(selDistrict));
+        const prov = provinces.find(p => p.code === Number(selProvince));
+        buildAddress(e.target.value, ward?.name ?? "", dist?.name ?? "", prov?.name ?? "");
+    };
+
     useEffect(() => {
         const token = localStorage.getItem("token");
         const storedUser = localStorage.getItem("user");
@@ -207,13 +269,40 @@ export default function EditProfilePage() {
 
                     <div className={styles.field}>
                         <label className={styles.label}>Địa chỉ</label>
+
+                        <div className={styles.locationSelects}>
+                            <select className={styles.select} value={selProvince} onChange={handleProvinceChange}>
+                                <option value="">-- Tỉnh / Thành phố --</option>
+                                {provinces.map(p => (
+                                    <option key={p.code} value={p.code}>{p.name}</option>
+                                ))}
+                            </select>
+
+                            <select className={styles.select} value={selDistrict} onChange={handleDistrictChange} disabled={!selProvince}>
+                                <option value="">-- Quận / Huyện --</option>
+                                {districts.map(d => (
+                                    <option key={d.code} value={d.code}>{d.name}</option>
+                                ))}
+                            </select>
+
+                            <select className={styles.select} value={selWard} onChange={handleWardChange} disabled={!selDistrict}>
+                                <option value="">-- Phường / Xã --</option>
+                                {wards.map(w => (
+                                    <option key={w.code} value={w.code}>{w.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
                         <input
-                            name="address"
-                            value={form.address}
-                            onChange={handleChange}
                             className={styles.input}
-                            placeholder="TP. Hồ Chí Minh"
+                            placeholder="Số nhà, tên đường..."
+                            value={street}
+                            onChange={handleStreetChange}
                         />
+
+                        {form.address && (
+                            <p className={styles.locationPreview}>📍 {form.address}</p>
+                        )}
                     </div>
 
                     <div className={styles.actions}>

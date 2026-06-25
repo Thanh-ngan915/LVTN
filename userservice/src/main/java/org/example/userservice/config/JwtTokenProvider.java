@@ -20,23 +20,27 @@ public class JwtTokenProvider {
     @Value("${app.jwt.expiration-ms}")
     private int jwtExpirationMs;
 
-    public String generateToken(String username, String userId, String role, String fullName, String image) {
+    public String generateToken(String username, String userId, String role, String fullName, String image, String permissions) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
-        String token = Jwts.builder()
+        return Jwts.builder()
                 .setSubject(username)
                 .claim("userId", userId)
                 .claim("role", role)
                 .claim("fullName", fullName)
                 .claim("image", image)
+                .claim("permissions", permissions != null ? permissions : "")
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(key(), SignatureAlgorithm.HS512)
                 .compact();
-        
-        log.debug("Generated token for user: {} (ID: {})", username, userId);
-        return token;
+    }
+
+    public String getPermissionsFromToken(String token) {
+        Object p = Jwts.parserBuilder().setSigningKey(key()).build()
+                .parseClaimsJws(token).getBody().get("permissions");
+        return p != null ? p.toString() : "";
     }
 
     private Key key() {
@@ -65,7 +69,6 @@ public class JwtTokenProvider {
                 .getSubject();
     }
 
-    // ✅ THÊM METHOD NÀY
     public String getRoleFromToken(String token) {
         return (String) Jwts.parserBuilder()
                 .setSigningKey(key())

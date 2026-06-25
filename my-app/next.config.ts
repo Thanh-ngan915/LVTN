@@ -13,8 +13,12 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
+        source: '/api/admin/settlements/:path*',
+        destination: `${GATEWAY_URL}/api/admin/settlements/:path*`,
+      },
+      {
         source: '/api/admin/:path*',
-        destination: `${USER_SVC}/api/admin/:path*`,
+        destination: `${GATEWAY_URL}/api/admin/:path*`,
       },
       {
         source: '/api/products/:path*',
@@ -30,7 +34,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/uploads/:path*',
-        destination: `${USER_SVC}/uploads/:path*`,
+        destination: `${GATEWAY_URL}/uploads/:path*`,
       },
       {
         source: '/api/users/:path*',
@@ -46,7 +50,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/api/auth/:path*',
-        destination: `${USER_SVC}/api/auth/:path*`,
+        destination: `${GATEWAY_URL}/api/auth/:path*`,
       },
       {
         source: '/api/cart',
@@ -69,8 +73,12 @@ const nextConfig: NextConfig = {
          destination: `${GATEWAY_URL}/api/stores`,
       },
       {
-            source: '/api/:path*',
-            destination: `${GATEWAY_URL}/api/:path*`,
+         source: '/api/complaints/:path*',
+         destination: `${GATEWAY_URL}/api/complaints/:path*`,
+      },
+      {
+         source: '/api/complaints',
+         destination: `${GATEWAY_URL}/api/complaints`,
       },
       {
          source: '/api/vouchers/:path*',
@@ -78,16 +86,22 @@ const nextConfig: NextConfig = {
       },
       {
          source: '/api/seller/:path*',
-         destination: `${ORDER_SVC}/api/seller/:path*`,
+         destination: `${GATEWAY_URL}/api/seller/:path*`,
       },
-      // Livestream service - direct (trước rule catch-all)
+
+      // Livestream service - direct
       {
         source: '/api/livestream/:path*',
-        destination: `${LIVESTREAM_SVC}/api/livestream/:path*`,
+        destination: `${GATEWAY_URL}/api/livestream/:path*`,
       },
       {
-        source: '/api/:path*',
-        destination: `${GATEWAY_URL}/api/:path*`,
+        source: '/api/chat/:path*',
+        destination: `${GATEWAY_URL}/api/chat/:path*`,
+      },
+      // Catch-all - phải đặt CUỐI CÙNG
+      {
+         source: '/api/:path*',
+         destination: `${GATEWAY_URL}/api/:path*`,
       },
     ];
   },

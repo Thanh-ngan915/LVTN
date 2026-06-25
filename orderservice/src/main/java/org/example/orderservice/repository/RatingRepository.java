@@ -64,4 +64,27 @@ public interface RatingRepository extends JpaRepository<Rating, Integer> {
     Page<Rating> findByStoreId(@Param("storeId") String storeId, Pageable pageable);
 
     @Query("SELECT r FROM Rating r WHERE r.storeId = :storeId AND r.isReply = false ORDER BY r.createdAt DESC")
-    Page<Rating> findByStoreIdAndNotReplied(@Param("storeId") String storeId, Pageable pageable);}
+    Page<Rating> findByStoreIdAndNotReplied(@Param("storeId") String storeId, Pageable pageable);
+
+    // RatingRepository
+    @Query("SELECT AVG(r.stars) FROM Rating r WHERE r.storeId = :storeId")
+    Double averageStarsByStoreId(@Param("storeId") String storeId);
+
+    @Query("SELECT COUNT(r) FROM Rating r WHERE r.storeId = :storeId")
+    Long countByStoreId(@Param("storeId") String storeId);
+
+    @Query("SELECT r.stars, COUNT(r) FROM Rating r WHERE r.storeId = :storeId GROUP BY r.stars")
+    List<Object[]> countByStoreIdGroupByStar(@Param("storeId") String storeId);
+
+    @Query("SELECT COUNT(r) FROM Rating r WHERE r.storeId = :storeId AND r.isReply = true")
+    Long countRepliedByStoreId(@Param("storeId") String storeId);
+
+    @Query("SELECT COUNT(r) FROM Rating r WHERE r.storeId = :storeId AND r.stars <= 2 AND r.isReply = false")
+    Long countLowStarPendingByStoreId(@Param("storeId") String storeId);
+
+    // Xu hướng theo ngày (MySQL DATE())
+    @Query(value = "SELECT DATE(created_at) as day, COUNT(*) as cnt, AVG(stars) as avgStars " +
+            "FROM rating WHERE store_id = :storeId " +
+            "GROUP BY DATE(created_at) ORDER BY day DESC LIMIT 30", nativeQuery = true)
+    List<Object[]> getDailyTrendByStoreId(@Param("storeId") String storeId);
+}

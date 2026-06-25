@@ -26,9 +26,10 @@ public class RatingService {
     private final OrderRepository orderRepository;
     private final UserLocalRepository userLocalRepository;
     private final RestTemplate restTemplate;
-
+    private final SentimentService sentimentService;
     @Value("${store-service.url:http://localhost:8090}")
     private String storeServiceUrl;
+
 
     /**
      * Lấy đánh giá theo productId (phân trang)
@@ -72,19 +73,39 @@ public class RatingService {
     /**
      * Tạo đánh giá mới
      */
-    @Transactional
     public RatingDTO createRating(RatingRequestDTO request, String username) {
         // Kiểm tra order tồn tại
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
 
-        // Kiểm tra đã đánh giá chưa
         List<Rating> existingRatings = ratingRepository.findByOrderId(request.getOrderId());
         if (!existingRatings.isEmpty()) {
             throw new RuntimeException("Bạn đã đánh giá đơn hàng này rồi");
         }
 
-        // Tạo rating
+        // Phân tích sentiment TRƯỚC khi mở transaction
+        SentimentResultDTO sentiment = sentimentService.analyze(
+                request.getComment(), request.getStars()
+        );
+        log.info("Sentiment result: analyzed={}, isMatch={}, sentiment={}",
+                sentiment.isAnalyzed(), sentiment.getIsMatch(), sentiment.getSentiment());
+
+        if (sentiment.isAnalyzed() && !sentiment.getIsMatch()) {
+            return RatingDTO.builder()
+                    .sentimentResult(sentiment)
+                    .build();
+        }
+
+        // Chỉ vào transaction khi hợp lệ
+        return saveRating(request, username, sentiment);
+    }
+
+    // Method @Transactional riêng - chỉ lo việc lưu DB
+    @Transactional
+    public RatingDTO saveRating(RatingRequestDTO request, String username, SentimentResultDTO sentiment) {
+        Order order = orderRepository.findById(request.getOrderId())
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+
         Rating rating = Rating.builder()
                 .storeId(request.getStoreId() != null ? request.getStoreId() : order.getStoreId())
                 .orderId(request.getOrderId())
@@ -96,30 +117,30 @@ public class RatingService {
         rating = ratingRepository.save(rating);
 
         if (request.getComment() != null && !request.getComment().isEmpty()) {
-            RatingMaterial commentMaterial = RatingMaterial.builder()
-                    .url("text:" + request.getComment())  // ← prefix để phân biệt
+            ratingMaterialRepository.save(RatingMaterial.builder()
+                    .url("text:" + request.getComment())
                     .ratingId(rating.getId())
                     .ratingReplyId(null)
                     .createdBy(username)
                     .updatedBy(username)
-                    .build();
-            ratingMaterialRepository.save(commentMaterial);
+                    .build());
         }
-        // Lưu materials (nếu có)
+
         if (request.getMaterialUrls() != null && !request.getMaterialUrls().isEmpty()) {
             for (String url : request.getMaterialUrls()) {
-                RatingMaterial material = RatingMaterial.builder()
+                ratingMaterialRepository.save(RatingMaterial.builder()
                         .url(url)
                         .ratingId(rating.getId())
                         .ratingReplyId(null)
                         .createdBy(username)
                         .updatedBy(username)
-                        .build();
-                ratingMaterialRepository.save(material);
+                        .build());
             }
         }
 
-        return toRatingDTO(rating);
+        RatingDTO dto = toRatingDTO(rating);
+        dto.setSentimentResult(sentiment);
+        return dto;
     }
 
     /**
@@ -297,6 +318,45 @@ public class RatingService {
                 .createdAt(reply.getCreatedAt() != null ? reply.getCreatedAt().toString() : null)
                 .userFullName(userFullName)
                 .userImage(userImage)
+                .build();
+    }
+
+    public StoreRatingSummaryDTO getStoreRatingSummary(String storeId) {
+        Double avgStars = ratingRepository.averageStarsByStoreId(storeId);
+        Long total = ratingRepository.countByStoreId(storeId);
+        Long replied = ratingRepository.countRepliedByStoreId(storeId);
+        Long commentCount = ratingMaterialRepository.countRatingsWithCommentByStoreId(storeId);
+        Long lowStarPending = ratingRepository.countLowStarPendingByStoreId(storeId);
+
+        Map<Integer, Long> starCounts = new HashMap<>();
+        for (int i = 1; i <= 5; i++) starCounts.put(i, 0L);
+        for (Object[] row : ratingRepository.countByStoreIdGroupByStar(storeId)) {
+            starCounts.put(((Number) row[0]).intValue(), ((Number) row[1]).longValue());
+        }
+
+        List<DailyTrendDTO> trend = ratingRepository.getDailyTrendByStoreId(storeId).stream()
+                .map(row -> DailyTrendDTO.builder()
+                        .day(row[0].toString())
+                        .count(((Number) row[1]).longValue())
+                        .averageStars(((Number) row[2]).doubleValue())
+                        .build())
+                .collect(Collectors.toList());
+
+        long totalSafe = total != null ? total : 0L;
+        long repliedSafe = replied != null ? replied : 0L;
+        long commentSafe = commentCount != null ? commentCount : 0L;
+
+        return StoreRatingSummaryDTO.builder()
+                .averageStars(avgStars != null ? avgStars : 0.0)
+                .totalRatings(totalSafe)
+                .starCounts(starCounts)
+                .repliedCount(repliedSafe)
+                .pendingCount(totalSafe - repliedSafe)
+                .repliedRate(totalSafe > 0 ? repliedSafe * 100.0 / totalSafe : 0.0)
+                .commentCount(commentSafe)
+                .commentRate(totalSafe > 0 ? commentSafe * 100.0 / totalSafe : 0.0)
+                .lowStarPendingCount(lowStarPending != null ? lowStarPending : 0L)
+                .dailyTrend(trend)
                 .build();
     }
 }

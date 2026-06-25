@@ -758,6 +758,113 @@
     display: flex;
     gap: 0.75rem;
 }
+/* ── Pagination ── */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 1rem;
+    border-top: 1px solid var(--border, #e8e4de);
+}
+
+.pageBtn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid #e8e4de;
+    background: #fff;
+    color: #1a1a2e;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.pageBtn:hover:not(:disabled) {
+    border-color: #6366f1;
+    color: #6366f1;
+}
+
+.pageBtn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.pageBtnActive {
+    background: #6366f1;
+    color: #fff !important;
+    border-color: #6366f1 !important;
+}
+
+/* ── Image upload ── */
+.imageUploadRow {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.uploadedImg {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e8e4de;
+    flex-shrink: 0;
+}
+
+.uploadedImg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.removeImg {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.removeImg:hover { background: rgba(220,38,38,0.9); }
+
+.uploadBox {
+    width: 80px;
+    height: 80px;
+    border: 1.5px dashed #c8c4be;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 0.68rem;
+    color: #8a8a9a;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.uploadBox:hover {
+    border-color: #e8572a;
+    color: #e8572a;
+    background: rgba(232,87,42,0.04);
+}
 
 /* ─── Responsive ──────────────────────────────────────────── */
 @media (max-width: 768px) {

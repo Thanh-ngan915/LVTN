@@ -75,6 +75,7 @@ const STATUS_TABS = [
     { key: "delivered", label: "Đã giao" },
     { key: "completed", label: "Hoàn thành" },
     { key: "cancelled", label: "Đã hủy" },
+    { key: "complained", label: "Đang khiếu nại" },
     { key: "refunded", label: "Hoàn trả" },
 ];
 
@@ -85,6 +86,7 @@ const STATUS_LABEL: Record<string, string> = {
     delivered: "Đã giao",
     completed: "Hoàn thành",
     cancelled: "Đã hủy",
+    complained: "Đang khiếu nại",
     refunded: "Hoàn trả",
 };
 

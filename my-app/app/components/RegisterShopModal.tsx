@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./RegisterShopModal.module.css";
 
 interface Props {
@@ -19,6 +19,17 @@ export default function RegisterShopModal({ userId, onClose, onSuccess }: Props)
     const [uploading, setUploading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    interface Province { code: number; name: string; }
+    interface District { code: number; name: string; }
+    interface Ward     { code: number; name: string; }
+
+    const [provinces,    setProvinces]    = useState<Province[]>([]);
+    const [districts,    setDistricts]    = useState<District[]>([]);
+    const [wards,        setWards]        = useState<Ward[]>([]);
+    const [selProvince,  setSelProvince]  = useState("");
+    const [selDistrict,  setSelDistrict]  = useState("");
+    const [selWard,      setSelWard]      = useState("");
+    const [street,       setStreet]       = useState("");
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -49,6 +60,61 @@ export default function RegisterShopModal({ userId, onClose, onSuccess }: Props)
         } finally {
             setUploading(false);
         }
+    };
+
+    useEffect(() => {
+        fetch("https://provinces.open-api.vn/api/p/")
+            .then(r => r.json())
+            .then(setProvinces);
+    }, []);
+
+    const buildLocation = (st: string, w: string, d: string, p: string) => {
+        const parts = [st, w, d, p].filter(Boolean);
+        setForm(prev => ({ ...prev, location: parts.join(", ") }));
+    };
+
+    const handleProvinceChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const code = e.target.value;
+        setSelProvince(code);
+        setSelDistrict("");
+        setSelWard("");
+        setDistricts([]);
+        setWards([]);
+        if (!code) return;
+        const res  = await fetch(`https://provinces.open-api.vn/api/p/${code}?depth=2`);
+        const data = await res.json();
+        setDistricts(data.districts ?? []);
+        buildLocation(street, "", "", data.name);
+    };
+
+    const handleDistrictChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const code = e.target.value;
+        setSelDistrict(code);
+        setSelWard("");
+        setWards([]);
+        if (!code) return;
+        const res  = await fetch(`https://provinces.open-api.vn/api/d/${code}?depth=2`);
+        const data = await res.json();
+        setWards(data.wards ?? []);
+        const pName = provinces.find(p => p.code === Number(selProvince))?.name ?? "";
+        buildLocation(street, "", data.name, pName);
+    };
+
+    const handleWardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const code = e.target.value;
+        setSelWard(code);
+        const ward = wards.find(w => w.code === Number(code));
+        const dist = districts.find(d => d.code === Number(selDistrict));
+        const prov = provinces.find(p => p.code === Number(selProvince));
+        buildLocation(street, ward?.name ?? "", dist?.name ?? "", prov?.name ?? "");
+    };
+
+    const handleStreetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setStreet(e.target.value);
+        const ward = wards.find(w => w.code === Number(selWard));
+        const dist = districts.find(d => d.code === Number(selDistrict));
+        const prov = provinces.find(p => p.code === Number(selProvince));
+        buildLocation(e.target.value, ward?.name ?? "", dist?.name ?? "", prov?.name ?? "");
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -125,10 +191,40 @@ export default function RegisterShopModal({ userId, onClose, onSuccess }: Props)
                         <label className={styles.label}>
                             Địa chỉ shop <span className={styles.required}>*</span>
                         </label>
-                        <input type="text" name="location" value={form.location}
-                               onChange={handleChange} className={styles.input}
-                               placeholder="Ví dụ: 123 Nguyễn Huệ, Q1, TP.HCM"
-                               required />
+
+                        <div className={styles.locationSelects}>
+                            <select className={styles.select} value={selProvince} onChange={handleProvinceChange}>
+                                <option value="">-- Tỉnh / Thành phố --</option>
+                                {provinces.map(p => (
+                                    <option key={p.code} value={p.code}>{p.name}</option>
+                                ))}
+                            </select>
+
+                            <select className={styles.select} value={selDistrict} onChange={handleDistrictChange} disabled={!selProvince}>
+                                <option value="">-- Quận / Huyện --</option>
+                                {districts.map(d => (
+                                    <option key={d.code} value={d.code}>{d.name}</option>
+                                ))}
+                            </select>
+
+                            <select className={styles.select} value={selWard} onChange={handleWardChange} disabled={!selDistrict}>
+                                <option value="">-- Phường / Xã --</option>
+                                {wards.map(w => (
+                                    <option key={w.code} value={w.code}>{w.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <input
+                            className={styles.input}
+                            placeholder="Số nhà, tên đường..."
+                            value={street}
+                            onChange={handleStreetChange}
+                        />
+
+                        {form.location && (
+                            <p className={styles.locationPreview}>📍 {form.location}</p>
+                        )}
                     </div>
 
                     {/* Mô tả */}

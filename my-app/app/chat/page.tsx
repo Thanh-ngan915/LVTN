@@ -136,7 +136,8 @@ function ChatContent() {
             await set(indexRef, {
                 lastMessage: currentText,
                 updatedAt: now,
-                customerName: username
+                customerName: username,
+                storeName: activeChannel.storeName
             });
 
             setChannels(prev => prev.map(c =>

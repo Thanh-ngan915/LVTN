@@ -3,6 +3,10 @@ package org.example.productservice.controller;
 import org.example.productservice.client.StoreClient;
 import org.example.productservice.dto.ApiResponse;
 import org.example.productservice.dto.CategoryDTO;
+import org.example.productservice.dto.OrderStockDTO;
+import org.example.productservice.dto.ProductDTO;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.example.productservice.dto.ProductDTO;
 import org.example.productservice.service.ProductService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -461,6 +465,45 @@ public class ProductController {
             return ResponseEntity.ok(ApiResponse.success(hidden, "Sản phẩm được ẩn"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/products/update-stock")
+    public ResponseEntity<ApiResponse<String>> updateStock(
+            @RequestBody List<OrderStockDTO> requests,
+            @RequestParam(defaultValue = "false") boolean isCancel) {
+        try {
+            productService.updateStockFromOrder(requests, isCancel);
+            return ResponseEntity.ok(ApiResponse.success(null, "Stock updated successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @GetMapping("/products/sync-historical-data")
+    public ResponseEntity<String> syncHistoricalData() {
+        try {
+            String sql = "UPDATE productdb.product p JOIN (SELECT product_id, SUM(quantity) as total_sold FROM ordersdb.productorder GROUP BY product_id) o ON p.id = o.product_id SET p.sold = o.total_sold, p.current_quantity = p.init_quantity - o.total_sold";
+            int rows = jdbcTemplate.update(sql);
+            return ResponseEntity.ok("Synced " + rows + " products.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/products/store/{storeId}/stats")
+    public ResponseEntity<Map<String, Object>> getStoreStats(@PathVariable String storeId) {
+        try {
+            Long totalSold = jdbcTemplate.queryForObject(
+                "SELECT SUM(sold) FROM productdb.product WHERE store_id = ? AND (is_delete = false OR is_delete IS NULL)",
+                Long.class, storeId);
+            if (totalSold == null) totalSold = 0L;
+            return ResponseEntity.ok(Map.of("totalSold", totalSold));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 

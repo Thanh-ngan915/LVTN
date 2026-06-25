@@ -47,6 +47,17 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
     private static final String GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
     private static final String GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 
+    private String buildPermissionsClaim(String userId) {
+        java.util.List<Permission> perms = permissionRepository.findByUserId(userId);
+        boolean hasAll = perms.stream().anyMatch(p -> "ALL".equalsIgnoreCase(p.getInstance()));
+        if (hasAll) return "ALL";
+        return perms.stream()
+                .map(Permission::getInstance)
+                .filter(i -> i != null && !"DEFAULT".equalsIgnoreCase(i))
+                .distinct()
+                .collect(java.util.stream.Collectors.joining(","));
+    }
+
     @Override
     @Transactional
     public LoginResponse loginWithGoogle(String code, String redirectUri) {
@@ -121,14 +132,15 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
             // Create Google Account
             account = createGoogleAccount(googleUser, userId);
         }
-
+        String permissions = buildPermissionsClaim(account.getUserId());
         // 4. Generate JWT token
         String token = jwtTokenProvider.generateToken(
                 account.getUsername(), 
                 account.getUserId(), 
                 account.getRole(),
                 user.getFullName(),
-                user.getImage()
+                user.getImage(),
+                permissions
         );
 
         return LoginResponse.builder()

@@ -111,17 +111,36 @@ export default function ReviewModal({ order, onClose, onSuccess }: ReviewModalPr
                 },
                 body: JSON.stringify(form),
             });
+
             if (!res.ok) {
                 const errBody = await res.json().catch(() => ({}));
                 throw new Error(errBody?.message || "Gửi thất bại");
             }
 
+            const data = await res.json();
+            const sentiment = data?.data?.sentimentResult;
+
+            // Nếu sentiment phân tích được và không khớp
+            if (sentiment?.analyzed && sentiment?.isMatch === false) {
+                const confirmed = window.confirm(
+                    `⚠️ ${sentiment.reason}\n\nBấm OK để sửa lại, Cancel để hủy đánh giá.`
+                );
+                if (confirmed) {
+                    setSubmitting(false);
+                    return;
+                } else {
+                    onClose();
+                    return;
+                }
+            }
+
+            // Hợp lệ → lưu localStorage và thông báo thành công
             const ratedOrders: number[] = JSON.parse(localStorage.getItem("ratedOrders") || "[]");
             if (!ratedOrders.includes(form.orderId)) {
                 localStorage.setItem("ratedOrders", JSON.stringify([...ratedOrders, form.orderId]));
             }
-
             onSuccess(form.orderId);
+
         } catch (e) {
             const msg = e instanceof Error ? e.message : "Lỗi không xác định";
             alert(`Gửi đánh giá thất bại: ${msg}`);

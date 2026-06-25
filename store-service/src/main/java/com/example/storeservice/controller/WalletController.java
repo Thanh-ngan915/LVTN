@@ -156,6 +156,30 @@
             }
         }
 
+        // Admin từ chối rút tiền
+        @PutMapping("/admin/withdrawals/{id}/reject")
+        public ResponseEntity<Map<String, String>> rejectWithdrawal(
+                @PathVariable String id,
+                @RequestParam String reason) {
+            WithdrawalRequest req = withdrawalRequestRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu"));
+            if (!"PENDING".equals(req.getStatus()))
+                throw new RuntimeException("Yêu cầu này đã được xử lý rồi");
+
+            req.setStatus("REJECTED");
+            req.setVnpayFailReason(reason);
+            req.setProcessedAt(LocalDateTime.now());
+            req.setProcessedBy("admin");
+            withdrawalRequestRepository.save(req);
+
+            walletService.rejectWithdrawal(id, reason);
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "REJECTED",
+                    "reason", reason
+            ));
+        }
+
         // Seller xem lịch sử rút tiền của mình
         @GetMapping("/me/withdrawals")
         public ResponseEntity<Page<WithdrawalRequest>> getMyWithdrawals(
@@ -165,4 +189,35 @@
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             return ResponseEntity.ok(withdrawalRequestRepository.findByStoreId(storeId, pageable));
         }
+
+        // Order-service gọi khi approve complaint → hoàn tiền buyer
+        @PostMapping("/user/{userId}/refund")
+        public ResponseEntity<Void> refundToUser(
+                @PathVariable String userId,
+                @RequestParam Double amount,
+                @RequestParam String referenceId) {
+            walletService.refundToUser(userId, amount, referenceId);
+            return ResponseEntity.ok().build();
+        }
+
+        // Order-service gọi khi approve complaint + lỗi shop → phạt tiền
+        @PostMapping("/store/{storeId}/deduct")
+        public ResponseEntity<Void> deductFromStore(
+                @PathVariable String storeId,
+                @RequestParam Double amount,
+                @RequestParam String referenceId) {
+            walletService.deductFromStore(storeId, amount, referenceId);
+            return ResponseEntity.ok().build();
+        }
+
+        // Order-service gọi khi approve complaint để thu hồi tiền pending của đơn hàng bị hoàn tiền
+        @PostMapping("/store/{storeId}/cancel-pending")
+        public ResponseEntity<Void> cancelPending(
+                @PathVariable String storeId,
+                @RequestParam Double amount,
+                @RequestParam String referenceId) {
+            walletService.cancelPendingBalance(storeId, amount, referenceId);
+            return ResponseEntity.ok().build();
+        }
+
     }

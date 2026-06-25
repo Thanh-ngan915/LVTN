@@ -69,4 +69,10 @@ public class VoucherController {
     public ResponseEntity<List<VoucherDTO>> getAllActiveVouchers() {
         return ResponseEntity.ok(voucherService.getAllActiveVouchers());
     }
+
+    @PostMapping("/{voucherId}/use")
+    public ResponseEntity<Void> useVoucher(@PathVariable String voucherId) {
+        voucherService.useVoucher(voucherId);
+        return ResponseEntity.ok().build();
+    }
 }

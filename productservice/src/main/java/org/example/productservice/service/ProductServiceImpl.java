@@ -1,6 +1,7 @@
 package org.example.productservice.service;
 
 import org.example.productservice.dto.CategoryDTO;
+import org.example.productservice.dto.OrderStockDTO;
 import org.example.productservice.dto.ProductDTO;
 import org.example.productservice.model.Category;
 import org.example.productservice.model.Product;
@@ -166,6 +167,21 @@ public class ProductServiceImpl implements ProductService {
                 .updatedBy(productDTO.getCreatedBy())
                 .updateAt(new Timestamp(System.currentTimeMillis()))
                 .build();
+
+        if (productDTO.getImageUrls() != null) {
+            if (productDTO.getImageUrls().size() > 5) {
+                throw new RuntimeException("Tối đa 5 ảnh cho mỗi sản phẩm");
+            }
+            java.util.Set<ProductImage> images = productDTO.getImageUrls().stream()
+                    .map(url -> ProductImage.builder()
+                            .id(java.util.UUID.randomUUID().toString())
+                            .url(url)
+                            .product(product)
+                            .build())
+                    .collect(Collectors.toSet());
+            product.setImages(images);
+        }
+
         return toDTO(productRepository.save(product));
     }
 
@@ -193,6 +209,27 @@ public class ProductServiceImpl implements ProductService {
         product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
         int sold = product.getSold() != null ? product.getSold() : 0;
         product.setCurrentQuantity(dto.getInitQuantity() - sold);
+
+        if (dto.getImageUrls() != null) {
+            if (dto.getImageUrls().size() > 5) {
+                throw new RuntimeException("Tối đa 5 ảnh cho mỗi sản phẩm");
+            }
+            if (product.getImages() == null) {
+                product.setImages(new java.util.HashSet<>());
+            }
+            product.getImages().clear();
+
+            java.util.Set<ProductImage> images = dto.getImageUrls().stream()
+                    .map(url -> ProductImage.builder()
+                            .id(java.util.UUID.randomUUID().toString())
+                            .url(url)
+                            .product(product)
+                            .build())
+                    .collect(Collectors.toSet());
+
+            product.getImages().addAll(images);
+        }
+
         return toDTO(productRepository.save(product));
     }
 
@@ -297,5 +334,30 @@ public class ProductServiceImpl implements ProductService {
         product.setStatus("inactive");
         product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
         return toDTO(productRepository.save(product));
+    }
+
+    @Override
+    @Transactional
+    public void updateStockFromOrder(List<OrderStockDTO> items, boolean isCancel) {
+        if (items == null || items.isEmpty()) return;
+        for (OrderStockDTO item : items) {
+            Product product = productRepository.findById(item.getProductId())
+                    .orElse(null);
+            if (product != null) {
+                int currentSold = product.getSold() != null ? product.getSold() : 0;
+                int currentQty = product.getCurrentQuantity() != null ? product.getCurrentQuantity() : 0;
+                int qty = item.getQuantity() != null ? item.getQuantity() : 0;
+
+                if (isCancel) {
+                    product.setSold(Math.max(0, currentSold - qty));
+                    product.setCurrentQuantity(currentQty + qty);
+                } else {
+                    product.setSold(currentSold + qty);
+                    product.setCurrentQuantity(Math.max(0, currentQty - qty));
+                }
+                product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
+                productRepository.save(product);
+            }
+        }
     }
 }

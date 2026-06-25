@@ -36,12 +36,47 @@ public class OrderService {
     @Value("${store.service.url:http://localhost:8090}/api")
     private String STORE_SERVICE_BASE_URL;
 
+    @Value("${product.service.url:http://localhost:8087}")
+    private String PRODUCT_SERVICE_BASE_URL;
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     // Có thể override bằng env var STORE_SERVICE_URL khi chạy Docker
     @Value("${store.service.url:http://localhost:8090}/api/vouchers")
     private String STORE_SERVICE_URL;
     private final SettlementRepository settlementRepository;
+
+    private void updateProductStock(List<ProductOrder> items, boolean isCancel) {
+        try {
+            List<OrderStockDTO> requests = new ArrayList<>();
+            for (ProductOrder po : items) {
+                requests.add(OrderStockDTO.builder().productId(po.getProductId()).quantity(po.getQuantity()).build());
+            }
+            if (!requests.isEmpty()) {
+                // 1. Cập nhật tồn kho sản phẩm gốc (product-service)
+                String urlProduct = PRODUCT_SERVICE_BASE_URL + "/api/products/update-stock?isCancel=" + isCancel;
+                org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+                headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+                org.springframework.http.HttpEntity<List<OrderStockDTO>> requestEntity = new org.springframework.http.HttpEntity<>(requests, headers);
+                
+                restTemplate.postForEntity(urlProduct, requestEntity, String.class);
+                log.info("Successfully requested stock update for {} items at {}", requests.size(), urlProduct);
+
+                // 2. Cập nhật số lượng đã bán của sản phẩm khuyến mãi (store-service)
+                try {
+                    // Extract base url of store-service by removing /api/vouchers from STORE_SERVICE_URL
+                    String storeBaseUrl = STORE_SERVICE_URL.replace("/api/vouchers", "");
+                    String urlPromotion = storeBaseUrl + "/api/stores/promotions/update-bought";
+                    restTemplate.postForEntity(urlPromotion, requestEntity, String.class);
+                    log.info("Successfully updated flash sale bought quantity for {} items", requests.size());
+                } catch (Exception e) {
+                    log.error("Failed to update flash sale bought quantity: {}", e.getMessage(), e);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to update product stock: {}", e.getMessage(), e);
+        }
+    }
 
     /**
      * Tạo đơn hàng mới (Mua ngay)
@@ -200,6 +235,19 @@ public class OrderService {
                     .size(request.getSize())
                     .build();
             savedItems.add(productOrderRepository.save(productOrder));
+        }
+
+        // Cập nhật tồn kho / đã bán
+        updateProductStock(savedItems, false);
+
+        // Cập nhật lượt dùng shop voucher (nếu có)
+        if (shopVoucherDTO != null && shopVoucherDTO.getId() != null) {
+            try {
+                restTemplate.postForEntity(STORE_SERVICE_URL + "/" + shopVoucherDTO.getId() + "/use", null, Void.class);
+                log.info("Successfully requested voucher use for {}", shopVoucherDTO.getId());
+            } catch (Exception e) {
+                log.error("Failed to update voucher use: {}", e.getMessage(), e);
+            }
         }
 
         return toOrderResponseDTO(order, delivery, savedItems);
@@ -366,7 +414,10 @@ public class OrderService {
         order.setUpdateAt(LocalDateTime.now());
         orderRepository.save(order);
 
-        return toOrderResponseDTO(order, order.getDeliveryInformation(), order.getItems());
+        List<ProductOrder> items = productOrderRepository.findByOrderId(orderId);
+        updateProductStock(items, true);
+
+        return toOrderResponseDTO(order, order.getDeliveryInformation(), items);
     }
 
 
@@ -573,6 +624,11 @@ public class OrderService {
         DeliveryInformation delivery = deliveryInformationRepository
                 .findById(order.getDeliveryInformationId()).orElse(null);
         List<ProductOrder> items = productOrderRepository.findByOrderId(orderId);
+
+        if ("cancelled".equals(updateDTO.getStatus())) {
+            updateProductStock(items, true);
+        }
+
         return toOrderResponseDTO(order, delivery, items);
     }
 
@@ -727,6 +783,7 @@ public class OrderService {
         }
 
         List<ProductOrderRefund> items = productOrderRefundRepository.findByOrderRefundId(refundId);
+
         return toOrderRefundDTO(refund, items);
     }
 
