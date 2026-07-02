@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.CacheManager;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +30,7 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final CacheManager cacheManager;
 
     @Override
     public Page<ProductDTO> getAllProducts(Pageable pageable) {
@@ -79,6 +81,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "categories")
     public List<CategoryDTO> getAllCategories() {
         return categoryRepository.findAll().stream()
                 .map(this::toCategoryDTO)
@@ -357,6 +360,10 @@ public class ProductServiceImpl implements ProductService {
                 }
                 product.setUpdateAt(new Timestamp(System.currentTimeMillis()));
                 productRepository.save(product);
+                
+                if (cacheManager.getCache("product") != null) {
+                    cacheManager.getCache("product").evict(product.getId());
+                }
             }
         }
     }

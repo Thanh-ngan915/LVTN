@@ -1,0 +1,14 @@
+{
+  "navigation": {
+    "home": "Trang chủ",
+    "shop": "Cửa hàng",
+    "cart": "Giỏ hàng",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "profile": "Hồ sơ"
+  },
+  "home": {
+    "title": "Chào mừng đến với Anvi Store",
+    "description": "Nơi tốt nhất để mua sắm mọi thứ bạn cần"
+  }
+}

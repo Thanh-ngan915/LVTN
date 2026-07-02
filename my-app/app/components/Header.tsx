@@ -5,6 +5,8 @@ import styles from './Header.module.css';
 import { getCartCount } from '../services/cartService';
 import {useRouter} from "next/navigation";
 import Link from 'next/link';
+import GoogleTranslate from './GoogleTranslate';
+
 interface HeaderProps {
   onSearch?: (keyword: string) => void;
   cartUpdateTrigger?: number; // Increment this to trigger cart count refresh
@@ -70,6 +72,8 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
         <div className={styles.topBarInner}>
           <span>🚚 Miễn phí vận chuyển cho đơn hàng từ 500.000đ</span>
             <div className={styles.topBarLinks}>
+                <GoogleTranslate />
+                <span className={styles.divider}>|</span>
                 {mounted && username ? (
                     <>
                         <Link href="/profile">👤 {username}</Link>
@@ -80,8 +84,7 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
                     </>
                 ) : (
                     <>
-                        <Link
-                            href="/login">Đăng nhập</Link>
+                        <Link href="/login">Đăng nhập</Link>
                         <span className={styles.divider}>|</span>
                         <Link href="/register">Đăng ký</Link>
                     </>

@@ -49,6 +49,23 @@ services:
       - anvi-network
 
   # --------------------------------------------------------
+  # Redis Cache
+  # --------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: anvi-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - anvi-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------------------------------
   # 2. Kafka (KRaft mode - không cần Zookeeper)
   # --------------------------------------------------------
   kafka:
@@ -93,13 +110,18 @@ services:
     ports:
       - "8085:8085"
     environment:
-      # Ghi đè application.properties - dùng tên service "mysql" thay vì localhost
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/usersdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&useUnicode=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: anvi@root2025
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # Redis Cache - trỏ đến container redis trong Docker network
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CACHE_TYPE: redis
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - anvi-network
@@ -123,8 +145,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: anvi@root2025
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       STORE_SERVICE_URL: http://storeservice:8090
+      # Redis Cache
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CACHE_TYPE: redis
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - anvi-network
@@ -146,8 +174,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: anvi@root2025
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       PRODUCT_SERVICE_URL: http://productservice:8087
+      # Redis Cache
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CACHE_TYPE: redis
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - anvi-network
@@ -168,10 +202,15 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: anvi@root2025
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      # Ghi đè URL gọi đến store-service (trong OrderService.java)
       STORE_SERVICE_URL: http://storeservice:8090
+      # Redis Cache
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CACHE_TYPE: redis
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       storeservice:
         condition: service_started

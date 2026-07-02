@@ -65,3 +65,33 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: #a0a0a0;
 }
+
+/* ===================== */
+/* Google Translate Fixes */
+/* ===================== */
+
+/* Ẩn banner "Translated by Google" ở đầu trang */
+.goog-te-banner-frame,
+#goog-gt-tt,
+.goog-te-balloon-frame,
+#google_translate_element_hidden,
+#google_translate_element_hidden * {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Ngăn body bị đẩy xuống do Google Translate thêm top offset */
+body {
+  top: 0 !important;
+  position: static !important;
+}
+
+/* Ẩn mọi iframe Google Translate ẩn */
+iframe.goog-te-banner-frame,
+iframe.skiptranslate {
+  display: none !important;
+}
+
+

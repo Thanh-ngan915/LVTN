@@ -1,0 +1,14 @@
+{
+  "navigation": {
+    "home": "Home",
+    "shop": "Shop",
+    "cart": "Cart",
+    "login": "Login",
+    "register": "Register",
+    "profile": "Profile"
+  },
+  "home": {
+    "title": "Welcome to Anvi Store",
+    "description": "The best place to buy everything you need"
+  }
+}
