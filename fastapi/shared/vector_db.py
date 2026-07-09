@@ -1,32 +1,194 @@
 import os
-import pandas as pd
+import pymysql
+from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 
-# Cấu hình Model Embedding (Giữ nguyên từ Colab)
-embeddings = HuggingFaceEmbeddings(model_name="intfloat/multilingual-e5-large", model_kwargs={'device': 'cpu'})
+load_dotenv()
+
+embeddings = HuggingFaceEmbeddings(
+    model_name="intfloat/multilingual-e5-large",
+    model_kwargs={"device": "cpu"},
+    encode_kwargs={"batch_size": 32},
+)
+
+DB_CONFIG = {
+    "host":     os.getenv("DB_HOST", "localhost"),
+    "port":     int(os.getenv("DB_PORT", 3306)),
+    "user":     os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "database": os.getenv("DB_NAME", "productdb"),
+    "charset":  "utf8mb4",
+}
+
+STORE_DB_CONFIG = {
+    "host":     os.getenv("DB_HOST", "localhost"),
+    "port":     int(os.getenv("DB_PORT", 3306)),
+    "user":     os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "database": os.getenv("STORE_DB_NAME", "storesdb"),
+    "charset":  "utf8mb4",
+}
+
+INDEX_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "faiss_etsy_index_v2"
+)
 
 
-def load_vector_db():
-    """Load FAISS index từ thư mục cục bộ"""
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    index_path = os.path.join(base_dir, "faiss_etsy_index_v2")
+def _load_store_map() -> dict[str, str]:
+    """Lấy map store_id -> tên shop từ storesdb (database khác)."""
+    conn = pymysql.connect(**STORE_DB_CONFIG)
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            cur.execute("SELECT id, name FROM store")
+            rows = cur.fetchall()
+        return {str(r["id"]): (r["name"] or "").strip() for r in rows}
+    except Exception as e:
+        print(f"⚠️  Không lấy được dữ liệu store: {e}")
+        return {}
+    finally:
+        conn.close()
 
-    if os.path.exists(index_path):
-        return FAISS.load_local(
-            index_path,
-            embeddings,
-            allow_dangerous_deserialization=True
+
+def _load_docs_from_mysql() -> list[Document]:
+    conn = pymysql.connect(**DB_CONFIG)
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            cur.execute("""
+                SELECT
+                    p.id,
+                    p.name,
+                    p.price_before,
+                    p.price_after,
+                    p.description,
+                    p.status,
+                    p.rate,
+                    p.sold,
+                    p.store_id,
+                    c.name  AS category_name,
+                    p.category AS category_short
+                FROM product p
+                LEFT JOIN category c ON c.shortname = p.category
+                WHERE p.is_delete = 0 OR p.is_delete IS NULL
+                ORDER BY p.id
+            """)
+            products = cur.fetchall()
+
+            cur.execute("SELECT product_id, url FROM product_image ORDER BY product_id")
+            image_rows = cur.fetchall()
+            images_map: dict[int, list[str]] = {}
+            for row in image_rows:
+                pid = row["product_id"]
+                images_map.setdefault(pid, []).append(row["url"] or "")
+
+            cur.execute("""
+                SELECT product_id, color, size, price_before, price_after, current_quantity
+                FROM product_variant
+                ORDER BY product_id
+            """)
+            variant_rows = cur.fetchall()
+            variants_map: dict[int, list[dict]] = {}
+            for row in variant_rows:
+                pid = row["product_id"]
+                variants_map.setdefault(pid, []).append(row)
+    finally:
+        conn.close()
+
+    store_map = _load_store_map()
+
+    docs: list[Document] = []
+
+    for p in products:
+        pid        = p["id"]
+        name       = (p["name"] or "").strip()
+        desc_raw   = (p["description"] or "")[:400].strip()
+        category_display   = p["category_name"] or p["category_short"] or "Không rõ"
+        category_shortname = p["category_short"] or "khong_ro"
+        price_b    = p["price_before"] or 0
+        price_a    = p["price_after"]  or price_b
+        rate       = p["rate"] or 0
+        sold       = p["sold"] or 0
+        status     = p["status"] or "active"
+        store_id   = str(p.get("store_id") or "")
+        shop_name  = store_map.get(store_id, "Không rõ")
+
+        imgs  = images_map.get(pid, [])
+        thumb = imgs[0] if imgs else ""
+
+        variants = variants_map.get(pid, [])
+        variant_summary = ""
+        if variants:
+            colors = sorted({v["color"] for v in variants if v["color"]})
+            sizes  = sorted({v["size"]  for v in variants if v["size"]})
+            if colors:
+                variant_summary += f"Màu sắc: {', '.join(colors)}. "
+            if sizes:
+                variant_summary += f"Kích thước: {', '.join(sizes)}. "
+            prices = [v["price_after"] or v["price_before"] for v in variants
+                      if (v["price_after"] or v["price_before"])]
+            if prices:
+                variant_summary += (
+                    f"Giá biến thể: {min(prices):,.0f}đ"
+                    + (f" - {max(prices):,.0f}đ" if max(prices) != min(prices) else "")
+                    + ". "
+                )
+
+        discount = ""
+        if price_b and price_a and price_a < price_b:
+            pct = round((1 - price_a / price_b) * 100)
+            discount = f"Giảm {pct}% (từ {price_b:,.0f}đ còn {price_a:,.0f}đ). "
+        else:
+            discount = f"Giá: {price_a:,.0f}đ. "
+
+        clean_text = (
+            f"passage: Mã sản phẩm (ID): {pid}. "
+            f"Tên sản phẩm: {name}. "
+            f"Tên cửa hàng (Shop): {shop_name}. "
+            f"Danh mục: {category_display}. "
+            f"{discount}"
+            f"Đánh giá: {rate}/5 ({sold} đã bán). "
+            f"{variant_summary}"
+            f"Mô tả: {desc_raw}."
         )
-    else:
-        raise FileNotFoundError(f"Không tìm thấy Index tại: {index_path}")
+
+        meta_data = {
+            "product_id": str(pid),
+            "category":   category_shortname,
+            "status":     status,
+            "images_url": thumb,
+            "images_all": imgs,        # toàn bộ ảnh, phục vụ "xem ảnh khác"
+            "shop_id":    store_id,
+            "shop_name":  shop_name,
+        }
+        docs.append(Document(page_content=clean_text, metadata=meta_data))
+
+    print(f"✅ Đọc được {len(docs)} sản phẩm từ MySQL (product + image + variant + store)")
+    return docs
+
+
+def build_and_save_index() -> FAISS:
+    docs = _load_docs_from_mysql()
+    if not docs:
+        raise ValueError("Không có sản phẩm nào trong DB để train!")
+    print(f"⏳ Đang tạo FAISS index từ {len(docs)} sản phẩm…")
+    vectorstore = FAISS.from_documents(docs, embeddings)
+    vectorstore.save_local(INDEX_PATH)
+    print(f"✅ Đã lưu index tại: {INDEX_PATH}")
+    return vectorstore
+
+
+def load_vector_db() -> FAISS:
+    if os.path.exists(INDEX_PATH):
+        print(f"📂 Load FAISS index từ: {INDEX_PATH}")
+        return FAISS.load_local(
+            INDEX_PATH, embeddings, allow_dangerous_deserialization=True,
+        )
+    print("⚠️  Chưa có FAISS index — đang build từ MySQL lần đầu…")
+    return build_and_save_index()
 
 
 def get_retriever():
-    """Tạo bộ truy xuất dữ liệu"""
-    vectorstore = load_vector_db()
-    return vectorstore.as_retriever(
-        search_type="similarity",
-        search_kwargs={"k": 3}
+    return load_vector_db().as_retriever(
+        search_type="similarity", search_kwargs={"k": 3},
     )
