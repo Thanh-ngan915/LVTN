@@ -71,6 +71,7 @@ public class UserServiceImpl implements UserService {
                 .rankId(user.getRankId())
                 .role(displayRole)
                 .storeRoleId(storeRoleId)
+                .createdAt(user.getCreatedAt())
                 .build();
     }
 
