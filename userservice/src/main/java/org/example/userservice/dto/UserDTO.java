@@ -25,4 +25,5 @@ public class UserDTO {
     private String rankId;
     private String storeRoleId;
     private String role;
+    private LocalDateTime createdAt;
 }
