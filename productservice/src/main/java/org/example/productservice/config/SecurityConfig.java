@@ -20,32 +20,31 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                // Đọc sản phẩm: public
-                .requestMatchers(HttpMethod.GET,
-                    "/api/products",
-                    "/api/products/**",
-                    "/api/categories",
-                    "/api/categories/**",
-                    "/api/cart/count"
-                ).permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/products/update-stock").permitAll()
-                // Admin
-                .requestMatchers(HttpMethod.PATCH,
-                        "/api/products/*/approve",
-                        "/api/products/*/reject",
-                        "/api/products/*/hide"
-                ).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/products/stats").hasRole("ADMIN")
-                // Giỏ hàng cần xác thực (trừ /count)
-                .requestMatchers("/api/cart/**").authenticated()
-                // Tạo/sửa/xóa sản phẩm: cần xác thực
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Đọc sản phẩm: public
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/products",
+                                "/api/products/**",
+                                "/api/categories",
+                                "/api/categories/**",
+                                "/api/cart/count")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/products/update-stock").permitAll()
+                        // Admin
+                        .requestMatchers(HttpMethod.PATCH,
+                                "/api/products/*/approve",
+                                "/api/products/*/reject",
+                                "/api/products/*/hide")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/products/stats").hasRole("ADMIN")
+                        // Giỏ hàng cần xác thực (trừ /count)
+                        .requestMatchers("/api/cart/**").authenticated()
+                        // Tạo/sửa/xóa sản phẩm: cần xác thực
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
