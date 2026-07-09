@@ -159,9 +159,9 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
             </p>
           </div>
           <div className={styles.orderHeaderRight}>
-            <div className={`${styles.statusBadge} ${statusInfo.className}`}>
+            <div className={`${styles.statusBadge} ${statusInfo.cls}`}>
               <span className={styles.statusDot} />
-              {statusInfo.icon} {statusInfo.label}
+              {statusInfo.label}
             </div>
           </div>
         </div>

@@ -101,7 +101,9 @@ function AdminDashboardContent() {
             const size = 500;
 
             while (true) {
-                const res = await fetch(`/api/products?page=${page}&size=${size}`, { headers: authHeader() });
+                const res = await fetch(`/api/admin/products?page=${page}&size=${size}`, { headers: authHeader() });
+                if (!res.ok) break; // Check for HTTP errors
+                
                 const data = await res.json();
                 const items = Array.isArray(data.data) ? data.data : [];
                 allProducts = [...allProducts, ...items];
@@ -124,7 +126,14 @@ function AdminDashboardContent() {
             return;
         }
         setToken(t);
-        const parsedUser = u ? JSON.parse(u) : null;
+        let parsedUser = null;
+        if (u) {
+            try {
+                parsedUser = JSON.parse(u);
+            } catch (e) {
+                console.error("Lỗi parse user từ localStorage:", e);
+            }
+        }
         if (parsedUser) setAdminUser(parsedUser);
 
         // Đọc permissions từ localStorage
@@ -341,7 +350,13 @@ export default function AdminDashboardPage() {
         const u = localStorage.getItem("user");
         if (!t) { router.push("/login"); return; }
         setToken(t);
-        if (u) setAdminUser(JSON.parse(u));
+        if (u) {
+            try {
+                setAdminUser(JSON.parse(u));
+            } catch (e) {
+                console.error("Lỗi parse user từ localStorage:", e);
+            }
+        }
     }, [router]);
 
     const authHeader = (): Record<string, string> => {

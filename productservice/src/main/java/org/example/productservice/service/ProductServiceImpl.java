@@ -36,6 +36,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public Page<ProductDTO> getAllProductsForAdmin(Pageable pageable) {
+        return productRepository.findAllNotDeleted(pageable).map(this::toDTO);
+    }
+
+    @Override
     public Page<ProductDTO> getProductsByCategory(String category, Pageable pageable) {
         return productRepository.findAllActiveByCategory(category, pageable).map(this::toDTO);
     }

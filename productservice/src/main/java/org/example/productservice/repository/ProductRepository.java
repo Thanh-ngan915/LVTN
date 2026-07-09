@@ -14,6 +14,10 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     Page<Product> findByCategoryShortname(String category, Pageable pageable);
 
+    @Query("SELECT p FROM Product p WHERE p.isDelete = false OR p.isDelete IS NULL")
+    @EntityGraph(attributePaths = {"images", "variants"})
+    Page<Product> findAllNotDeleted(Pageable pageable);
+
     @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.status = 'active'")
     @EntityGraph(attributePaths = {"images", "variants"})
     Page<Product> findAllActive(Pageable pageable);

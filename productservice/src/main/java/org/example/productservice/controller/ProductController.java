@@ -61,6 +61,36 @@ public class ProductController {
     }
 
     /**
+     * Lấy tất cả sản phẩm cho admin (bao gồm pending, inactive, active)
+     * GET /api/admin/products?page=0&size=12&sort=createdAt,desc
+     */
+    @GetMapping("/admin/products")
+    public ResponseEntity<ApiResponse<List<ProductDTO>>> getAllProductsForAdmin(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<ProductDTO> productPage = productService.getAllProductsForAdmin(pageable);
+
+        ApiResponse<List<ProductDTO>> response = ApiResponse.<List<ProductDTO>>builder()
+                .success(true)
+                .message("Products for admin retrieved successfully")
+                .data(productPage.getContent())
+                .page(productPage.getNumber())
+                .size(productPage.getSize())
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Lấy sản phẩm theo ID
      * GET /api/products/{id}
      */
