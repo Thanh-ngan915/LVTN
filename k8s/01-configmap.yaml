@@ -1,0 +1,38 @@
+# ==========================================================
+# ANVI Shop — ConfigMap (non-sensitive configuration)
+# ==========================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: anvi-config
+  namespace: anvi-dev
+data:
+  # ---- MySQL driver ----
+  SPRING_DATASOURCE_DRIVER_CLASS_NAME: "com.mysql.cj.jdbc.Driver"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+
+  # ---- Redis ----
+  SPRING_DATA_REDIS_HOST: "redis"
+  SPRING_DATA_REDIS_PORT: "6379"
+
+  # ---- Inter-service URLs (K8s Service names) ----
+  STORE_SERVICE_URL: "http://store-service:8090"
+  USER_SERVICE_URL: "http://userservice:8085"
+  PRODUCT_SERVICE_URL: "http://productservice:8087"
+  ORDER_SERVICE_URL: "http://orderservice:8088"
+  LIVESTREAM_SERVICE_URL: "http://livestreamservice:8086"
+  CHATBOT_SERVICE_URL: "http://chatbot-service:8081"
+
+  # ---- Aliases used by specific services ----
+  # orderservice uses these property names
+  STORE__SERVICE__URL: "http://store-service:8090"
+
+  # ---- Frontend ----
+  APP_FRONTEND_URL: "http://localhost:3000"
+  GOOGLE_REDIRECT_URI: "http://localhost:3000/auth/google/callback"
+
+  # ---- VNPAY ----
+  VNPAY_PAY_URL: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+  VNPAY_RETURN_URL: "http://localhost:3000/checkout/payment-result"
+  VNPAY_API_URL: "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
