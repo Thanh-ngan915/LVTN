@@ -138,6 +138,13 @@ public class StoreController {
 
     @GetMapping("/by-user/{userId}")
     public ResponseEntity<StoreDTO> getStoreByUserId(@PathVariable String userId) {
-        return ResponseEntity.ok(storeService.getStoreByUserId(userId));
+        try {
+            return ResponseEntity.ok(storeService.getStoreByUserId(userId));
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("chưa có shop") || e.getMessage().contains("chua c shop")) {
+                return ResponseEntity.notFound().build();
+            }
+            throw e;
+        }
     }
 }

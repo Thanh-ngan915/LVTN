@@ -1,0 +1,65 @@
+# ==========================================================
+# StoreService — port 8090, DB: storesdb
+# Depends on: productservice
+# ==========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: store-service
+  namespace: anvi-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: store-service
+  template:
+    metadata:
+      labels:
+        app: store-service
+    spec:
+      containers:
+        - name: store-service
+          image: anvi-store-service:local
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: anvi-config
+            - secretRef:
+                name: anvi-secrets
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-host:3306/storesdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&useUnicode=true"
+            - name: PRODUCT_SERVICE_URL
+              value: "http://productservice:8087"
+          ports:
+            - containerPort: 8090
+          readinessProbe:
+            tcpSocket:
+              port: 8090
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8090
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 200m
+              memory: 384Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: store-service
+  namespace: anvi-dev
+spec:
+  selector:
+    app: store-service
+  ports:
+    - port: 8090
+      targetPort: 8090

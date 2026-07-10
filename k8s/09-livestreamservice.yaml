@@ -1,0 +1,70 @@
+# ==========================================================
+# LivestreamService — port 8086, DB: livestreamdb, Redis
+# Note: Uses JDK 17 (not 21)
+# ==========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livestreamservice
+  namespace: anvi-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: livestreamservice
+  template:
+    metadata:
+      labels:
+        app: livestreamservice
+    spec:
+      containers:
+        - name: livestreamservice
+          image: anvi-livestreamservice:local
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: anvi-config
+            - secretRef:
+                name: anvi-secrets
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-host:3306/livestreamdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&useUnicode=true"
+            # Redis (livestream uses old spring.redis.* property names)
+            - name: SPRING_REDIS_HOST
+              value: "redis"
+            - name: SPRING_REDIS_PORT
+              value: "6379"
+            - name: SPRING_CACHE_TYPE
+              value: "redis"
+          ports:
+            - containerPort: 8086
+          readinessProbe:
+            tcpSocket:
+              port: 8086
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8086
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 200m
+              memory: 384Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: livestreamservice
+  namespace: anvi-dev
+spec:
+  selector:
+    app: livestreamservice
+  ports:
+    - port: 8086
+      targetPort: 8086

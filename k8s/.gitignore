@@ -1,0 +1,2 @@
+# K8s secrets (contains credentials - NEVER commit)
+k8s/02-secrets.yaml
