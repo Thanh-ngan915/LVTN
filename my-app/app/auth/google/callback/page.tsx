@@ -49,7 +49,7 @@ function GoogleCallbackContent() {
           },
           body: JSON.stringify({
             code: code,
-            redirectUri: "http://localhost:3000/auth/google/callback",
+            redirectUri: "http://localhost:30000/auth/google/callback",
           }),
         });
 
