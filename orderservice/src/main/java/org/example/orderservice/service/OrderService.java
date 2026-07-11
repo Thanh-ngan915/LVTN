@@ -542,7 +542,7 @@ public class OrderService {
         return getStoreIdByUserId(userId, null);
     }
 
-    private String getStoreIdByUserId(String userId, String bearerToken) {
+    public String getStoreIdByUserId(String userId, String bearerToken) {
         try {
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.set("X-User-Id", userId);
