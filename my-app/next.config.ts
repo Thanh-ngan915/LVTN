@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
         destination: `${GATEWAY_URL}/api/admin/:path*`,
       },
       {
+        source: '/api/products',
+        destination: `${GATEWAY_URL}/api/products`,
+      },
+      {
         source: '/api/products/:path*',
         destination: `${GATEWAY_URL}/api/products/:path*`,
       },

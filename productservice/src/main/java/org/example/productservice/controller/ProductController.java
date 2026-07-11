@@ -5,9 +5,10 @@ import org.example.productservice.dto.ApiResponse;
 import org.example.productservice.dto.CategoryDTO;
 import org.example.productservice.dto.OrderStockDTO;
 import org.example.productservice.dto.ProductDTO;
+import org.example.productservice.dto.ProductEvent;
+import org.example.productservice.service.ProductEventProducer;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.example.productservice.dto.ProductDTO;
 import org.example.productservice.service.ProductService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class ProductController {
 
     private final ProductService productService;
     private final StoreClient storeClient;
+    private final ProductEventProducer productEventProducer;
 
     /**
      * Lấy tất cả sản phẩm (phân trang)
@@ -295,6 +297,20 @@ public class ProductController {
             productDTO.setCreatedBy(userId);
 
             ProductDTO created = productService.createProduct(productDTO);
+
+            // Gửi Kafka event NGOÀI transaction - lỗi Kafka không ảnh hưởng DB
+            try {
+                ProductEvent event = ProductEvent.builder()
+                        .id(created.getId())
+                        .name(created.getName())
+                        .description(created.getDescription())
+                        .categoryName(created.getCategoryName())
+                        .build();
+                productEventProducer.sendProductCreatedEvent(event);
+            } catch (Exception ex) {
+                System.err.println("Kafka event failed (product saved OK): " + ex.getMessage());
+            }
+
             return ResponseEntity.ok(ApiResponse.success(created, "Tạo sản phẩm thành công"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));

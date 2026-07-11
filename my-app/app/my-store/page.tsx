@@ -242,7 +242,11 @@ export default function MyStorePage() {
                 headers: { "Content-Type": "application/json", ...authHeader() },
                 body: JSON.stringify(sendBody),
             });
-            if (!res.ok) throw new Error("Lưu thất bại");
+            if (!res.ok) {
+                const errBody = await res.text();
+                console.error("Save failed:", res.status, errBody);
+                throw new Error(errBody || "Lưu thất bại");
+            }
             const data = await res.json();
             if (editProduct) {
                 setProducts(prev => prev.map(p => p.id === editProduct.id ? data.data : p));
