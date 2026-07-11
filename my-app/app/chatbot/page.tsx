@@ -91,15 +91,26 @@ export default function ChatbotPage() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const API_URL = "http://localhost:8080/api/chat";
-    const userId = "user-1766022973";
+    const [userId, setUserId] = useState<string>("anonymous");
 
     useEffect(() => {
-        fetchSessions();
+        const storedUser = localStorage.getItem("user");
+        let uid = "anonymous";
+        if (storedUser) {
+            try {
+                const userObj = JSON.parse(storedUser);
+                uid = String(userObj.id || userObj.userId || "anonymous");
+            } catch (e) {
+                console.error("Lỗi parse user from localStorage", e);
+            }
+        }
+        setUserId(uid);
+        fetchSessions(uid);
     }, []);
 
-    const fetchSessions = async () => {
+    const fetchSessions = async (uid: string) => {
         try {
-            const res = await fetch(`${API_URL}/sessions?userId=${userId}`);
+            const res = await fetch(`${API_URL}/sessions?userId=${uid}`);
             if (!res.ok) return;
             const data: ChatSession[] = await res.json();
             setSessions(data);
@@ -250,140 +261,140 @@ export default function ChatbotPage() {
             <Header onSearch={handleSearch} />
             <main className={pageStyles.main} style={{ display: 'flex', justifyContent: 'center', padding: '32px 24px', flex: 1 }}>
 
-            <div className={styles.container}>
-                <aside className={styles.sidebar}>
-                    <div className={styles.sidebarHeader}>
-                        <button className={styles.newChatBtn} onClick={handleNewChat}>
-                            + Đoạn chat mới
-                        </button>
-                    </div>
-                    <div className={styles.sessionList}>
-                        {sessions.map((s) => (
-                            <div
-                                key={s.id}
-                                className={`${styles.sessionItem} ${sessionId === s.id ? styles.activeSession : ""}`}
-                                onClick={() => loadSessionMessages(s.id)}
-                                style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
-                            >
-            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                📂 {s.title || "Cuộc trò chuyện mới"}
-            </span>
-                                <button
-                                    onClick={(e) => handleDeleteSession(e, s.id)}
-                                    style={{
-                                        background: "none",
-                                        border: "none",
-                                        color: "rgba(255,255,255,0.5)",
-                                        cursor: "pointer",
-                                        fontSize: "16px",
-                                        padding: "2px 6px",
-                                        flexShrink: 0,
-                                    }}
-                                    title="Xóa đoạn chat"
-                                >
-                                    🗑️
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </aside>
-
-                <main className={styles.glassmorphism}>
-                    <div className={styles.header}>
-                        <div className={styles.headerLeft}>
-                            <div className={styles.botAvatar}>AI</div>
-                            <div>
-                                <h1>Etsy Assistant</h1>
-                                <div className={styles.statusBadge}>
-                                    <span className={styles.statusDot}></span> Trực tuyến
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className={styles.messagesArea}>
-                        {messages.length === 0 && (
-                            <div style={{textAlign: 'center', marginTop: '40px', color: '#888'}}>
-                                <p>Hôm nay bạn cần trợ giúp gì nào? 😊</p>
-                            </div>
-                        )}
-                        {messages.map((msg) => (
-                            <div key={msg.id} className={`${styles.messageRow} ${msg.role === "user" ? styles.userRow : styles.botRow}`}>
-                                <div className={styles.bubble}>
-                                    <p>{msg.content}</p>
-                                    {msg.images && msg.images.length > 0 && (
-                                        msg.isSingleProduct ? (
-                                            <ProductGallery images={msg.images} />
-                                        ) : (
-                                            <div style={{ display: "flex", gap: "8px", marginTop: "8px", flexWrap: "wrap" }}>
-                                                {msg.images.map((img: ImageItem, idx: number) => (
-                                                    <img
-                                                        key={`${img.product_id}-${idx}`}
-                                                        src={img.url}
-                                                        alt={`Sản phẩm ${img.product_id}`}
-                                                        style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "8px" }}
-                                                    />
-                                                ))}
-                                            </div>
-                                        )
-                                    )}
-                                    {msg.isSingleProduct && msg.productUrl && (
-                                        <a
-                                        href={msg.productUrl}
-                                        style={{
-                                        display: "inline-block",
-                                        marginTop: "10px",
-                                        padding: "8px 16px",
-                                        backgroundColor: "#6366f1",
-                                        color: "#fff",
-                                        borderRadius: "8px",
-                                        textDecoration: "none",
-                                        fontSize: "14px",
-                                        fontWeight: 600,
-                                    }}
-                                        >
-                                        🛒 Xem chi tiết & mua hàng
-                                        </a>
-                                        )}
-                                </div>
-                            </div>
-                        ))}
-                        {loading && (
-                            <div className={`${styles.messageRow} ${styles.botRow}`}>
-                                <div className={`${styles.bubble} ${styles.typingBubble}`}>
-                                    <span className={styles.dot}></span>
-                                    <span className={styles.dot}></span>
-                                    <span className={styles.dot}></span>
-                                </div>
-                            </div>
-                        )}
-                        <div ref={messagesEndRef} />
-                    </div>
-
-                    <div className={styles.inputArea}>
-                        <div className={styles.inputWrapper}>
-                            <textarea
-                                ref={textareaRef}
-                                className={styles.chatInput}
-                                placeholder="Nhập tin nhắn..."
-                                value={input}
-                                onChange={(e) => { setInput(e.target.value); autoResize(); }}
-                                onKeyDown={handleKeyDown}
-                                rows={1}
-                            />
-                            <button
-                                className={`${styles.sendBtn} ${!input.trim() || loading ? styles.sendBtnDisabled : ""}`}
-                                onClick={handleSend}
-                                disabled={loading || !input.trim()}
-                            >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-                                </svg>
+                <div className={styles.container}>
+                    <aside className={styles.sidebar}>
+                        <div className={styles.sidebarHeader}>
+                            <button className={styles.newChatBtn} onClick={handleNewChat}>
+                                + Đoạn chat mới
                             </button>
                         </div>
-                    </div>
-                </main>
-            </div>
+                        <div className={styles.sessionList}>
+                            {sessions.map((s) => (
+                                <div
+                                    key={s.id}
+                                    className={`${styles.sessionItem} ${sessionId === s.id ? styles.activeSession : ""}`}
+                                    onClick={() => loadSessionMessages(s.id)}
+                                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                                >
+                                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        📂 {s.title || "Cuộc trò chuyện mới"}
+                                    </span>
+                                    <button
+                                        onClick={(e) => handleDeleteSession(e, s.id)}
+                                        style={{
+                                            background: "none",
+                                            border: "none",
+                                            color: "rgba(255,255,255,0.5)",
+                                            cursor: "pointer",
+                                            fontSize: "16px",
+                                            padding: "2px 6px",
+                                            flexShrink: 0,
+                                        }}
+                                        title="Xóa đoạn chat"
+                                    >
+                                        🗑️
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </aside>
+
+                    <main className={styles.glassmorphism}>
+                        <div className={styles.header}>
+                            <div className={styles.headerLeft}>
+                                <div className={styles.botAvatar}>AI</div>
+                                <div>
+                                    <h1>Etsy Assistant</h1>
+                                    <div className={styles.statusBadge}>
+                                        <span className={styles.statusDot}></span> Trực tuyến
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles.messagesArea}>
+                            {messages.length === 0 && (
+                                <div style={{ textAlign: 'center', marginTop: '40px', color: '#888' }}>
+                                    <p>Hôm nay bạn cần trợ giúp gì nào? 😊</p>
+                                </div>
+                            )}
+                            {messages.map((msg) => (
+                                <div key={msg.id} className={`${styles.messageRow} ${msg.role === "user" ? styles.userRow : styles.botRow}`}>
+                                    <div className={styles.bubble}>
+                                        <p>{msg.content}</p>
+                                        {msg.images && msg.images.length > 0 && (
+                                            msg.isSingleProduct ? (
+                                                <ProductGallery images={msg.images} />
+                                            ) : (
+                                                <div style={{ display: "flex", gap: "8px", marginTop: "8px", flexWrap: "wrap" }}>
+                                                    {msg.images.map((img: ImageItem, idx: number) => (
+                                                        <img
+                                                            key={`${img.product_id}-${idx}`}
+                                                            src={img.url}
+                                                            alt={`Sản phẩm ${img.product_id}`}
+                                                            style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "8px" }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )
+                                        )}
+                                        {msg.isSingleProduct && msg.productUrl && (
+                                            <a
+                                                href={msg.productUrl}
+                                                style={{
+                                                    display: "inline-block",
+                                                    marginTop: "10px",
+                                                    padding: "8px 16px",
+                                                    backgroundColor: "#6366f1",
+                                                    color: "#fff",
+                                                    borderRadius: "8px",
+                                                    textDecoration: "none",
+                                                    fontSize: "14px",
+                                                    fontWeight: 600,
+                                                }}
+                                            >
+                                                🛒 Xem chi tiết & mua hàng
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                            {loading && (
+                                <div className={`${styles.messageRow} ${styles.botRow}`}>
+                                    <div className={`${styles.bubble} ${styles.typingBubble}`}>
+                                        <span className={styles.dot}></span>
+                                        <span className={styles.dot}></span>
+                                        <span className={styles.dot}></span>
+                                    </div>
+                                </div>
+                            )}
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        <div className={styles.inputArea}>
+                            <div className={styles.inputWrapper}>
+                                <textarea
+                                    ref={textareaRef}
+                                    className={styles.chatInput}
+                                    placeholder="Nhập tin nhắn..."
+                                    value={input}
+                                    onChange={(e) => { setInput(e.target.value); autoResize(); }}
+                                    onKeyDown={handleKeyDown}
+                                    rows={1}
+                                />
+                                <button
+                                    className={`${styles.sendBtn} ${!input.trim() || loading ? styles.sendBtnDisabled : ""}`}
+                                    onClick={handleSend}
+                                    disabled={loading || !input.trim()}
+                                >
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </main>
+                </div>
             </main>
             <footer className={pageStyles.footer} id="site-footer">
                 <div className={pageStyles.footerInner}>

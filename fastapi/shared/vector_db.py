@@ -154,6 +154,7 @@ def _load_docs_from_mysql() -> list[Document]:
 
         meta_data = {
             "product_id": str(pid),
+            "name": name,
             "category":   category_shortname,
             "status":     status,
             "images_url": thumb,

@@ -15,10 +15,22 @@ export default function FloatingChatbot() {
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [sessionId, setSessionId] = useState<string | null>(null);
+    const [userId, setUserId] = useState<string>("anonymous");
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const API_URL = "http://localhost:8080/api/chat";
-    const userId = "user-1766022973"; // Nên đồng bộ với userId bên trang chính
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+            try {
+                const userObj = JSON.parse(storedUser);
+                setUserId(String(userObj.id || userObj.userId || "anonymous"));
+            } catch (e) {
+                console.error("Lỗi parse user from localStorage", e);
+            }
+        }
+    }, []);
 
     // Tự động cuộn xuống khi có tin nhắn mới
     useEffect(() => {
