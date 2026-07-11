@@ -11,6 +11,7 @@ import java.util.Map;
 
 public interface ProductService {
     Page<ProductDTO> getAllProducts(Pageable pageable);
+    Page<ProductDTO> getAllProductsForAdmin(Pageable pageable);
     Page<ProductDTO> getProductsByCategory(String category, Pageable pageable);
     Page<ProductDTO> searchProducts(String keyword, Pageable pageable);
     ProductDTO getProductById(Integer id);

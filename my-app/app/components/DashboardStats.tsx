@@ -112,7 +112,7 @@ export default function DashboardStats({ users, productStats, authHeader }: Prop
             }
         }
 
-        const result = [];
+        const result: any[] = [];
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentMonth = today.getMonth();

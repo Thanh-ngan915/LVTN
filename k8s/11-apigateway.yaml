@@ -1,0 +1,69 @@
+# ==========================================================
+# API Gateway — port 8080
+# Routes traffic to all backend services
+# ==========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apigateway
+  namespace: anvi-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apigateway
+  template:
+    metadata:
+      labels:
+        app: apigateway
+    spec:
+      containers:
+        - name: apigateway
+          image: anvi-apigateway:local
+          imagePullPolicy: Never
+          env:
+            # Gateway routes — override application.properties service URLs
+            - name: USER_SERVICE_URL
+              value: "http://userservice:8085"
+            - name: PRODUCT_SERVICE_URL
+              value: "http://productservice:8087"
+            - name: ORDER_SERVICE_URL
+              value: "http://orderservice:8088"
+            - name: STORE_SERVICE_URL
+              value: "http://store-service:8090"
+            - name: LIVESTREAM_SERVICE_URL
+              value: "http://livestreamservice:8086"
+            - name: CHATBOT_SERVICE_URL
+              value: "http://chatbot-service:8081"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 45
+            periodSeconds: 15
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 150m
+              memory: 256Mi
+            limits:
+              cpu: 400m
+              memory: 384Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: apigateway
+  namespace: anvi-dev
+spec:
+  selector:
+    app: apigateway
+  ports:
+    - port: 8080
+      targetPort: 8080

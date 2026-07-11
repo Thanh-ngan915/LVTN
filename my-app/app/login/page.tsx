@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const GOOGLE_CLIENT_ID = "262862647958-7g338hg8pm0e617d0dk4c67jqumhr2nu.apps.googleusercontent.com";
-const GOOGLE_REDIRECT_URI = "http://localhost:3000/auth/google/callback";
+const GOOGLE_REDIRECT_URI = "http://localhost:30000/auth/google/callback";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({

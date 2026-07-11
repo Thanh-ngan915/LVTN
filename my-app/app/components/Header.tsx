@@ -17,11 +17,17 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [activeLang, setActiveLang] = useState('vi');
 
   // Read localStorage only on client after mount to avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
     try {
+      const match = document.cookie.match(/googtrans=\/vi\/([a-z]{2})/);
+      if (match) {
+        setActiveLang(match[1]);
+      }
+      
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         const user = JSON.parse(storedUser);
@@ -31,6 +37,12 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
       // ignore
     }
   }, []);
+
+  const switchLanguage = (lang: string) => {
+    document.cookie = `googtrans=/vi/${lang}; path=/; domain=${window.location.hostname}`;
+    document.cookie = `googtrans=/vi/${lang}; path=/`;
+    window.location.reload();
+  };
 
   const handleLogout = () => {
       localStorage.removeItem('username');
@@ -70,6 +82,19 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
         <div className={styles.topBarInner}>
           <span>🚚 Miễn phí vận chuyển cho đơn hàng từ 500.000đ</span>
             <div className={styles.topBarLinks}>
+                {mounted && (
+                    <div style={{display: 'inline-flex', gap: '8px', alignItems: 'center', cursor: 'pointer', marginRight: '15px'}} className="notranslate">
+                        <span 
+                            style={{ fontWeight: activeLang === 'vi' ? 'bold' : 'normal', color: activeLang === 'vi' ? 'inherit' : '#888' }}
+                            onClick={() => switchLanguage('vi')}
+                        >VI</span>
+                        <span style={{color: '#ddd'}}>|</span>
+                        <span 
+                            style={{ fontWeight: activeLang === 'en' ? 'bold' : 'normal', color: activeLang === 'en' ? 'inherit' : '#888' }}
+                            onClick={() => switchLanguage('en')}
+                        >EN</span>
+                    </div>
+                )}
                 {mounted && username ? (
                     <>
                         <Link href="/profile">👤 {username}</Link>

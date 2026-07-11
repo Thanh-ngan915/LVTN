@@ -16,13 +16,17 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     @Query("SELECT p FROM Product p WHERE p.isDelete = false OR p.isDelete IS NULL")
     @EntityGraph(attributePaths = {"images", "variants"})
+    Page<Product> findAllNotDeleted(Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.status = 'active'")
+    @EntityGraph(attributePaths = {"images", "variants"})
     Page<Product> findAllActive(Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.categoryShortname = :category")
+    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.status = 'active' AND p.categoryShortname = :category")
     @EntityGraph(attributePaths = {"images", "variants"})
     Page<Product> findAllActiveByCategory(@Param("category") String category, Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.status = 'active' AND LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     @EntityGraph(attributePaths = {"images", "variants"})
     Page<Product> searchByName(@Param("keyword") String keyword, Pageable pageable);
     // ProductRepository.java
