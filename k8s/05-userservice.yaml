@@ -1,0 +1,68 @@
+# ==========================================================
+# UserService — port 8085, DB: usersdb
+# ==========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: userservice
+  namespace: anvi-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: userservice
+  template:
+    metadata:
+      labels:
+        app: userservice
+    spec:
+      containers:
+        - name: userservice
+          image: anvi-userservice:local
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: anvi-config
+            - secretRef:
+                name: anvi-secrets
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-host:3306/usersdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&useUnicode=true"
+          ports:
+            - containerPort: 8085
+          readinessProbe:
+            tcpSocket:
+              port: 8085
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8085
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 200m
+              memory: 384Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+      volumes:
+        - name: uploads
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: userservice
+  namespace: anvi-dev
+spec:
+  selector:
+    app: userservice
+  ports:
+    - port: 8085
+      targetPort: 8085

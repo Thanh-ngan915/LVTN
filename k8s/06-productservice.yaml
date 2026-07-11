@@ -1,0 +1,64 @@
+# ==========================================================
+# ProductService — port 8087, DB: productdb, Redis
+# ==========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: productservice
+  namespace: anvi-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: productservice
+  template:
+    metadata:
+      labels:
+        app: productservice
+    spec:
+      containers:
+        - name: productservice
+          image: anvi-productservice:local
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: anvi-config
+            - secretRef:
+                name: anvi-secrets
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-host:3306/productdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&useUnicode=true"
+            - name: STORE_SERVICE_URL
+              value: "http://store-service:8090"
+          ports:
+            - containerPort: 8087
+          readinessProbe:
+            tcpSocket:
+              port: 8087
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8087
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 200m
+              memory: 384Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: productservice
+  namespace: anvi-dev
+spec:
+  selector:
+    app: productservice
+  ports:
+    - port: 8087
+      targetPort: 8087

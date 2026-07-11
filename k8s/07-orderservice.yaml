@@ -1,0 +1,72 @@
+# ==========================================================
+# OrderService — port 8088, DB: ordersdb
+# Depends on: store-service, userservice, productservice
+# ==========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orderservice
+  namespace: anvi-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orderservice
+  template:
+    metadata:
+      labels:
+        app: orderservice
+    spec:
+      containers:
+        - name: orderservice
+          image: anvi-orderservice:local
+          imagePullPolicy: Never
+          envFrom:
+            - configMapRef:
+                name: anvi-config
+            - secretRef:
+                name: anvi-secrets
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-host:3306/ordersdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8&useUnicode=true"
+            - name: STORE_SERVICE_URL
+              value: "http://store-service:8090"
+            - name: USER_SERVICE_URL
+              value: "http://userservice:8085"
+            - name: PRODUCT_SERVICE_URL
+              value: "http://productservice:8087"
+            # orderservice uses "store-service.url" property name
+            - name: STORE__SERVICE__URL
+              value: "http://store-service:8090"
+          ports:
+            - containerPort: 8088
+          readinessProbe:
+            tcpSocket:
+              port: 8088
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8088
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 200m
+              memory: 384Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orderservice
+  namespace: anvi-dev
+spec:
+  selector:
+    app: orderservice
+  ports:
+    - port: 8088
+      targetPort: 8088
