@@ -1,12 +1,72 @@
+import json
+import asyncio
 from fastapi import FastAPI, Body
 from shared.vector_db import load_vector_db
 from chatbot_service.chatbot_logic import create_rag_chain
 import uvicorn
+from contextlib import asynccontextmanager
+from aiokafka import AIOKafkaConsumer
+from langchain_core.documents import Document
 
-app = FastAPI(title="Etsy AI Chatbot API")
+vector_db = None
+rag_chain = None
 
-vector_db = load_vector_db()
-rag_chain = create_rag_chain(vector_db)
+async def consume_product_events():
+    global vector_db
+    consumer = AIOKafkaConsumer(
+        "product-created",
+        bootstrap_servers="localhost:9092",
+        group_id="chatbot-dynamic-updater",
+        auto_offset_reset="latest",
+        value_deserializer=lambda x: json.loads(x.decode("utf-8")) if x else None
+    )
+    try:
+        await consumer.start()
+        print("Chatbot Kafka Consumer connected!")
+        async for msg in consumer:
+            data = msg.value
+            if not data or "id" not in data:
+                continue
+            pid = data.get("id")
+            name = data.get("name", "")
+            desc = data.get("description", "")
+            cat = data.get("categoryName", "")
+            print(f"Chatbot nhan san pham moi: {pid} - {name}")
+            
+            clean_text = (
+                f"passage: Mã sản phẩm (ID): {pid}. "
+                f"Tên sản phẩm: {name}. "
+                f"Danh mục: {cat}. "
+                f"Mô tả: {desc}."
+            )
+            meta_data = {
+                "product_id": str(pid),
+                "name": name,
+                "category": cat,
+                "status": "active",
+                "images_url": "",
+                "images_all": [],
+                "shop_id": "",
+                "shop_name": "Không rõ",
+            }
+            if vector_db:
+                vector_db.add_documents([Document(page_content=clean_text, metadata=meta_data)])
+                print(f"Da them san pham {pid} vao FAISS index trong bo nho!")
+    except Exception as e:
+        print(f"Chatbot Kafka Consumer error: {e}")
+    finally:
+        await consumer.stop()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global vector_db, rag_chain
+    vector_db = load_vector_db()
+    rag_chain = create_rag_chain(vector_db)
+    consumer_task = asyncio.create_task(consume_product_events())
+    yield
+    consumer_task.cancel()
+
+app = FastAPI(title="Etsy AI Chatbot API", lifespan=lifespan)
 
 @app.post("/api/ai/chat")
 async def chat_endpoint(payload: dict = Body(...)):

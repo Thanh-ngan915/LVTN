@@ -45,7 +45,7 @@ def _load_store_map() -> dict[str, str]:
             rows = cur.fetchall()
         return {str(r["id"]): (r["name"] or "").strip() for r in rows}
     except Exception as e:
-        print(f"⚠️  Không lấy được dữ liệu store: {e}")
+        print(f"Khong lay duoc du lieu store: {e}")
         return {}
     finally:
         conn.close()
@@ -164,7 +164,7 @@ def _load_docs_from_mysql() -> list[Document]:
         }
         docs.append(Document(page_content=clean_text, metadata=meta_data))
 
-    print(f"✅ Đọc được {len(docs)} sản phẩm từ MySQL (product + image + variant + store)")
+    print(f"Doc duoc {len(docs)} san pham tu MySQL (product + image + variant + store)")
     return docs
 
 
@@ -172,20 +172,20 @@ def build_and_save_index() -> FAISS:
     docs = _load_docs_from_mysql()
     if not docs:
         raise ValueError("Không có sản phẩm nào trong DB để train!")
-    print(f"⏳ Đang tạo FAISS index từ {len(docs)} sản phẩm…")
+    print(f"Dang tao FAISS index tu {len(docs)} san pham…")
     vectorstore = FAISS.from_documents(docs, embeddings)
     vectorstore.save_local(INDEX_PATH)
-    print(f"✅ Đã lưu index tại: {INDEX_PATH}")
+    print(f"Da luu index tai: {INDEX_PATH}")
     return vectorstore
 
 
 def load_vector_db() -> FAISS:
     if os.path.exists(INDEX_PATH):
-        print(f"📂 Load FAISS index từ: {INDEX_PATH}")
+        print(f"Load FAISS index tu: {INDEX_PATH}")
         return FAISS.load_local(
             INDEX_PATH, embeddings, allow_dangerous_deserialization=True,
         )
-    print("⚠️  Chưa có FAISS index — đang build từ MySQL lần đầu…")
+    print("Chua co FAISS index — dang build tu MySQL lan dau…")
     return build_and_save_index()
 
 
