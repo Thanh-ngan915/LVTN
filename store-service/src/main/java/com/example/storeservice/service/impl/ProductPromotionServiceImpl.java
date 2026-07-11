@@ -53,6 +53,13 @@ public class ProductPromotionServiceImpl implements ProductPromotionService {
             throw new RuntimeException("Sản phẩm đã được đăng ký vào KM này");
         }
 
+        // Kiểm tra trùng lặp thời gian với các KM khác của cùng sản phẩm
+        long overlappingCount = productPromotionRepository.countOverlappingPromotions(
+                request.getProductId(), promotion.getStartDate(), promotion.getEndDate(), salePromotionId);
+        if (overlappingCount > 0) {
+            throw new RuntimeException("Sản phẩm đang tham gia một chương trình khuyến mãi khác trong cùng khoảng thời gian");
+        }
+
         // Validate giá KM
         if (request.getPriceAfter() <= 0) {
             throw new RuntimeException("Giá KM phải lớn hơn 0");
@@ -75,11 +82,11 @@ public class ProductPromotionServiceImpl implements ProductPromotionService {
                 .productId(request.getProductId())
                 .salePromotionId(salePromotionId)
                 .name(product.getName())
-                .image(product.getImage())   // ← thêm
+                .image(product.getImageUrls() != null && !product.getImageUrls().isEmpty() ? product.getImageUrls().get(0) : null)
                 .priceAfter(request.getPriceAfter())
                 .quantity(request.getQuantity())
                 .bought(0)
-                .isDelete(false)             // ← đổi từ 0 sang false
+                .isDelete(false)
                 .createdBy(userId)
                 .updatedBy(userId)
                 .createdAt(LocalDateTime.now())
