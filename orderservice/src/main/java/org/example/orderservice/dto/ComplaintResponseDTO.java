@@ -19,8 +19,11 @@ public class ComplaintResponseDTO {
     private String reason;
     private String description;
     private List<String> images;
+    private String shopReply;
+    private List<String> shopImages;
     private String status;        // PENDING | APPROVED | REJECTED
     private String adminNotes;
+    private Boolean isShopFault;
     private String resolvedBy;
     private String createdAt;
     private String resolvedAt;

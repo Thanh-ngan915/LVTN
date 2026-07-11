@@ -48,4 +48,17 @@ public class ComplaintController {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
+
+    /** GET /api/complaints/order/{orderId} */
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<ApiResponse<ComplaintResponseDTO>> getByOrderId(
+            @PathVariable Integer orderId
+    ) {
+        try {
+            return ResponseEntity.ok(ApiResponse.success(
+                    complaintService.getComplaintByOrderId(orderId), "OK"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }

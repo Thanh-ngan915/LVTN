@@ -42,12 +42,24 @@ public class OrderComplaint {
     @Column(name = "image_url", columnDefinition = "TEXT")
     private List<String> images;
 
+    @Column(name = "shop_reply", columnDefinition = "TEXT")
+    private String shopReply;
+
+    @ElementCollection
+    @CollectionTable(name = "order_complaint_shop_image",
+            joinColumns = @JoinColumn(name = "complaint_id"))
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private List<String> shopImages;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
     private ComplaintStatus status;
 
     @Column(name = "admin_notes", columnDefinition = "TEXT")
     private String adminNotes;
+
+    @Column(name = "is_shop_fault")
+    private Boolean isShopFault;
 
     @Column(name = "resolved_by", length = 100)
     private String resolvedBy;

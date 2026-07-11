@@ -453,6 +453,22 @@
   transform: scale(0.97);
 }
 
+.outOfStockBtn {
+  flex: 1;
+  height: 48px;
+  border: none;
+  background: #cccccc;
+  color: #666666;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 2px;
+  cursor: not-allowed;
+}
+
+.buyNowBtn:active {
+  transform: scale(0.97);
+}
+
 /* === Shop Section === */
 .shopSection {
   background: #fff;
