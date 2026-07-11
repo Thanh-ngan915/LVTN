@@ -192,7 +192,7 @@ export default function ChatbotPage() {
 
             if (!sessionId && data.sessionId) {
                 setSessionId(data.sessionId);
-                fetchSessions();
+                fetchSessions(userId);
             }
 
             const newImages: ImageItem[] = data.images || [];
