@@ -20,8 +20,79 @@ const REASONS = [
 export default function ComplaintModal({ orderId, onClose, onSuccess }: Props) {
     const [reason, setReason] = useState('');
     const [description, setDescription] = useState('');
+    const [images, setImages] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
+    const [uploadingImg, setUploadingImg] = useState(false);
     const [error, setError] = useState('');
+
+    const compressImage = (file: File, maxSizeMB = 1): Promise<Blob> => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let { width, height } = img;
+
+                    const maxDim = 1920;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d')!;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(
+                        (blob) => resolve(blob!),
+                        'image/jpeg',
+                        0.8
+                    );
+                };
+                img.src = e.target?.result as string;
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadingImg(true);
+        try {
+            const fd = new FormData();
+            if (file.size > 10 * 1024 * 1024 && file.type.startsWith('image/')) {
+                const compressed = await compressImage(file);
+                fd.append("file", compressed, file.name);
+            } else {
+                fd.append("file", file);
+            }
+            fd.append("upload_preset", "kltn_user_avatar");
+            const res = await fetch("https://api.cloudinary.com/v1_1/dqghfi8be/auto/upload", {
+                method: "POST", body: fd,
+            });
+            const data = await res.json();
+            if (data.secure_url) {
+                setImages(prev => [...prev, data.secure_url]);
+            }
+        } catch (err) { 
+            console.error(err);
+        } finally {
+            setUploadingImg(false);
+            e.target.value = '';
+        }
+    };
+
+    const removeImage = (url: string) => {
+        setImages(prev => prev.filter(u => u !== url));
+    };
 
     const handleSubmit = async () => {
         if (!reason) { setError('Vui lòng chọn lý do khiếu nại'); return; }
@@ -46,7 +117,7 @@ export default function ComplaintModal({ orderId, onClose, onSuccess }: Props) {
                     orderId,
                     reason,
                     description,
-                    images: [],
+                    images,
                 }),
             });
 
@@ -87,6 +158,30 @@ export default function ComplaintModal({ orderId, onClose, onSuccess }: Props) {
                     onChange={e => setDescription(e.target.value)}
                     rows={4}
                 />
+
+                <label className={styles.label}>Thêm ảnh/video (không bắt buộc)</label>
+                <div className={styles.imageUploadRow}>
+                    {images.map(url => {
+                        const isVideo = url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.webm');
+                        return (
+                            <div key={url} className={styles.uploadedImg}>
+                                {isVideo ? (
+                                    <video src={url} muted playsInline />
+                                ) : (
+                                    <img src={url} alt="complaint proof" />
+                                )}
+                                <button className={styles.removeImg} onClick={() => removeImage(url)}>✕</button>
+                            </div>
+                        );
+                    })}
+                    {images.length < 5 && (
+                        <label className={styles.uploadBox} htmlFor={`complaint-media-${orderId}`}>
+                            {uploadingImg ? "⏳..." : "+ Thêm tệp"}
+                            <input id={`complaint-media-${orderId}`} type="file" accept="image/*,video/*"
+                                   style={{ display: "none" }} onChange={handleMediaUpload} />
+                        </label>
+                    )}
+                </div>
 
                 {error && <p className={styles.error}>⚠️ {error}</p>}
 
