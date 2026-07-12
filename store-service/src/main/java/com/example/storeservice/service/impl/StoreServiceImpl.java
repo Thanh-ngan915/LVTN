@@ -207,4 +207,12 @@ public class StoreServiceImpl implements StoreService {
         store.setUpdateAt(LocalDateTime.now());
         return toDTO(storeRepository.save(store));
     }
+
+    @Override
+    public List<String> getStoreIdsByLocations(List<String> locations) {
+        if (locations == null || locations.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return storeRepository.findStoreIdsByLocations(locations);
+    }
 }

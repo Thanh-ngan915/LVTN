@@ -46,8 +46,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductDTO> searchProducts(String keyword, Pageable pageable) {
-        return productRepository.searchByName(keyword, pageable).map(this::toDTO);
+    public Page<ProductDTO> searchProducts(String keyword, Float minPrice, Float maxPrice, List<String> storeIds, Pageable pageable) {
+        return productRepository.findAll(org.example.productservice.repository.ProductSpecification.searchWithFilters(keyword, minPrice, maxPrice, storeIds), pageable).map(this::toDTO);
     }
 
     @Override

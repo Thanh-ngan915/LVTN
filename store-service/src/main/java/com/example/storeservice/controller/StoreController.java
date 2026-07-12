@@ -147,4 +147,9 @@ public class StoreController {
             throw e;
         }
     }
+
+    @GetMapping("/locations")
+    public ResponseEntity<List<String>> getStoreIdsByLocations(@RequestParam List<String> locations) {
+        return ResponseEntity.ok(storeService.getStoreIdsByLocations(locations));
+    }
 }
