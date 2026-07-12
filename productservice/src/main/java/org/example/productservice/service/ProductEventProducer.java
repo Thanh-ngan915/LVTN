@@ -15,7 +15,23 @@ public class ProductEventProducer {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void sendProductCreatedEvent(ProductEvent event) {
+        event.setAction("CREATE");
         log.info("Sending product event to Kafka topic {}: {}", TOPIC, event);
         kafkaTemplate.send(TOPIC, String.valueOf(event.getId()), event);
+    }
+
+    public void sendProductUpdatedEvent(ProductEvent event) {
+        event.setAction("UPDATE");
+        log.info("Sending product event to Kafka topic {}: {}", TOPIC, event);
+        kafkaTemplate.send(TOPIC, String.valueOf(event.getId()), event);
+    }
+
+    public void sendProductDeletedEvent(Integer productId) {
+        ProductEvent event = ProductEvent.builder()
+                .action("DELETE")
+                .id(productId)
+                .build();
+        log.info("Sending product event to Kafka topic {}: {}", TOPIC, event);
+        kafkaTemplate.send(TOPIC, String.valueOf(productId), event);
     }
 }

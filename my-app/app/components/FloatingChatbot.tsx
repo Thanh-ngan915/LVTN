@@ -18,7 +18,7 @@ export default function FloatingChatbot() {
     const [userId, setUserId] = useState<string>("anonymous");
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const API_URL = "http://localhost:8080/api/chat";
+    const API_URL = "/api/chat";
 
     useEffect(() => {
         const storedUser = localStorage.getItem("user");

@@ -11,6 +11,7 @@ $services = @(
     @{ Name = "anvi-store-service";     Context = "store-service" },
     @{ Name = "anvi-livestreamservice"; Context = "livetreamservice" },
     @{ Name = "anvi-chatbot-service";   Context = "chatbot-service" },
+    @{ Name = "anvi-fastapi";           Context = "fastapi" },
     @{ Name = "anvi-apigateway";        Context = "apigatewway" },
     @{ Name = "anvi-frontend";          Context = "my-app" }
 )

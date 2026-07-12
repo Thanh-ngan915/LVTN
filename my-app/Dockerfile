@@ -22,6 +22,7 @@ ENV ORDER_SERVICE_URL=http://orderservice:8088
 ENV STORE_SERVICE_URL=http://storeservice:8090
 ENV GATEWAY_URL=http://apigateway:8080
 ENV LIVESTREAM_SERVICE_URL=http://livestreamservice:8086
+ENV NEXT_PUBLIC_FASTAPI_LIVESTREAM_URL=http://localhost:30050
 RUN npm run build
 
 # =====================================================

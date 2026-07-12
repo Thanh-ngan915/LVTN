@@ -25,6 +25,11 @@ spec:
                 name: anvi-config
             - secretRef:
                 name: anvi-secrets
+          env:
+            - name: FASTAPI_URL
+              value: "http://fastapi-chatbot:8000/api/ai/chat"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-host:3306/chatbot_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh"
           ports:
             - containerPort: 8081
           readinessProbe:

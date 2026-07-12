@@ -120,7 +120,7 @@ Câu hỏi hiện tại: {question}
         best_doc = None
         best_len = 0
         for prod_name, doc in name_to_doc.items():
-            if len(prod_name) >= 4 and prod_name in q_lower:
+            if len(prod_name) >= 3 and (prod_name in q_lower or q_lower in prod_name):
                 if len(prod_name) > best_len:
                     best_doc = doc
                     best_len = len(prod_name)
@@ -253,6 +253,20 @@ Câu hỏi hiện tại: {question}
         for attempt in range(retries):
             try:
                 reply = chain.invoke(payload)
+                
+                # Xử lý thông minh: Nếu lúc đầu lấy 3 sản phẩm (is_single=False),
+                # nhưng AI chỉ quyết định tư vấn về 1 sản phẩm duy nhất
+                if not is_single:
+                    mentioned_docs = [d for d in docs if d.metadata.get("product_id", "") in reply]
+                    if len(mentioned_docs) == 1:
+                        doc = mentioned_docs[0]
+                        pid = doc.metadata.get("product_id", "")
+                        all_imgs = doc.metadata.get("images_all", [])
+                        images = [{"product_id": pid, "url": url} for url in all_imgs if url][:10]
+                        if pid:
+                            product_url = f"{FRONTEND_BASE_URL}/product/{pid}"
+                            is_single = True
+
                 return {
                     "reply": reply,
                     "images": images,
@@ -265,4 +279,23 @@ Câu hỏi hiện tại: {question}
                 else:
                     raise
 
+    def add_product(doc):
+        """Cập nhật pid_to_doc và name_to_doc khi có sản phẩm mới từ Kafka."""
+        pid = doc.metadata.get("product_id")
+        name = doc.metadata.get("name", "").strip().lower()
+        if pid:
+            pid_to_doc[pid] = doc
+        if name:
+            name_to_doc[name] = doc
+
+    def delete_product(pid: str):
+        """Xóa sản phẩm khỏi pid_to_doc và name_to_doc."""
+        if pid in pid_to_doc:
+            doc = pid_to_doc.pop(pid)
+            name = doc.metadata.get("name", "").strip().lower()
+            if name in name_to_doc:
+                del name_to_doc[name]
+
+    invoke_with_retry.add_product = add_product
+    invoke_with_retry.delete_product = delete_product
     return invoke_with_retry

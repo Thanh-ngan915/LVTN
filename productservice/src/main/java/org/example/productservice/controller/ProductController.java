@@ -305,6 +305,7 @@ public class ProductController {
                         .name(created.getName())
                         .description(created.getDescription())
                         .categoryName(created.getCategoryName())
+                        .imageUrls(created.getImageUrls())
                         .build();
                 productEventProducer.sendProductCreatedEvent(event);
             } catch (Exception ex) {
@@ -324,6 +325,20 @@ public class ProductController {
             @RequestBody ProductDTO productDTO) {
         try {
             ProductDTO updated = productService.updateProduct(id, productDTO);
+
+            try {
+                ProductEvent event = ProductEvent.builder()
+                        .id(updated.getId())
+                        .name(updated.getName())
+                        .description(updated.getDescription())
+                        .categoryName(updated.getCategoryName())
+                        .imageUrls(updated.getImageUrls())
+                        .build();
+                productEventProducer.sendProductUpdatedEvent(event);
+            } catch (Exception ex) {
+                System.err.println("Kafka event failed (product updated OK): " + ex.getMessage());
+            }
+
             return ResponseEntity.ok(ApiResponse.success(updated, "Product updated successfully"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
@@ -335,6 +350,13 @@ public class ProductController {
     public ResponseEntity<ApiResponse<ProductDTO>> deleteProduct(@PathVariable Integer id) {
         try {
             productService.deleteProduct(id);
+
+            try {
+                productEventProducer.sendProductDeletedEvent(id);
+            } catch (Exception ex) {
+                System.err.println("Kafka event failed (product deleted OK): " + ex.getMessage());
+            }
+
             return ResponseEntity.ok(ApiResponse.success(null, "Product deleted successfully"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));

@@ -10,8 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductEvent {
+    private String action; // CREATE, UPDATE, DELETE
     private Integer id;
     private String name;
     private String description;
     private String categoryName;
+    private java.util.List<String> imageUrls;
 }

@@ -90,7 +90,7 @@ export default function ChatbotPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const API_URL = "http://localhost:8080/api/chat";
+    const API_URL = "/api/chat";
     const [userId, setUserId] = useState<string>("anonymous");
 
     useEffect(() => {

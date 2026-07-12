@@ -1,3 +1,4 @@
+import os
 import json
 import asyncio
 from fastapi import FastAPI, Body
@@ -12,10 +13,10 @@ vector_db = None
 rag_chain = None
 
 async def consume_product_events():
-    global vector_db
+    global vector_db, rag_chain
     consumer = AIOKafkaConsumer(
         "product-created",
-        bootstrap_servers="localhost:9092",
+        bootstrap_servers=os.getenv("KAFKA_BROKER", "localhost:9092"),
         group_id="chatbot-dynamic-updater",
         auto_offset_reset="latest",
         value_deserializer=lambda x: json.loads(x.decode("utf-8")) if x else None
@@ -27,31 +28,64 @@ async def consume_product_events():
             data = msg.value
             if not data or "id" not in data:
                 continue
-            pid = data.get("id")
+            
+            action = data.get("action", "CREATE")
+            pid = str(data.get("id"))
             name = data.get("name", "")
             desc = data.get("description", "")
             cat = data.get("categoryName", "")
-            print(f"Chatbot nhan san pham moi: {pid} - {name}")
+            image_urls = data.get("imageUrls") or []
+            thumb = image_urls[0] if image_urls else ""
             
-            clean_text = (
-                f"passage: Mã sản phẩm (ID): {pid}. "
-                f"Tên sản phẩm: {name}. "
-                f"Danh mục: {cat}. "
-                f"Mô tả: {desc}."
-            )
-            meta_data = {
-                "product_id": str(pid),
-                "name": name,
-                "category": cat,
-                "status": "active",
-                "images_url": "",
-                "images_all": [],
-                "shop_id": "",
-                "shop_name": "Không rõ",
-            }
-            if vector_db:
-                vector_db.add_documents([Document(page_content=clean_text, metadata=meta_data)])
+            print(f"Chatbot nhan event: {action} - {pid} - {name} ({len(image_urls)} anh)")
+            
+            if not vector_db:
+                continue
+                
+            # Hàm phụ để tìm internal ID trong FAISS
+            def get_internal_id(product_id_str):
+                for internal_id, document in vector_db.docstore._dict.items():
+                    if document.metadata.get("product_id") == product_id_str:
+                        return internal_id
+                return None
+
+            if action in ["UPDATE", "DELETE"]:
+                # Xóa khỏi FAISS
+                internal_id = get_internal_id(pid)
+                if internal_id:
+                    vector_db.delete([internal_id])
+                    print(f"Da xoa doc cu cua san pham {pid} khoi FAISS")
+                # Xóa khỏi bảng tra cứu nhanh
+                if rag_chain and hasattr(rag_chain, 'delete_product'):
+                    rag_chain.delete_product(pid)
+
+            if action in ["CREATE", "UPDATE"]:
+                clean_text = (
+                    f"passage: Mã sản phẩm (ID): {pid}. "
+                    f"Tên sản phẩm: {name}. "
+                    f"Danh mục: {cat}. "
+                    f"Mô tả: {desc}."
+                )
+                meta_data = {
+                    "product_id": pid,
+                    "name": name,
+                    "category": cat,
+                    "status": "active",
+                    "images_url": thumb,
+                    "images_all": image_urls,
+                    "shop_id": "",
+                    "shop_name": "Không rõ",
+                }
+                doc = Document(page_content=clean_text, metadata=meta_data)
+                vector_db.add_documents([doc])
+                if rag_chain and hasattr(rag_chain, 'add_product'):
+                    rag_chain.add_product(doc)
                 print(f"Da them san pham {pid} vao FAISS index trong bo nho!")
+            
+            # LƯU XUỐNG Ổ CỨNG ẢO
+            from shared.vector_db import INDEX_PATH
+            vector_db.save_local(INDEX_PATH)
+            print(f"Da save_local xuong Persistent Volume: {INDEX_PATH}")
     except Exception as e:
         print(f"Chatbot Kafka Consumer error: {e}")
     finally:
@@ -104,4 +138,4 @@ async def chat_endpoint(payload: dict = Body(...)):
         }
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

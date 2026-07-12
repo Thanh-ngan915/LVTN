@@ -23,7 +23,7 @@ public class ChatService {
     private final ChatSessionRepository chatSessionRepository;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final String FASTAPI_URL = "http://127.0.0.1:8000/api/ai/chat";
+    private final String FASTAPI_URL = System.getenv("FASTAPI_URL") != null ? System.getenv("FASTAPI_URL") : "http://127.0.0.1:8000/api/ai/chat";
 
     public Map<String, Object> processChat(String userId, String sessionId, String userMessage,
                                            List<String> lastProductIds) {

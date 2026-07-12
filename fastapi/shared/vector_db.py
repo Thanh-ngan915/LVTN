@@ -31,9 +31,7 @@ STORE_DB_CONFIG = {
     "charset":  "utf8mb4",
 }
 
-INDEX_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "faiss_etsy_index_v2"
-)
+INDEX_PATH = "/app/shared/faiss_data/faiss_etsy_index_v2"
 
 
 def _load_store_map() -> dict[str, str]:
@@ -181,11 +179,11 @@ def build_and_save_index() -> FAISS:
 
 def load_vector_db() -> FAISS:
     if os.path.exists(INDEX_PATH):
-        print(f"Load FAISS index tu: {INDEX_PATH}")
+        print(f"Load FAISS index tu Persistent Volume: {INDEX_PATH}")
         return FAISS.load_local(
             INDEX_PATH, embeddings, allow_dangerous_deserialization=True,
         )
-    print("Chua co FAISS index — dang build tu MySQL lan dau…")
+    print("Chua co FAISS index tren PVC — dang build tu MySQL lan dau…")
     return build_and_save_index()
 
 
