@@ -177,10 +177,26 @@ Câu hỏi hiện tại: {question}
         shop_match = re.search(r'(?:shop|cửa hàng)\s+([a-zA-Z0-9À-ỹ_\-\s]+?)(?:\s+bán|\?|$)', question, re.IGNORECASE)
         if shop_match:
             shop_target = shop_match.group(1).strip().lower()
-            candidate_docs = vectorstore.similarity_search(query=query_for_faiss, k=20)
-            matched = [d for d in candidate_docs if shop_target in d.metadata.get("shop_name", "").lower()]
-            if matched:
-                return matched[:1] if narrow else matched[:5]
+            candidate_docs = vectorstore.similarity_search(query=query_for_faiss, k=30)
+            
+            matched = []
+            store_info_docs = []
+            
+            for d in candidate_docs:
+                is_store_doc = d.metadata.get("type") == "store"
+                
+                # Cửa hàng (doc loại store)
+                if is_store_doc and shop_target in d.metadata.get("name", "").lower():
+                    store_info_docs.append(d)
+                
+                # Sản phẩm của cửa hàng
+                elif not is_store_doc and shop_target in d.metadata.get("shop_name", "").lower():
+                    matched.append(d)
+            
+            # Ưu tiên trả về thông tin cửa hàng kèm theo vài sản phẩm
+            final_docs = store_info_docs + matched
+            if final_docs:
+                return final_docs[:1] if narrow else final_docs[:5]
 
         # 2. Category filter
         category_keyword_found = False

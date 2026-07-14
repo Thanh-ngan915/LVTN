@@ -91,14 +91,86 @@ async def consume_product_events():
     finally:
         await consumer.stop()
 
+async def consume_store_events():
+    global vector_db, rag_chain
+    consumer = AIOKafkaConsumer(
+        "store-events",
+        bootstrap_servers=os.getenv("KAFKA_BROKER", "localhost:9092"),
+        group_id="chatbot-store-updater",
+        auto_offset_reset="latest",
+        value_deserializer=lambda x: json.loads(x.decode("utf-8")) if x else None
+    )
+    try:
+        await consumer.start()
+        print("Chatbot Kafka Consumer (Store) connected!")
+        async for msg in consumer:
+            data = msg.value
+            if not data or "id" not in data:
+                continue
+            
+            action = data.get("action", "CREATE")
+            store_id = str(data.get("id"))
+            name = data.get("name", "")
+            desc = data.get("description", "")
+            location = data.get("location", "")
+            image = data.get("image", "")
+            status = data.get("status", "active")
+            
+            print(f"Chatbot nhan event store: {action} - {store_id} - {name}")
+            
+            if not vector_db:
+                continue
+                
+            def get_internal_store_id(sid):
+                for internal_id, document in vector_db.docstore._dict.items():
+                    if document.metadata.get("type") == "store" and document.metadata.get("store_id") == sid:
+                        return internal_id
+                return None
+
+            if action in ["UPDATE", "DELETE"] or status != "active":
+                internal_id = get_internal_store_id(store_id)
+                if internal_id:
+                    vector_db.delete([internal_id])
+                    print(f"Da xoa doc cu cua store {store_id} khoi FAISS")
+
+            if action in ["CREATE", "UPDATE"] and status == "active":
+                clean_text = (
+                    f"Thông tin cửa hàng. "
+                    f"Mã cửa hàng (ID): {store_id}. "
+                    f"Tên cửa hàng: {name}. "
+                    f"Địa chỉ: {location}. "
+                    f"Mô tả: {desc}."
+                )
+                meta_data = {
+                    "type": "store",
+                    "store_id": store_id,
+                    "name": name,
+                    "location": location,
+                    "status": status,
+                    "images_url": image,
+                    "images_all": [image] if image else [],
+                }
+                doc = Document(page_content=clean_text, metadata=meta_data)
+                vector_db.add_documents([doc])
+                print(f"Da them store {store_id} vao FAISS index trong bo nho!")
+            
+            from shared.vector_db import INDEX_PATH
+            vector_db.save_local(INDEX_PATH)
+    except Exception as e:
+        print(f"Chatbot Kafka Consumer (Store) error: {e}")
+    finally:
+        await consumer.stop()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global vector_db, rag_chain
     vector_db = load_vector_db()
     rag_chain = create_rag_chain(vector_db)
     consumer_task = asyncio.create_task(consume_product_events())
+    store_consumer_task = asyncio.create_task(consume_store_events())
     yield
     consumer_task.cancel()
+    store_consumer_task.cancel()
 
 app = FastAPI(title="Etsy AI Chatbot API", lifespan=lifespan)
 
