@@ -5,6 +5,7 @@ Write-Host "  ANVI Shop - Building Docker Images"        -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 
 $services = @(
+    @{ Name = "anvi-mysql";             Context = "docker" },
     @{ Name = "anvi-userservice";       Context = "userservice" },
     @{ Name = "anvi-productservice";    Context = "productservice" },
     @{ Name = "anvi-orderservice";      Context = "orderservice" },
