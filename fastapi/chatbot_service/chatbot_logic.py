@@ -71,8 +71,20 @@ Câu hỏi hiện tại: {question}
         for doc in vectorstore.docstore._dict.values()
     }
 
+    # 👇 MỚI: map tên sản phẩm (viết thường, đã chuẩn hoá) -> doc, để match đúng chiều
+    # Yêu cầu: metadata phải có field "name" (xem ghi chú build_and_save_index bên vector_db.py)
+    name_to_doc = {
+        doc.metadata.get("name", "").strip().lower(): doc
+        for doc in vectorstore.docstore._dict.values()
+        if doc.metadata.get("name")
+    }
+
     IMAGE_INTENT_KEYWORDS = ["ảnh", "hình", "photo", "image"]
     NARROW_INTENT_KEYWORDS = ["chỉ", "duy nhất", "mỗi", "riêng", "thôi"]
+    BUY_INTENT_KEYWORDS = [
+        "mua hàng", "đặt hàng", "đặt mua", "link mua", "mua ngay",
+        "chốt đơn", "muốn mua", "muốn đặt", "cho tôi mua", "cho mình mua",
+    ]
     IMAGE_FILLER_WORDS = [
         "ảnh của", "hình của", "ảnh", "hình ảnh", "hình",
         "cho tôi xem", "cho xem", "xem thêm", "gửi cho tôi", "gửi", "cho tôi", "xem",
@@ -87,12 +99,32 @@ Câu hỏi hiện tại: {question}
         q = question.lower()
         return any(kw in q for kw in NARROW_INTENT_KEYWORDS)
 
+    def is_buy_intent(question: str) -> bool:
+        """Người dùng có ý định mua/đặt hàng ngay."""
+        q = question.lower()
+        return any(kw in q for kw in BUY_INTENT_KEYWORDS)
+
     def clean_query_for_search(question: str) -> str:
         """Bỏ các từ nói về ý định xem ảnh, chỉ giữ lại phần tên sản phẩm để search chính xác hơn."""
         q = question.lower()
         for filler in IMAGE_FILLER_WORDS:
             q = q.replace(filler, "")
         return q.strip(" ?.,")
+
+    def _find_doc_by_name_in_question(q_lower: str):
+        """
+        Match ĐÚNG CHIỀU: kiểm tra xem tên sản phẩm (ngắn, lấy từ DB) có xuất hiện
+        như một đoạn trong câu hỏi của khách (thường dài, kèm giá/mô tả) hay không.
+        Ưu tiên tên khớp DÀI NHẤT (cụ thể nhất) nếu có nhiều tên cùng là substring.
+        """
+        best_doc = None
+        best_len = 0
+        for prod_name, doc in name_to_doc.items():
+            if len(prod_name) >= 3 and (prod_name in q_lower or q_lower in prod_name):
+                if len(prod_name) > best_len:
+                    best_doc = doc
+                    best_len = len(prod_name)
+        return best_doc
 
     def _get_docs(question: str, last_product_ids: list = None):
         query_for_faiss = f"query: {question}"
@@ -116,19 +148,21 @@ Câu hỏi hiện tại: {question}
 
         narrow = is_narrow_intent(question)
         image_q = is_image_intent(question)
+        buy_intent = is_buy_intent(question)
 
-        # 0.5 LUÔN thử match tên sản phẩm chính xác trước, bất kể có từ khóa ảnh/narrow hay không
-        cleaned = clean_query_for_search(question)
-        if len(cleaned) >= 3:
-            name_matched_docs = vectorstore.similarity_search(f"query: {cleaned}", k=5)
-            strict_matches = [
-                d for d in name_matched_docs
-                if cleaned in d.page_content.lower()
-            ]
-            if strict_matches:
-                # Có match tên chính xác -> chỉ trả về đúng 1 sản phẩm khớp nhất,
-                # bất kể câu hỏi có ý "chỉ/thôi" hay không
-                return strict_matches[:1]
+        # 0.4 Ý định mua hàng + chỉ đang bám theo đúng 1 sản phẩm vừa hiển thị trước đó
+        # -> ưu tiên chốt luôn sản phẩm đó, kể cả khi tên bị gõ tắt/sai chính tả nhẹ
+        if buy_intent and len(last_product_ids) == 1:
+            doc = pid_to_doc.get(last_product_ids[0])
+            if doc:
+                return [doc]
+
+        # 0.5 Match tên sản phẩm: tên (ngắn) có nằm trong câu hỏi (dài) hay không.
+        # Đây là bản sửa so với bản cũ (bản cũ kiểm tra ngược chiều nên luôn fail
+        # với câu hỏi dài kiểu "bạn cung cấp tôi link mua hàng **Ba lô... Giá:...**").
+        name_matched_doc = _find_doc_by_name_in_question(q_lower)
+        if name_matched_doc:
+            return [name_matched_doc]
 
         # 0.6 Không match được tên -> nếu là ý hỏi ảnh, thử bám vào last_product_ids
         if image_q:
@@ -149,14 +183,29 @@ Câu hỏi hiện tại: {question}
                 return matched[:1] if narrow else matched[:5]
 
         # 2. Category filter
+        category_keyword_found = False
         for cat_name, cat_short in category_map.items():
             if cat_name in q_lower or any(word in q_lower for word in cat_name.split(" & ")):
+                category_keyword_found = True
                 docs = vectorstore.similarity_search(query=query_for_faiss, k=8, filter={"category": cat_short})
                 if docs:
                     return docs[:1] if narrow else docs
                 break
 
-        # 3. Fallback — chỉ chạy khi thực sự không tìm được tên cụ thể nào khớp
+        # 2.5 CONTINUATION FALLBACK: câu hỏi không hề có dấu hiệu tìm sản phẩm MỚI
+        # (không match ID, không match tên, không có từ khóa shop, không có từ khóa category)
+        # nhưng vẫn đang trong ngữ cảnh 1 sản phẩm cụ thể (last_product_ids) từ lượt trước
+        # (vd: "chọn mẫu có dây", "lấy cái đó", "ok chốt vậy" ...).
+        # -> Bám tiếp last_product_ids thay vì để tuột xuống semantic search ngẫu nhiên,
+        #    tránh trả về ảnh của sản phẩm KHÔNG liên quan (bug đã gặp: hỏi về bông tai
+        #    nhưng bị trả về ảnh sổ tay da do fallback k=3 khớp nhầm theo embedding).
+        if not shop_match and not category_keyword_found and last_product_ids:
+            docs = [pid_to_doc[pid] for pid in last_product_ids if pid in pid_to_doc]
+            if docs:
+                return docs[:1] if narrow else docs
+
+        # 3. Fallback — chỉ chạy khi thực sự không tìm được gì để bám: không tên,
+        # không shop, không category, và cũng không có last_product_ids để nối tiếp
         docs = vectorstore.similarity_search(query=query_for_faiss, k=1 if narrow else 3)
         return docs
 
@@ -204,6 +253,20 @@ Câu hỏi hiện tại: {question}
         for attempt in range(retries):
             try:
                 reply = chain.invoke(payload)
+                
+                # Xử lý thông minh: Nếu lúc đầu lấy 3 sản phẩm (is_single=False),
+                # nhưng AI chỉ quyết định tư vấn về 1 sản phẩm duy nhất
+                if not is_single:
+                    mentioned_docs = [d for d in docs if d.metadata.get("product_id", "") in reply]
+                    if len(mentioned_docs) == 1:
+                        doc = mentioned_docs[0]
+                        pid = doc.metadata.get("product_id", "")
+                        all_imgs = doc.metadata.get("images_all", [])
+                        images = [{"product_id": pid, "url": url} for url in all_imgs if url][:10]
+                        if pid:
+                            product_url = f"{FRONTEND_BASE_URL}/product/{pid}"
+                            is_single = True
+
                 return {
                     "reply": reply,
                     "images": images,
@@ -216,4 +279,23 @@ Câu hỏi hiện tại: {question}
                 else:
                     raise
 
+    def add_product(doc):
+        """Cập nhật pid_to_doc và name_to_doc khi có sản phẩm mới từ Kafka."""
+        pid = doc.metadata.get("product_id")
+        name = doc.metadata.get("name", "").strip().lower()
+        if pid:
+            pid_to_doc[pid] = doc
+        if name:
+            name_to_doc[name] = doc
+
+    def delete_product(pid: str):
+        """Xóa sản phẩm khỏi pid_to_doc và name_to_doc."""
+        if pid in pid_to_doc:
+            doc = pid_to_doc.pop(pid)
+            name = doc.metadata.get("name", "").strip().lower()
+            if name in name_to_doc:
+                del name_to_doc[name]
+
+    invoke_with_retry.add_product = add_product
+    invoke_with_retry.delete_product = delete_product
     return invoke_with_retry

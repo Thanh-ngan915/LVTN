@@ -4,8 +4,8 @@ echo   ANVI SHOP - Start All Services
 echo ============================================
 echo.
 
-set KAFKA_HOME=C:\kafka_2.13-4.2.0\kafka_2.13-4.2.0
-set PROJECT_HOME=d:\HK2_2025_2026\TestKLTN\anvi
+set KAFKA_HOME=e:\tool\kafka_2.13-4.3.1\kafka_2.13-4.3.1
+set PROJECT_HOME=e:\20252026\KLTN_Ecommerce\LVTN
 
 echo [1/5] Starting Kafka (KRaft mode)...
 start "Kafka Broker" cmd /k "cd /d %KAFKA_HOME% && bin\windows\kafka-server-start.bat config\server.properties"

@@ -21,6 +21,7 @@ interface ComplaintResponseDTO {
     resolvedBy: string;
     createdAt: string;
     resolvedAt: string;
+    isShopFault?: boolean;
 }
 
 const REASON_MAP: Record<string, string> = {

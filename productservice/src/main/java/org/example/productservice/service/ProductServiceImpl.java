@@ -7,6 +7,7 @@ import org.example.productservice.model.Category;
 import org.example.productservice.model.Product;
 import org.example.productservice.model.ProductImage;
 import org.example.productservice.model.ProductVariant;
+import org.example.productservice.dto.ProductEvent;
 import org.example.productservice.repository.CategoryRepository;
 import org.example.productservice.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductEventProducer productEventProducer;
 
     @Override
     public Page<ProductDTO> getAllProducts(Pageable pageable) {
@@ -177,7 +179,9 @@ public class ProductServiceImpl implements ProductService {
             product.setImages(images);
         }
 
-        return toDTO(productRepository.save(product));
+        Product savedProduct = productRepository.save(product);
+
+        return toDTO(savedProduct);
     }
 
     @Override
