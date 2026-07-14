@@ -18,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -37,6 +39,7 @@ public class UserServiceImpl implements UserService {
     private final PermissionRepository permissionRepository;
 
     @Override
+    @Cacheable(value = "user_profile", key = "#userId")
     public UserDTO getProfile(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -77,6 +80,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "user_profile", key = "#userId")
     public UserDTO updateProfile(String userId, UserDTO userDTO){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -91,6 +95,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "user_profile", key = "#userId")
     public void updatePassword(String userId, PasswordRequest request) {
         Account account = accountRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
@@ -111,6 +116,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "user_profile", key = "#userId")
     public void updateUserName(String userId, String newUserName) {
         if (accountRepository.existsByUsername(newUserName)) {
             throw new RuntimeException("Username already exists");
@@ -122,6 +128,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = "user_profile", key = "#userId")
     public String updateAvatar(String userId, MultipartFile file) {
         try {
             String uploadDir = "uploads/avatars/";
@@ -156,6 +163,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "user_profile", key = "#userId")
     public void updateAvatarUrl(String userId, String imageUrl) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -165,6 +173,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "user_profile", key = "#userId")
     public void approveStore(String userId, String storeId) {
         // 1. Tạo StoreRole
         StoreRole storeRole = StoreRole.builder()
@@ -209,6 +218,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "user_profile", key = "#userId")
     public void changeUserRole(String userId, String role) {
         if (!"USER".equals(role) && !"ADMIN".equals(role)) {
             throw new RuntimeException("Chỉ được đổi role USER hoặc ADMIN");
@@ -264,6 +274,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "user_profile", key = "#userId")
     public void changeUserStatus(String userId, String status) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

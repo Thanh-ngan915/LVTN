@@ -12,6 +12,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
 @Service
@@ -34,7 +35,8 @@ public class SentimentService {
                     "không ổn", "không chuẩn", "không nhanh", "không xứng", "không ngon",
                     "chưa tốt", "chưa hài lòng", "chưa ổn", "chẳng đẹp", "chẳng thích",
                     // từ tiêu cực gốc
-                    "tệ", "xấu", "kém", "thất vọng", "tồi", "chán", "dở", "hỏng", "lỗi"
+                    "tệ", "xấu", "kém", "thất vọng", "tồi", "chán", "dở", "hỏng", "lỗi",
+                    "fake", "đểu", "nhái", "rách", "mỏng", "trầy", "xước", "dơ", "bẩn", "lừa đảo"
             );
 
     //  kiểm tra negative trước, negative thì không cho match positive nữa
@@ -51,21 +53,43 @@ public class SentimentService {
         return POSITIVE_KEYWORDS.stream().anyMatch(lower::contains);
     }
 
-    private static final double CONFIDENCE_THRESHOLD = 0.82;
+    private static final double CONFIDENCE_THRESHOLD = 0.65;
     @Value("${huggingface.api.key:}")
     private String hfApiKey;
 
     private static final String API_URL =
             "https://router.huggingface.co/hf-inference/models/wonrax/phobert-base-vietnamese-sentiment";
 
+    /**
+     * Giữ cho HuggingFace model luôn thức (tránh lỗi cold start mất 20s)
+     * Tự động gửi request rác ("xin chào") mỗi 3 phút (180,000 ms).
+     */
+    @Scheduled(fixedRate = 180000)
+    public void keepAliveModel() {
+        if (hfApiKey == null || hfApiKey.isBlank()) {
+            return;
+        }
+        try {
+            log.info("Bắn ping giữ HuggingFace model luôn thức...");
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + hfApiKey);
+            headers.set("Accept", "application/json");
+
+            Map<String, String> body = Map.of("inputs", "xin chào");
+            restTemplate.postForEntity(API_URL, new HttpEntity<>(body, headers), String.class);
+            log.info("Ping HuggingFace thành công!");
+        } catch (Exception e) {
+            log.warn("Ping HuggingFace thất bại (Model có thể đang khởi động lại): {}", e.getMessage());
+        }
+    }
+
     public SentimentResultDTO analyze(String comment, Double stars) {
         log.info("HF API KEY: '{}'", hfApiKey);
         if (comment == null || comment.isBlank() || stars == null) {
             return SentimentResultDTO.skipped();
         }
-        if (hfApiKey == null || hfApiKey.isBlank()) {
-            return SentimentResultDTO.skipped();
-        }
+
 
         // kiểm tra NEGATIVE trước POSITIVE khi stars >= 4.0
         // Nếu để positive check trước, một số câu match cả 2 danh sách sẽ bị return skip() sớm, bỏ lọt cảnh báo cần thiết
@@ -121,6 +145,10 @@ public class SentimentService {
                     .stars(stars)
                     .analyzed(true)
                     .build();
+        }
+
+        if (hfApiKey == null || hfApiKey.isBlank()) {
+            return SentimentResultDTO.skipped(); // Bỏ qua AI vì không có key, dựa hoàn toàn vào keyword
         }
 
         try {
