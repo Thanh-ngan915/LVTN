@@ -242,7 +242,11 @@ export default function MyStorePage() {
                 headers: { "Content-Type": "application/json", ...authHeader() },
                 body: JSON.stringify(sendBody),
             });
-            if (!res.ok) throw new Error("Lưu thất bại");
+            if (!res.ok) {
+                const errBody = await res.text();
+                console.error("Save failed:", res.status, errBody);
+                throw new Error(errBody || "Lưu thất bại");
+            }
             const data = await res.json();
             if (editProduct) {
                 setProducts(prev => prev.map(p => p.id === editProduct.id ? data.data : p));
@@ -369,11 +373,12 @@ export default function MyStorePage() {
                                 <div className={styles.tableWrap}>
                                     <table className={styles.table}>
                                         <thead>
-                                        <tr><th>Ảnh</th><th>Tên sản phẩm</th><th>Giá gốc</th><th>Giá bán</th><th>Tồn kho</th><th>Đã bán</th><th>Trạng thái</th><th>Thao tác</th></tr>
+                                        <tr><th>ID</th><th>Ảnh</th><th>Tên sản phẩm</th><th>Giá gốc</th><th>Giá bán</th><th>Tồn kho</th><th>Đã bán</th><th>Trạng thái</th><th>Thao tác</th></tr>
                                         </thead>
                                         <tbody>
                                         {filtered.map(p => (
                                             <tr key={p.id}>
+                                                <td style={{ fontWeight: 600, color: "#6366f1" }}>#{p.id}</td>
                                                 <td>
                                                     {p.imageUrls?.[0]
                                                         ? <img src={p.imageUrls[0]} alt={p.name} className={styles.productThumb} />
@@ -417,11 +422,12 @@ export default function MyStorePage() {
                                 <div className={styles.tableWrap}>
                                     <table className={styles.table}>
                                         <thead>
-                                        <tr><th>Ảnh</th><th>Tên sản phẩm</th><th>Giá gốc</th><th>Giá bán</th><th>Đã bán</th><th>Thao tác</th></tr>
+                                        <tr><th>ID</th><th>Ảnh</th><th>Tên sản phẩm</th><th>Giá gốc</th><th>Giá bán</th><th>Đã bán</th><th>Thao tác</th></tr>
                                         </thead>
                                         <tbody>
                                         {deletedProducts.map(p => (
                                             <tr key={p.id} style={{ opacity: 0.6 }}>
+                                                <td style={{ fontWeight: 600 }}>#{p.id}</td>
                                                 <td>
                                                     {p.imageUrls?.[0]
                                                         ? <img src={p.imageUrls[0]} alt={p.name} className={styles.productThumb} />

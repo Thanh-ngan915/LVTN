@@ -27,6 +27,7 @@ public class RatingService {
     private final UserLocalRepository userLocalRepository;
     private final RestTemplate restTemplate;
     private final SentimentService sentimentService;
+    private final org.springframework.cache.CacheManager cacheManager;
     @Value("${store-service.url:http://localhost:8090}")
     private String storeServiceUrl;
 
@@ -140,6 +141,13 @@ public class RatingService {
 
         RatingDTO dto = toRatingDTO(rating);
         dto.setSentimentResult(sentiment);
+        
+        // Xóa cache của user để cập nhật lại cờ rated=true trong danh sách đơn hàng
+        org.springframework.cache.Cache cache = cacheManager.getCache("user_orders");
+        if (cache != null && order.getUserId() != null) {
+            cache.evict(order.getUserId());
+        }
+
         return dto;
     }
 

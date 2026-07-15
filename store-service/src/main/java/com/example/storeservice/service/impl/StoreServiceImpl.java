@@ -25,6 +25,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import com.example.storeservice.service.StoreEventProducer;
+import com.example.storeservice.dto.StoreEvent;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +38,7 @@ public class StoreServiceImpl implements StoreService {
     private final SalePromotionRepository salePromotionRepository;
     private final RestTemplate restTemplate;
     private final JwtTokenProvider jwtTokenProvider;
+    private final StoreEventProducer storeEventProducer;
     @Value("${user-service.url:http://localhost:8085}")
     private String userServiceUrl;
 
@@ -56,6 +59,17 @@ public class StoreServiceImpl implements StoreService {
                 .build();
 
         Store saved = storeRepository.save(store);
+        
+        StoreEvent event = StoreEvent.builder()
+                .id(saved.getId())
+                .name(saved.getName())
+                .location(saved.getLocation())
+                .description(saved.getDescription())
+                .image(saved.getImage())
+                .status(saved.getStatus())
+                .build();
+        storeEventProducer.sendStoreCreatedEvent(event);
+        
         return toDTO(saved);
     }
 
@@ -128,6 +142,16 @@ public class StoreServiceImpl implements StoreService {
             throw new RuntimeException("Duyệt shop thất bại: không thể cập nhật role");
         }
 
+        StoreEvent event = StoreEvent.builder()
+                .id(saved.getId())
+                .name(saved.getName())
+                .location(saved.getLocation())
+                .description(saved.getDescription())
+                .image(saved.getImage())
+                .status(saved.getStatus())
+                .build();
+        storeEventProducer.sendStoreUpdatedEvent(event);
+
         return toDTO(saved);
     }
 
@@ -139,7 +163,23 @@ public class StoreServiceImpl implements StoreService {
         store.setStatus(status.toLowerCase());
         store.setUpdatedBy("ADMIN");
         store.setUpdateAt(LocalDateTime.now());
-        return toDTO(storeRepository.save(store));
+        Store saved = storeRepository.save(store);
+        
+        StoreEvent event = StoreEvent.builder()
+                .id(saved.getId())
+                .name(saved.getName())
+                .location(saved.getLocation())
+                .description(saved.getDescription())
+                .image(saved.getImage())
+                .status(saved.getStatus())
+                .build();
+        if ("active".equalsIgnoreCase(status) || "pending".equalsIgnoreCase(status)) {
+            storeEventProducer.sendStoreUpdatedEvent(event);
+        } else {
+            storeEventProducer.sendStoreDeletedEvent(saved.getId());
+        }
+
+        return toDTO(saved);
     }
 
     @Override
@@ -205,7 +245,19 @@ public class StoreServiceImpl implements StoreService {
         if (dto.getDescription() != null) store.setDescription(dto.getDescription());
         store.setUpdatedBy(userId);
         store.setUpdateAt(LocalDateTime.now());
-        return toDTO(storeRepository.save(store));
+        Store saved = storeRepository.save(store);
+        
+        StoreEvent event = StoreEvent.builder()
+                .id(saved.getId())
+                .name(saved.getName())
+                .location(saved.getLocation())
+                .description(saved.getDescription())
+                .image(saved.getImage())
+                .status(saved.getStatus())
+                .build();
+        storeEventProducer.sendStoreUpdatedEvent(event);
+        
+        return toDTO(saved);
     }
 
     @Override

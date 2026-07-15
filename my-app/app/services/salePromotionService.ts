@@ -135,7 +135,10 @@ export async function addProductToPromotion(storeId: string, salePromotionId: st
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Lỗi thêm sản phẩm vào KM');
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || 'Lỗi thêm sản phẩm vào KM');
+    }
     return res.json();
 }
 

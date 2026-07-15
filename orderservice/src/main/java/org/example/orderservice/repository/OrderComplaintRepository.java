@@ -12,7 +12,11 @@ public interface OrderComplaintRepository extends JpaRepository<OrderComplaint, 
 
     List<OrderComplaint> findByBuyerIdOrderByCreatedAtDesc(String buyerId);
 
+    List<OrderComplaint> findByShopIdOrderByCreatedAtDesc(String shopId);
+
     List<OrderComplaint> findByStatusOrderByCreatedAtDesc(OrderComplaint.ComplaintStatus status);
 
     boolean existsByOrderIdAndStatus(Integer orderId, OrderComplaint.ComplaintStatus status);
+
+    java.util.Optional<OrderComplaint> findByOrderId(Integer orderId);
 }

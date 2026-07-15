@@ -11,6 +11,8 @@ interface ComplaintResponseDTO {
     reason: string;
     description: string;
     images: string[];
+    shopReply?: string;
+    shopImages?: string[];
     status: string;
     adminNotes: string;
     resolvedBy: string;
@@ -23,6 +25,16 @@ interface Props {
     showToast: (msg: string) => void;
     logActivity: (action: string, target: string, category?: string) => Promise<void>;
 }
+
+const REASON_MAP: Record<string, string> = {
+    'WRONG_ITEM': 'Sai sản phẩm',
+    'DAMAGED_ITEM': 'Hàng bị hỏng',
+    'NOT_RECEIVED': 'Chưa nhận được hàng',
+    'QUALITY_ISSUE': 'Chất lượng kém',
+    'OTHER': 'Khác',
+};
+
+const getReasonLabel = (reason: string) => REASON_MAP[reason] || reason;
 
 export default function ComplaintTable({ authHeader, showToast, logActivity }: Props) {
     const [complaints, setComplaints] = useState<ComplaintResponseDTO[]>([]);
@@ -172,7 +184,7 @@ export default function ComplaintTable({ authHeader, showToast, logActivity }: P
                                     {/* Lý do — badge cam */}
                                     <td>
                                         <span className={`${styles.badge} ${styles.badgeAdmin}`}>
-                                            {c.reason}
+                                            {getReasonLabel(c.reason)}
                                         </span>
                                     </td>
 
@@ -180,10 +192,15 @@ export default function ComplaintTable({ authHeader, showToast, logActivity }: P
                                     <td>
                                         <div
                                             className={styles.tdMuted}
-                                            style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                                            style={{ maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center" }}
                                             title={c.description}
                                         >
                                             {c.description || "—"}
+                                            {c.images && c.images.length > 0 && (
+                                                <span style={{ fontSize: 11, marginLeft: 6, color: '#fff', background: 'var(--accent)', padding: '2px 6px', borderRadius: 4 }}>
+                                                    📎 {c.images.length} tệp
+                                                </span>
+                                            )}
                                         </div>
                                     </td>
 
@@ -220,16 +237,16 @@ export default function ComplaintTable({ authHeader, showToast, logActivity }: P
             {/* ── Resolve Modal ── */}
             {resolveModal && (
                 <div className={styles.overlay}>
-                    <div className={styles.confirmBox} style={{ maxWidth: 480, textAlign: "left" }}>
+                    <div className={styles.confirmBox} style={{ maxWidth: 560, textAlign: "left", maxHeight: "90vh", overflowY: "auto", padding: "24px 32px" }}>
 
                         {/* Icon + Tiêu đề */}
-                        <div className={styles.confirmIcon}>
+                        <div className={styles.confirmIcon} style={{ fontSize: 32, marginBottom: -4 }}>
                             {resolveModal.action === "approve" ? "✅" : "❌"}
                         </div>
                         <h3 style={{ fontFamily: "Fraunces, serif", fontSize: 20, fontWeight: 700, margin: "0 0 4px", color: "var(--text)" }}>
                             {resolveModal.action === "approve" ? "Hoàn tiền cho khách" : "Shop giữ tiền"}
                         </h3>
-                        <p style={{ fontSize: 14, color: "var(--muted)", margin: "0 0 20px" }}>
+                        <p style={{ fontSize: 14, color: "var(--muted)", margin: "0 0 16px" }}>
                             {resolveModal.action === "approve"
                                 ? "Khách hàng sẽ được hoàn tiền vào ví."
                                 : "Tiền được giữ lại cho cửa hàng. Khách không được hoàn tiền."}
@@ -239,18 +256,61 @@ export default function ComplaintTable({ authHeader, showToast, logActivity }: P
                         <div style={{
                             background: "var(--bg)",
                             border: "1px solid var(--border)",
-                            borderRadius: "var(--radius-sm)",
-                            padding: "12px 16px",
-                            marginBottom: 16,
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 6,
-                            fontSize: 13,
+                            borderRadius: "var(--radius-md)",
+                            padding: "20px",
+                            marginBottom: 20,
+                            fontSize: 14,
                             width: "100%",
+                            maxHeight: "50vh",
+                            minHeight: "300px",
+                            flex: "1 1 auto",
+                            overflowY: "auto",
                         }}>
-                            <div><b>Mã đơn hàng:</b> <span style={{ color: "var(--accent)", fontWeight: 700 }}>#{resolveModal.complaint.orderId}</span></div>
-                            <div><b>Lý do:</b> <span className={`${styles.badge} ${styles.badgeAdmin}`}>{resolveModal.complaint.reason}</span></div>
-                            <div><b>Mô tả:</b> <span style={{ color: "var(--muted)" }}>{resolveModal.complaint.description || "—"}</span></div>
+                            <div style={{ marginBottom: 8 }}><b>Mã đơn hàng:</b> <span style={{ color: "var(--accent)", fontWeight: 700, fontSize: 15 }}>#{resolveModal.complaint.orderId}</span></div>
+                            <div style={{ marginBottom: 8 }}><b>Lý do:</b> <span className={`${styles.badge} ${styles.badgeAdmin}`} style={{ fontSize: 13 }}>{getReasonLabel(resolveModal.complaint.reason)}</span></div>
+                            <div style={{ marginBottom: 12 }}><b>Mô tả:</b> <span style={{ color: "var(--text)" }}>{resolveModal.complaint.description || "—"}</span></div>
+                            {resolveModal.complaint.images && resolveModal.complaint.images.length > 0 && (
+                                <div style={{ marginBottom: 16 }}>
+                                    <b style={{ display: "block", marginBottom: 8 }}>Bằng chứng của khách:</b>
+                                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                        {resolveModal.complaint.images.map((url, idx) => {
+                                            const isVideo = url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.webm');
+                                            return isVideo ? (
+                                                <video key={idx} src={url} controls style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 6, background: '#000' }} />
+                                            ) : (
+                                                <a key={idx} href={url} target="_blank" rel="noreferrer">
+                                                    <img src={url} alt="Bằng chứng" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border)' }} />
+                                                </a>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div style={{ marginTop: 16, paddingTop: 16, borderTop: "2px dashed var(--border)" }}>
+                                <b style={{ display: "block", marginBottom: 8 }}>Phản hồi từ Shop:</b>
+                                {resolveModal.complaint.shopReply ? (
+                                    <>
+                                        <div style={{ color: "var(--text)", marginBottom: 12, lineHeight: 1.5 }}>{resolveModal.complaint.shopReply}</div>
+                                        {resolveModal.complaint.shopImages && resolveModal.complaint.shopImages.length > 0 && (
+                                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                                {resolveModal.complaint.shopImages.map((url, idx) => {
+                                                    const isVideo = url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.webm');
+                                                    return isVideo ? (
+                                                        <video key={idx} src={url} controls style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 6, background: '#000' }} />
+                                                    ) : (
+                                                        <a key={idx} href={url} target="_blank" rel="noreferrer">
+                                                            <img src={url} alt="Shop evidence" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border)' }} />
+                                                        </a>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <span style={{ color: "#888", fontStyle: "italic" }}>Chưa có phản hồi từ shop</span>
+                                )}
+                            </div>
                         </div>
 
                         {/* Ghi chú Admin */}

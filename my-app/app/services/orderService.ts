@@ -368,3 +368,12 @@ export async function calculateShippingFee(
     const data = await res.json();
     return data;
 }
+
+export async function getComplaintByOrderId(orderId: number): Promise<any> {
+    const res = await fetch(`${API_BASE}/api/complaints/order/${orderId}`, {
+        headers: { ...getAuthHeaders() }
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || 'Lỗi khi lấy thông tin khiếu nại');
+    return data;
+}

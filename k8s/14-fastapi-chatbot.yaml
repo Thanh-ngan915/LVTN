@@ -1,0 +1,70 @@
+# ==========================================================
+# FastAPI Chatbot (FAISS) — port 8000, ClusterIP
+# ==========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-chatbot
+  namespace: anvi-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fastapi-chatbot
+  template:
+    metadata:
+      labels:
+        app: fastapi-chatbot
+    spec:
+      containers:
+        - name: fastapi-chatbot
+          image: anvi-fastapi:local
+          imagePullPolicy: Never
+          command: ["python", "chatbot_service/main_chat.py"]
+          env:
+            - name: PYTHONPATH
+              value: "/app"
+            - name: DB_HOST
+              value: "mysql-host"
+            - name: DB_PORT
+              value: "3306"
+            - name: FRONTEND_BASE_URL
+              value: "http://localhost:30000"
+          envFrom:
+            - configMapRef:
+                name: anvi-config
+            - secretRef:
+                name: anvi-secrets
+          volumeMounts:
+            - name: hf-cache
+              mountPath: /root/.cache/huggingface
+            - name: faiss-data
+              mountPath: /app/shared/faiss_data
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 3Gi
+      volumes:
+        - name: hf-cache
+          persistentVolumeClaim:
+            claimName: huggingface-cache-pvc
+        - name: faiss-data
+          persistentVolumeClaim:
+            claimName: faiss-index-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fastapi-chatbot
+  namespace: anvi-dev
+spec:
+  selector:
+    app: fastapi-chatbot
+  ports:
+    - port: 8000
+      targetPort: 8000

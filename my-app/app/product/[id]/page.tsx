@@ -559,6 +559,7 @@ export default function ProductDetailPage() {
                     }}
                     min={1}
                     max={maxStock}
+                    disabled={maxStock === 0}
                     id="qty-input"
                   />
                   <button
@@ -575,18 +576,26 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className={styles.actionRow}>
-              <button className={styles.addToCartBtn} onClick={handleAddToCart} disabled={addingToCart} id="add-to-cart-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
-                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                </svg>
-                {addingToCart ? 'Đang thêm...' : 'Thêm Vào Giỏ Hàng'}
-              </button>
-              <button className={styles.buyNowBtn} onClick={handleBuyNow} id="buy-now-btn">
-                Mua Ngay
-              </button>
-            </div>
+            {maxStock > 0 ? (
+              <div className={styles.actionRow}>
+                <button className={styles.addToCartBtn} onClick={handleAddToCart} disabled={addingToCart} id="add-to-cart-btn">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                  </svg>
+                  {addingToCart ? 'Đang thêm...' : 'Thêm Vào Giỏ Hàng'}
+                </button>
+                <button className={styles.buyNowBtn} onClick={handleBuyNow} id="buy-now-btn">
+                  Mua Ngay
+                </button>
+              </div>
+            ) : (
+              <div className={styles.actionRow}>
+                <button className={styles.outOfStockBtn} disabled>
+                  Hết hàng
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

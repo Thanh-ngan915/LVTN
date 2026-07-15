@@ -788,7 +788,8 @@ export default function LivestreamPage() {
       formData.append('audio', blob, 'recording.webm');
 
       // Call FastAPI (assuming it runs on localhost:5000)
-      const response = await fetch('http://localhost:5000/speech-to-text', {
+      const fastApiUrl = process.env.NEXT_PUBLIC_FASTAPI_LIVESTREAM_URL || 'http://localhost:5000';
+      const response = await fetch(`${fastApiUrl}/speech-to-text`, {
         method: 'POST',
         body: formData,
       });

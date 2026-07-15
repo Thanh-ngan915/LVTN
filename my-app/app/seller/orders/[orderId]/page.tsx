@@ -62,7 +62,7 @@ type ModalAction = "confirmed" | "cancelled" | "shipping";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
 const STATUS_LABEL: Record<string, string> = {
     pending: "Chờ xác nhận",

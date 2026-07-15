@@ -181,7 +181,7 @@ export default function FlashSale() {
         )}
 
         <div className={scrollRef ? styles.scrollContainer : ''} ref={scrollRef}>
-          {products.map((product) => {
+          {Array.from(new Map(products.map(p => [p.id, p])).values()).map((product) => {
             const total = (product.sold || 0) + (product.currentQuantity || 0);
             const percentSold = total > 0 ? Math.round(((product.sold || 0) / total) * 100) : 0;
             const displayPercent = product.sold && product.sold > 0 

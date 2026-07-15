@@ -5,9 +5,10 @@ import org.example.productservice.dto.ApiResponse;
 import org.example.productservice.dto.CategoryDTO;
 import org.example.productservice.dto.OrderStockDTO;
 import org.example.productservice.dto.ProductDTO;
+import org.example.productservice.dto.ProductEvent;
+import org.example.productservice.service.ProductEventProducer;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.example.productservice.dto.ProductDTO;
 import org.example.productservice.service.ProductService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class ProductController {
 
     private final ProductService productService;
     private final StoreClient storeClient;
+    private final ProductEventProducer productEventProducer;
 
     /**
      * Lấy tất cả sản phẩm (phân trang)
@@ -315,6 +317,21 @@ public class ProductController {
             productDTO.setCreatedBy(userId);
 
             ProductDTO created = productService.createProduct(productDTO);
+
+            // Gửi Kafka event NGOÀI transaction - lỗi Kafka không ảnh hưởng DB
+            try {
+                ProductEvent event = ProductEvent.builder()
+                        .id(created.getId())
+                        .name(created.getName())
+                        .description(created.getDescription())
+                        .categoryName(created.getCategoryName())
+                        .imageUrls(created.getImageUrls())
+                        .build();
+                productEventProducer.sendProductCreatedEvent(event);
+            } catch (Exception ex) {
+                System.err.println("Kafka event failed (product saved OK): " + ex.getMessage());
+            }
+
             return ResponseEntity.ok(ApiResponse.success(created, "Tạo sản phẩm thành công"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
@@ -328,6 +345,20 @@ public class ProductController {
             @RequestBody ProductDTO productDTO) {
         try {
             ProductDTO updated = productService.updateProduct(id, productDTO);
+
+            try {
+                ProductEvent event = ProductEvent.builder()
+                        .id(updated.getId())
+                        .name(updated.getName())
+                        .description(updated.getDescription())
+                        .categoryName(updated.getCategoryName())
+                        .imageUrls(updated.getImageUrls())
+                        .build();
+                productEventProducer.sendProductUpdatedEvent(event);
+            } catch (Exception ex) {
+                System.err.println("Kafka event failed (product updated OK): " + ex.getMessage());
+            }
+
             return ResponseEntity.ok(ApiResponse.success(updated, "Product updated successfully"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
@@ -339,6 +370,13 @@ public class ProductController {
     public ResponseEntity<ApiResponse<ProductDTO>> deleteProduct(@PathVariable Integer id) {
         try {
             productService.deleteProduct(id);
+
+            try {
+                productEventProducer.sendProductDeletedEvent(id);
+            } catch (Exception ex) {
+                System.err.println("Kafka event failed (product deleted OK): " + ex.getMessage());
+            }
+
             return ResponseEntity.ok(ApiResponse.success(null, "Product deleted successfully"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));

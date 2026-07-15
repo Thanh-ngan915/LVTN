@@ -6,13 +6,31 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
+import asyncio
+from contextlib import asynccontextmanager
+from kafka_consumer import consume_product_events
+from database import init_db
 
 # ================== CONFIG ==================
 MODEL_SIZE = "base"   # tiny / base / small / medium / large
 PORT = 5000
 
 # ============================================
-app = FastAPI(title="Whisper Speech-to-Text Service")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize DB tables
+    init_db()
+    # Start Kafka consumer background task
+    consumer_task = asyncio.create_task(consume_product_events())
+    yield
+    # Cancel consumer task on shutdown
+    consumer_task.cancel()
+    try:
+        await consumer_task
+    except asyncio.CancelledError:
+        pass
+
+app = FastAPI(title="Whisper Speech-to-Text & Embedding Service", lifespan=lifespan)
 
 # CORS
 app.add_middleware(

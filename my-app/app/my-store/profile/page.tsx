@@ -5,7 +5,7 @@ import StoreSidebar from "../../components/StoreSidebar";
 import styles from "./profile.module.css";
 import Image from "next/image";
 
-const API_BASE = process.env.NEXT_PUBLIC_STORE_SERVICE_URL ?? "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_STORE_SERVICE_URL ?? "";
 
 interface StoreDTO {
     id: string;

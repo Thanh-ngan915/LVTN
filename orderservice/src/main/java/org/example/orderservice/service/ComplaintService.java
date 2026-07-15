@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.orderservice.dto.AdminResolveDTO;
 import org.example.orderservice.dto.ComplaintRequestDTO;
 import org.example.orderservice.dto.ComplaintResponseDTO;
+import org.example.orderservice.dto.ComplaintShopReplyDTO;
 import org.example.orderservice.entity.OrderComplaint;
 import org.example.orderservice.entity.OrderComplaint.ComplaintStatus;
 import org.example.orderservice.entity.ShopViolation;
@@ -83,10 +84,42 @@ public class ComplaintService {
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    public ComplaintResponseDTO getComplaintByOrderId(Integer orderId) {
+        return complaintRepo.findByOrderId(orderId)
+                .map(this::toDTO)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khiếu nại cho đơn hàng này"));
+    }
+
     // ── Admin: xem tất cả PENDING ─────────────────────────────────────────
     public List<ComplaintResponseDTO> getPendingComplaints() {
         return complaintRepo.findByStatusOrderByCreatedAtDesc(ComplaintStatus.PENDING)
                 .stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    // ── Shop: xem khiếu nại của shop ──────────────────────────────────────
+    public List<ComplaintResponseDTO> getStoreComplaints(String shopId) {
+        return complaintRepo.findByShopIdOrderByCreatedAtDesc(shopId)
+                .stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    // ── Shop: phản hồi khiếu nại ──────────────────────────────────────────
+    @Transactional
+    public ComplaintResponseDTO replyComplaintByShop(String complaintId, String shopId, ComplaintShopReplyDTO req) {
+        var complaint = complaintRepo.findById(complaintId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khiếu nại"));
+        
+        if (!complaint.getShopId().equals(shopId)) {
+            throw new RuntimeException("Khiếu nại này không thuộc về shop của bạn");
+        }
+
+        if (complaint.getStatus() != ComplaintStatus.PENDING) {
+            throw new RuntimeException("Chỉ có thể phản hồi khiếu nại đang chờ xử lý");
+        }
+
+        complaint.setShopReply(req.getShopReply());
+        complaint.setShopImages(req.getImages() != null ? req.getImages() : List.of());
+        
+        return toDTO(complaintRepo.save(complaint));
     }
 
     // ── Admin: APPROVE ────────────────────────────────────────────────────
@@ -100,9 +133,10 @@ public class ComplaintService {
 
         Float refundAmount = order.getPay(); // Float — khớp Order.pay
 
-        // 1. Cập nhật complaint
+        // 1. Cập nhật khiếu nại
         complaint.setStatus(ComplaintStatus.APPROVED);
         complaint.setAdminNotes(req.getAdminNotes());
+        complaint.setIsShopFault(req.getIsShopFault());
         complaint.setResolvedBy(adminId);
         complaint.setResolvedAt(LocalDateTime.now());
         complaintRepo.save(complaint);
@@ -215,13 +249,14 @@ public class ComplaintService {
 
         complaint.setStatus(ComplaintStatus.REJECTED);
         complaint.setAdminNotes(req.getAdminNotes());
+        complaint.setIsShopFault(req.getIsShopFault());
         complaint.setResolvedBy(adminId);
         complaint.setResolvedAt(LocalDateTime.now());
 
-        // Đổi trạng thái order lại thành completed do admin từ chối
+        // Đổi trạng thái order lại thành complaint_rejected do admin từ chối
         var order = orderRepo.findById(complaint.getOrderId()).orElse(null);
         if (order != null) {
-            order.setStatus("completed");
+            order.setStatus("complaint_rejected");
             orderRepo.save(order);
         }
 
@@ -241,20 +276,23 @@ public class ComplaintService {
         return c;
     }
 
-    private ComplaintResponseDTO toDTO(OrderComplaint c) {
+    private ComplaintResponseDTO toDTO(OrderComplaint entity) {
         return ComplaintResponseDTO.builder()
-                .id(c.getId())
-                .orderId(c.getOrderId())
-                .buyerId(c.getBuyerId())
-                .shopId(c.getShopId())
-                .reason(c.getReason().name())
-                .description(c.getDescription())
-                .images(c.getImages())
-                .status(c.getStatus().name())
-                .adminNotes(c.getAdminNotes())
-                .resolvedBy(c.getResolvedBy())
-                .createdAt(c.getCreatedAt() != null ? c.getCreatedAt().toString() : null)
-                .resolvedAt(c.getResolvedAt() != null ? c.getResolvedAt().toString() : null)
+                .id(entity.getId())
+                .orderId(entity.getOrderId())
+                .buyerId(entity.getBuyerId())
+                .shopId(entity.getShopId())
+                .reason(entity.getReason().name())
+                .description(entity.getDescription())
+                .images(entity.getImages())
+                .shopReply(entity.getShopReply())
+                .shopImages(entity.getShopImages())
+                .status(entity.getStatus() != null ? entity.getStatus().name() : null)
+                .adminNotes(entity.getAdminNotes())
+                .isShopFault(entity.getIsShopFault())
+                .resolvedBy(entity.getResolvedBy())
+                .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().toString() : null)
+                .resolvedAt(entity.getResolvedAt() != null ? entity.getResolvedAt().toString() : null)
                 .build();
     }
 }

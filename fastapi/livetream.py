@@ -12,10 +12,10 @@ PORT = 5000
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "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")
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
-# Load Whisper large-v3 làm fallback (cần GPU)
-print("🔄 Loading Whisper large-v3...")
-whisper_model = whisper.load_model("large-v3")
-print("✅ Whisper large-v3 ready!")
+# Load Whisper small làm fallback (vì CPU chạy large-v3 quá nặng)
+print("🔄 Loading Whisper small...")
+whisper_model = whisper.load_model("small")
+print("✅ Whisper small ready!")
 
 app = FastAPI(title="STT Service - Vietnamese ID")
 

@@ -10,6 +10,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -82,6 +84,7 @@ public class OrderService {
      * Tạo đơn hàng mới (Mua ngay)
      */
     @Transactional
+    @CacheEvict(value = "user_orders", key = "#userId")
     public OrderResponseDTO createOrder(OrderRequestDTO request, String userId) {
         // 1. Lưu địa chỉ giao hàng
         DeliveryInformation delivery = DeliveryInformation.builder()
@@ -389,6 +392,7 @@ public class OrderService {
         return toOrderResponseDTO(order, order.getDeliveryInformation(), order.getItems());
     }
 
+    @Cacheable(value = "user_orders", key = "#userId")
     public List<OrderResponseDTO> getOrdersByUser(String userId) {
         List<Order> orders = orderRepository.findByUserId(userId);
         List<OrderResponseDTO> result = new ArrayList<>();
@@ -399,6 +403,7 @@ public class OrderService {
     }
 
     @Transactional
+    @CacheEvict(value = "user_orders", key = "#userId")
     public OrderResponseDTO cancelOrder(Integer orderId, String userId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
@@ -542,7 +547,7 @@ public class OrderService {
         return getStoreIdByUserId(userId, null);
     }
 
-    private String getStoreIdByUserId(String userId, String bearerToken) {
+    public String getStoreIdByUserId(String userId, String bearerToken) {
         try {
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.set("X-User-Id", userId);

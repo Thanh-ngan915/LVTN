@@ -1,0 +1,58 @@
+# ==========================================================
+# FastAPI Livestream (Whisper) — port 5000, NodePort
+# ==========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-livestream
+  namespace: anvi-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fastapi-livestream
+  template:
+    metadata:
+      labels:
+        app: fastapi-livestream
+    spec:
+      containers:
+        - name: fastapi-livestream
+          image: anvi-fastapi:local
+          imagePullPolicy: Never
+          command: ["python", "-u", "livetream.py"]
+          envFrom:
+            - configMapRef:
+                name: anvi-config
+            - secretRef:
+                name: anvi-secrets
+          volumeMounts:
+            - name: hf-cache
+              mountPath: /root/.cache/whisper
+          ports:
+            - containerPort: 5000
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 2Gi
+      volumes:
+        - name: hf-cache
+          persistentVolumeClaim:
+            claimName: huggingface-cache-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fastapi-livestream
+  namespace: anvi-dev
+spec:
+  type: NodePort
+  selector:
+    app: fastapi-livestream
+  ports:
+    - port: 5000
+      targetPort: 5000
+      nodePort: 30050

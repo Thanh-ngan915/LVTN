@@ -23,6 +23,8 @@ data:
   ORDER_SERVICE_URL: "http://orderservice:8088"
   LIVESTREAM_SERVICE_URL: "http://livestreamservice:8086"
   CHATBOT_SERVICE_URL: "http://chatbot-service:8081"
+  KAFKA_BROKER: "kafka-service:9092"
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"
 
   # ---- Aliases used by specific services ----
   # orderservice uses these property names
