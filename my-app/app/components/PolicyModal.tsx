@@ -116,12 +116,12 @@ export default function PolicyModal({ policy, onClose, onSuccess, authHeader, sh
                         <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold" }}>Nội dung (*)</label>
                         <textarea 
                             className={styles.searchInput}
-                            style={{ width: "100%", minHeight: "120px", maxHeight: "50vh", padding: "10px", resize: "none", overflowY: "auto" }}
+                            style={{ width: "100%", minHeight: "120px", maxHeight: "250px", padding: "10px", resize: "none", overflowY: "auto" }}
                             value={content}
                             onChange={(e) => {
                                 setContent(e.target.value);
                                 e.target.style.height = '120px';
-                                e.target.style.height = Math.min(e.target.scrollHeight, window.innerHeight * 0.5) + 'px';
+                                e.target.style.height = Math.min(e.target.scrollHeight, 250) + 'px';
                             }}
                             placeholder="Nhập nội dung HTML hoặc Text..."
                             required

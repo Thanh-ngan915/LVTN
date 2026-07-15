@@ -22,6 +22,9 @@ public class PolicyServiceImpl implements PolicyService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PolicyEventProducer policyEventProducer;
+
     @Override
     @Transactional(readOnly = true)
     public List<PolicyDto> getAllPolicies() {
@@ -53,8 +56,9 @@ public class PolicyServiceImpl implements PolicyService {
                 .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
                 .createdBy(admin)
                 .build();
-                
-        return mapToDto(policyRepository.save(policy));
+        Policy savedPolicy = policyRepository.save(policy);
+        policyEventProducer.publishPolicyCreated(savedPolicy);
+        return mapToDto(savedPolicy);
     }
 
     @Override
@@ -71,13 +75,16 @@ public class PolicyServiceImpl implements PolicyService {
         }
         policy.setUpdatedBy(admin);
         
-        return mapToDto(policyRepository.save(policy));
+        Policy savedPolicy = policyRepository.save(policy);
+        policyEventProducer.publishPolicyUpdated(savedPolicy);
+        return mapToDto(savedPolicy);
     }
 
     @Override
     @Transactional
     public void deletePolicy(String id) {
         policyRepository.deleteById(id);
+        policyEventProducer.publishPolicyDeleted(id);
     }
 
     private PolicyDto mapToDto(Policy policy) {
