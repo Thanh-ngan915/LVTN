@@ -20,6 +20,9 @@ public class RegisterRequest {
     @Size(min = 6, max = 255, message = "Password phải từ 6 đến 255 ký tự")
     private String password;
 
+    @NotBlank(message = "Mã xác thực không được để trống")
+    private String token;
+
     @NotBlank(message = "Họ tên không được để trống")
     private String fullName;
 

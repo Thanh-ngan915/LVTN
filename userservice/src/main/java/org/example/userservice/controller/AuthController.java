@@ -25,6 +25,14 @@ public class AuthController {
     private final AuthService authService;
     private final GoogleAuthService googleAuthService;
 
+    @PostMapping("/send-verification-link")
+    public ResponseEntity<Map<String, String>> sendVerificationLink(@Valid @RequestBody org.example.userservice.dto.SendVerificationRequest request) {
+        authService.sendRegistrationLink(request.getEmail());
+        return ResponseEntity.ok(Map.of(
+                "message", "Link xác thực đã được gửi đến email của bạn."
+        ));
+    }
+
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         RegisterResponse response = authService.register(request);
@@ -45,8 +53,7 @@ public class AuthController {
     public ResponseEntity<LoginResponse> googleCallback(@RequestBody GoogleAuthRequest request) {
         LoginResponse response = googleAuthService.loginWithGoogle(
                 request.getCode(),
-                request.getRedirectUri()
-        );
+                request.getRedirectUri());
         return ResponseEntity.ok(response);
     }
 
@@ -59,8 +66,7 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authService.forgotPassword(request.getEmail());
         return ResponseEntity.ok(Map.of(
-                "message", "Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn."
-        ));
+                "message", "Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn."));
     }
 
     /**
@@ -72,7 +78,6 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok(Map.of(
-                "message", "Mật khẩu đã được đặt lại thành công. Vui lòng đăng nhập lại."
-        ));
+                "message", "Mật khẩu đã được đặt lại thành công. Vui lòng đăng nhập lại."));
     }
 }
