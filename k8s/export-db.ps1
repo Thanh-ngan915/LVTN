@@ -39,7 +39,8 @@ foreach ($db in $databases) {
     Write-Host "`n>> Exporting $db -> $filename ..." -ForegroundColor Yellow
 
     try {
-        kubectl exec $deployment -n $namespace -- mysqldump -u $dbUser -p"$dbPass" --single-transaction --routines --triggers $db > $filepath
+        $cmdArgs = "kubectl exec $deployment -n $namespace -- mysqldump -u $dbUser -p`"$dbPass`" --single-transaction --routines --triggers $db > `"$filepath`""
+        cmd.exe /c $cmdArgs
         if ($LASTEXITCODE -ne 0) { throw "mysqldump failed" }
 
         $size = (Get-Item $filepath).Length / 1KB
