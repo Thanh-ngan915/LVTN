@@ -31,6 +31,15 @@ STORE_DB_CONFIG = {
     "charset":  "utf8mb4",
 }
 
+USERS_DB_CONFIG = {
+    "host":     os.getenv("DB_HOST", "localhost"),
+    "port":     int(os.getenv("DB_PORT", 3306)),
+    "user":     os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "database": os.getenv("USERS_DB_NAME", "usersdb"),
+    "charset":  "utf8mb4",
+}
+
 INDEX_PATH = "/app/shared/faiss_data/faiss_etsy_index_v2"
 
 
@@ -162,6 +171,27 @@ def _load_docs_from_mysql() -> list[Document]:
         }
         docs.append(Document(page_content=clean_text, metadata=meta_data))
 
+    # Tải thêm các Policy (ACTIVE)
+    conn_users = pymysql.connect(**USERS_DB_CONFIG)
+    try:
+        with conn_users.cursor(pymysql.cursors.DictCursor) as cur:
+            cur.execute("SELECT id, title, content FROM policy WHERE status = 'ACTIVE'")
+            policies = cur.fetchall()
+            for pol in policies:
+                pol_id = pol["id"]
+                title = (pol["title"] or "").strip()
+                content = (pol["content"] or "").strip()
+                clean_text = f"passage: [CHÍNH SÁCH HỆ THỐNG] Tiêu đề: {title}. Nội dung: {content}."
+                meta_data = {
+                    "policy_id": str(pol_id),
+                    "type": "system_policy"
+                }
+                docs.append(Document(page_content=clean_text, metadata=meta_data))
+    except Exception as e:
+        print(f"Lỗi tải policies: {e}")
+    finally:
+        conn_users.close()
+
     print(f"Doc duoc {len(docs)} san pham tu MySQL (product + image + variant + store)")
     return docs
 
@@ -191,3 +221,60 @@ def get_retriever():
     return load_vector_db().as_retriever(
         search_type="similarity", search_kwargs={"k": 3},
     )
+
+def upsert_policy_in_index(policy_id):
+    """Cập nhật hoặc thêm chính sách vào FAISS index nếu ACTIVE, nếu không thì xoá."""
+    conn = pymysql.connect(**USERS_DB_CONFIG)
+    policy = None
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            cur.execute("SELECT id, title, content, status FROM policy WHERE id = %s", (policy_id,))
+            policy = cur.fetchone()
+    finally:
+        conn.close()
+
+    if not policy or policy.get("status") != "ACTIVE":
+        delete_policy_from_index(policy_id)
+        return
+
+    title = (policy["title"] or "").strip()
+    content = (policy["content"] or "").strip()
+    clean_text = f"passage: [CHÍNH SÁCH HỆ THỐNG] Tiêu đề: {title}. Nội dung: {content}."
+    meta_data = {
+        "policy_id": str(policy["id"]),
+        "type": "system_policy"
+    }
+    
+    doc = Document(page_content=clean_text, metadata=meta_data)
+    
+    try:
+        vectorstore = FAISS.load_local(INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
+        # Xóa cũ trước khi thêm mới
+        to_delete = []
+        for doc_id, doc_meta in vectorstore.docstore._dict.items():
+            if str(doc_meta.metadata.get("policy_id")) == str(policy_id):
+                to_delete.append(doc_id)
+        if to_delete:
+            vectorstore.delete(to_delete)
+            
+        vectorstore.add_documents([doc])
+        vectorstore.save_local(INDEX_PATH)
+        print(f"Đã upsert policy_id={policy_id} vào FAISS")
+    except Exception as e:
+        print(f"Lỗi khi upsert policy_id={policy_id}: {e}")
+
+def delete_policy_from_index(policy_id):
+    """Xóa chính sách khỏi FAISS index."""
+    try:
+        vectorstore = FAISS.load_local(INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
+        to_delete = []
+        for doc_id, doc_meta in vectorstore.docstore._dict.items():
+            if str(doc_meta.metadata.get("policy_id")) == str(policy_id):
+                to_delete.append(doc_id)
+        
+        if to_delete:
+            vectorstore.delete(to_delete)
+            vectorstore.save_local(INDEX_PATH)
+            print(f"Đã xóa policy_id={policy_id} khỏi FAISS")
+    except Exception as e:
+        print(f"Lỗi khi xóa policy_id={policy_id} khỏi FAISS: {e}")

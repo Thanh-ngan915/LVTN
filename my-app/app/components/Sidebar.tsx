@@ -1,7 +1,7 @@
 import styles from "../admin/dashboard/dashboard.module.css";
 import AdminNotificationBell from "./AdminNotificationBell";
 
-type SectionKey = "dashboard" | "users" | "shops" | "products" | "withdrawals" | "complaints" | "revenue";
+type SectionKey = "dashboard" | "users" | "shops" | "products" | "withdrawals" | "complaints" | "revenue" | "policies";
 
 interface Props {
     activeSection: SectionKey;
@@ -19,6 +19,7 @@ const ALL_MENU_ITEMS: { key: SectionKey; icon: string; label: string }[] = [
     { key: "withdrawals", icon: "💸", label: "Rút tiền" },
     { key: "complaints",  icon: "⚖️", label: "Khiếu nại" },
     { key: "revenue",     icon: "💰", label: "Doanh thu" },
+    { key: "policies",    icon: "📜", label: "Chính sách" },
 ];
 
 /**
