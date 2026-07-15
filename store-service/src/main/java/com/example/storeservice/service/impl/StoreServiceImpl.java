@@ -259,4 +259,12 @@ public class StoreServiceImpl implements StoreService {
         
         return toDTO(saved);
     }
+
+    @Override
+    public List<String> getStoreIdsByLocations(List<String> locations) {
+        if (locations == null || locations.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return storeRepository.findStoreIdsByLocations(locations);
+    }
 }

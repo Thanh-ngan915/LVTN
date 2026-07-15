@@ -13,7 +13,7 @@ public interface ProductService {
     Page<ProductDTO> getAllProducts(Pageable pageable);
     Page<ProductDTO> getAllProductsForAdmin(Pageable pageable);
     Page<ProductDTO> getProductsByCategory(String category, Pageable pageable);
-    Page<ProductDTO> searchProducts(String keyword, Pageable pageable);
+    Page<ProductDTO> searchProducts(String keyword, Float minPrice, Float maxPrice, List<String> storeIds, Pageable pageable);
     ProductDTO getProductById(Integer id);
     List<CategoryDTO> getAllCategories();
     Page<ProductDTO> getProductsByStore(String storeId, Pageable pageable);

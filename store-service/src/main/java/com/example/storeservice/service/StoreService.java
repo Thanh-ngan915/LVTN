@@ -15,4 +15,5 @@ public interface StoreService {
     StoreDTO updateStoreStatus(String storeId, String status);
     StoreDTO updateMyStore(String userId, StoreDTO dto);
     StoreDTO getStoreByUserId(String userId);
+    List<String> getStoreIdsByLocations(List<String> locations);
 }

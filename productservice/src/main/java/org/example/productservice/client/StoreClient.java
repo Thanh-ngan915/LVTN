@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,5 +49,24 @@ public class StoreClient {
             log.warn("Could not fetch store for userId {}: {}", userId, e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * Gọi store-service lấy danh sách storeId theo danh sách location
+     */
+    public List<String> getStoreIdsByLocations(List<String> locations) {
+        try {
+            String locationsParam = String.join(",", locations);
+            List<String> storeIds = webClient.get()
+                    .uri(storeServiceUrl + "/api/stores/locations?locations=" + locationsParam)
+                    .retrieve()
+                    .bodyToFlux(String.class)
+                    .collectList()
+                    .block();
+            return storeIds;
+        } catch (Exception e) {
+            log.warn("Could not fetch storeIds for locations {}: {}", locations, e.getMessage());
+        }
+        return java.util.Collections.emptyList();
     }
 }

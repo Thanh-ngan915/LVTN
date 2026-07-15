@@ -19,9 +19,12 @@ import org.example.userservice.repository.UserRepository;
 import org.example.userservice.service.AuthService;
 import org.example.userservice.service.EmailService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.Duration;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -39,24 +42,52 @@ public class AuthServiceImpl implements AuthService {
     private final org.example.userservice.config.JwtTokenProvider jwtTokenProvider;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
+    private final StringRedisTemplate redisTemplate;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
     @Override
+    public void sendRegistrationLink(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new RuntimeException("Email đã được sử dụng");
+        }
+
+        // Sinh token UUID ngẫu nhiên
+        String token = UUID.randomUUID().toString();
+
+        // Lưu vào Redis, cấu trúc key "REGISTER_TOKEN:email", giá trị "token", expire 15 phút
+        String redisKey = "REGISTER_TOKEN:" + email;
+        redisTemplate.opsForValue().set(redisKey, token, Duration.ofMinutes(15));
+
+        // Gửi qua email
+        String link = frontendUrl + "/register?token=" + token + "&email=" + email;
+        emailService.sendRegistrationLinkEmail(email, link);
+    }
+
+    @Override
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
-        // 1. Check if username already exists
         if (accountRepository.existsByUsername(request.getUsername())) {
             throw new UsernameAlreadyExistsException(
                     "Username '" + request.getUsername() + "' đã tồn tại");
         }
 
-        // 2. Check if email already exists
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new UsernameAlreadyExistsException(
                     "Email '" + request.getEmail() + "' đã được sử dụng");
         }
+
+        // Kiểm tra token xác thực từ Redis
+        String redisKey = "REGISTER_TOKEN:" + request.getEmail();
+        String savedToken = redisTemplate.opsForValue().get(redisKey);
+
+        if (savedToken == null || !savedToken.equals(request.getToken())) {
+            throw new RuntimeException("Token xác thực không hợp lệ hoặc đã hết hạn.");
+        }
+
+        // Xoá token khỏi Redis sau khi xác thực thành công
+        redisTemplate.delete(redisKey);
 
         // 3. Create User
         String userId = UUID.randomUUID().toString();
@@ -73,16 +104,16 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         // 4. Create StoreRole
-//        String storeRoleId = UUID.randomUUID().toString();
-//        StoreRole storeRole = StoreRole.builder()
-//                .id(storeRoleId)
-//                .storeRole("DEFAULT")
-//                .status("ACTIVE")
-//                .role("USER")
-//                .createdBy(request.getUsername())
-//                .updatedBy(request.getUsername())
-//                .build();
-//        storeRoleRepository.save(storeRole);
+        // String storeRoleId = UUID.randomUUID().toString();
+        // StoreRole storeRole = StoreRole.builder()
+        // .id(storeRoleId)
+        // .storeRole("DEFAULT")
+        // .status("ACTIVE")
+        // .role("USER")
+        // .createdBy(request.getUsername())
+        // .updatedBy(request.getUsername())
+        // .build();
+        // storeRoleRepository.save(storeRole);
 
         // 5. Create Permission
         String permissionId = UUID.randomUUID().toString();
@@ -101,7 +132,7 @@ public class AuthServiceImpl implements AuthService {
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .userId(userId)
-//                .storeRoleId(storeRoleId)
+                // .storeRoleId(storeRoleId)
                 .role("USER")
                 .createdBy(request.getUsername())
                 .updatedBy(request.getUsername())
@@ -135,8 +166,7 @@ public class AuthServiceImpl implements AuthService {
         if ("BANNED".equalsIgnoreCase(user.getStatus())) {
             log.warn("Attempted login to banned account: {}", account.getUsername());
             throw new AccountBannedException(
-                    "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ với quản trị viên để biết thêm chi tiết."
-            );
+                    "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ với quản trị viên để biết thêm chi tiết.");
         }
 
         String permissions = buildPermissionsClaim(account.getUserId());
@@ -147,8 +177,7 @@ public class AuthServiceImpl implements AuthService {
                 account.getRole(),
                 user.getFullName(),
                 user.getImage(),
-                permissions
-        );
+                permissions);
 
         return LoginResponse.builder()
                 .username(account.getUsername())
@@ -158,15 +187,19 @@ public class AuthServiceImpl implements AuthService {
                 .role(account.getRole())
                 .message("Đăng nhập thành công!")
                 .token(token)
-                .permissions(permissions)  // Sections admin được phép: "ALL" hoặc "dashboard,shops,orders"
+                .permissions(permissions) // Sections admin được phép: "ALL" hoặc "dashboard,shops,orders"
                 .build();
     }
 
-    /** Gom các instance (trừ "DEFAULT") thành chuỗi phân quyền trang admin. "ALL" nếu có dòng instance=ALL. */
+    /**
+     * Gom các instance (trừ "DEFAULT") thành chuỗi phân quyền trang admin. "ALL"
+     * nếu có dòng instance=ALL.
+     */
     private String buildPermissionsClaim(String userId) {
         java.util.List<Permission> perms = permissionRepository.findByUserId(userId);
         boolean hasAll = perms.stream().anyMatch(p -> "ALL".equalsIgnoreCase(p.getInstance()));
-        if (hasAll) return "ALL";
+        if (hasAll)
+            return "ALL";
         return perms.stream()
                 .map(Permission::getInstance)
                 .filter(i -> i != null && !"DEFAULT".equalsIgnoreCase(i))
