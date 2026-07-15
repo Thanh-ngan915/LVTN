@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
-import Footer from './components/Footer';
 import CategoryFilter from './components/CategoryFilter';
 import ProductGrid from './components/ProductGrid';
 import FlashSale from './components/FlashSale';
@@ -236,8 +235,32 @@ export default function Home() {
             )}
           </div>
         </main>
-        <Footer />
-      </div>
+      <footer className={styles.footer} id="site-footer">
+        <div className={styles.footerInner}>
+          <div className={styles.footerBrand}>
+            <span className={styles.footerLogo}>✦ ANVI SHOP</span>
+            <p className={styles.footerDesc}>
+              Thời trang chất lượng cao, phong cách đa dạng, giá cả hợp lý.
+            </p>
+          </div>
+          <div className={styles.footerLinks}>
+            <h4>Hỗ trợ</h4>
+            <a href="#">Chính sách đổi trả</a>
+            <a href="#">Hướng dẫn mua hàng</a>
+            <a href="#">Liên hệ</a>
+          </div>
+          <div className={styles.footerLinks}>
+            <h4>Theo dõi</h4>
+            <a href="#">Facebook</a>
+            <a href="#">Instagram</a>
+            <a href="#">TikTok</a>
+          </div>
+        </div>
+        <div className={styles.footerBottom}>
+          <span>© 2026 ANVI Shop. All rights reserved.</span>
+        </div>
+      </footer>
+    </div>
     );
   }
 
