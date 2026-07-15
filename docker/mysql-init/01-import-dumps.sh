@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 echo "Starting database dump import..."
 
 echo "Importing usersdb..."
