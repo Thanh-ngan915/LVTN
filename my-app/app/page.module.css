@@ -60,6 +60,115 @@
   color: #fff;
 }
 
+/* Search Layout */
+.searchLayout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  margin-top: 24px;
+}
+
+.filterSidebar {
+  width: 250px;
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.filterTitle {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #1a1a2e;
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 10px;
+}
+
+.filterGroup {
+  margin-bottom: 24px;
+}
+
+.filterSubtitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.checkboxList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkboxItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+}
+
+.checkboxItem input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.priceInputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.priceInputs input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+}
+
+.priceInputs input:focus {
+  border-color: #667eea;
+}
+
+.applyBtn {
+  width: 100%;
+  padding: 10px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.applyBtn:hover {
+  opacity: 0.9;
+}
+
+.searchResults {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 992px) {
+  .searchLayout {
+    flex-direction: column;
+  }
+  .filterSidebar {
+    width: 100%;
+  }
+}
+
 /* Footer */
 .footer {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);

@@ -65,3 +65,14 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: #a0a0a0;
 }
+
+/* Hide Google Translate Toolbar */
+.skiptranslate > iframe.skiptranslate {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Prevent Google Translate from pushing body down */
+body {
+  top: 0px !important;
+}

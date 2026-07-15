@@ -81,12 +81,19 @@ export async function getProductsByCategory(
 export async function searchProducts(
   keyword: string,
   page = 0,
-  size = 12
+  size = 12,
+  minPrice?: number,
+  maxPrice?: number,
+  locations?: string[]
 ): Promise<ApiResponse<Product[]>> {
-  const res = await fetch(
-    `${API_BASE}/api/products/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`,
-    { cache: 'no-store' }
-  );
+  let url = `${API_BASE}/api/products/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`;
+  if (minPrice !== undefined) url += `&minPrice=${minPrice}`;
+  if (maxPrice !== undefined) url += `&maxPrice=${maxPrice}`;
+  if (locations && locations.length > 0) {
+    url += `&locations=${encodeURIComponent(locations.join(','))}`;
+  }
+
+  const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to search products');
   return res.json();
 }

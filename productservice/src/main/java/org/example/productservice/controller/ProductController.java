@@ -144,11 +144,31 @@ public class ProductController {
     @GetMapping("/products/search")
     public ResponseEntity<ApiResponse<List<ProductDTO>>> searchProducts(
             @RequestParam String keyword,
+            @RequestParam(required = false) Float minPrice,
+            @RequestParam(required = false) Float maxPrice,
+            @RequestParam(required = false) List<String> locations,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size
     ) {
+        List<String> storeIds = null;
+        if (locations != null && !locations.isEmpty()) {
+            storeIds = storeClient.getStoreIdsByLocations(locations);
+            if (storeIds == null || storeIds.isEmpty()) {
+                ApiResponse<List<ProductDTO>> response = ApiResponse.<List<ProductDTO>>builder()
+                        .success(true)
+                        .message("Search results")
+                        .data(java.util.Collections.emptyList())
+                        .page(page)
+                        .size(size)
+                        .totalElements(0L)
+                        .totalPages(0)
+                        .build();
+                return ResponseEntity.ok(response);
+            }
+        }
+
         Pageable pageable = PageRequest.of(page, size);
-        Page<ProductDTO> productPage = productService.searchProducts(keyword, pageable);
+        Page<ProductDTO> productPage = productService.searchProducts(keyword, minPrice, maxPrice, storeIds, pageable);
 
         ApiResponse<List<ProductDTO>> response = ApiResponse.<List<ProductDTO>>builder()
                 .success(true)
