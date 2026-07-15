@@ -16,7 +16,7 @@ public class UserWallet {
     @Id
     private String id;
 
-    @Column(name = "user_id", unique = true)
+    @Column(name = "user_id", unique = true, length = 50)
     private String userId;
 
     @Column(name = "available_balance")

@@ -16,8 +16,9 @@ from kafka.errors import NoBrokersAvailable
 
 from shared.vector_db import (
     upsert_product_in_index,
-    delete_product_from_index,
     upsert_store_products_in_index,
+    upsert_policy_in_index,
+    delete_policy_from_index,
 )
 
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
@@ -25,6 +26,7 @@ GROUP_ID = os.getenv("KAFKA_CONSUMER_GROUP", "chatbot-embedding-service")
 
 PRODUCT_TOPIC = "product-events"
 STORE_TOPIC = "store-events"
+POLICY_TOPIC = "policy-events"
 
 
 def _make_consumer(topic: str) -> KafkaConsumer:
@@ -83,9 +85,34 @@ def _consume_store_events():
             print(f"⚠️  Consumer store-events lỗi, khởi động lại sau 5s: {e}")
             time.sleep(5)
 
+def _consume_policy_events():
+    while True:
+        try:
+            consumer = _make_consumer(POLICY_TOPIC)
+            print(f"👂 Đang lắng nghe topic '{POLICY_TOPIC}'…")
+            for msg in consumer:
+                event = msg.value
+                event_type = event.get("eventType")
+                policy_id = event.get("policyId")
+                print(f"📩 [policy-events] {event_type} — policy_id={policy_id}")
+                try:
+                    if event_type == "DELETED":
+                        delete_policy_from_index(policy_id)
+                    else:
+                        upsert_policy_in_index(policy_id)
+                except Exception as e:
+                    print(f"⚠️  Lỗi xử lý event policy {policy_id}: {e}")
+        except NoBrokersAvailable:
+            print("⚠️  Không kết nối được Kafka broker, thử lại sau 5s…")
+            time.sleep(5)
+        except Exception as e:
+            print(f"⚠️  Consumer policy-events lỗi, khởi động lại sau 5s: {e}")
+            time.sleep(5)
+
 
 def start_kafka_consumers():
     """Gọi 1 lần khi FastAPI app khởi động (xem chatbot_service/main_chat.py)."""
     threading.Thread(target=_consume_product_events, daemon=True).start()
     threading.Thread(target=_consume_store_events, daemon=True).start()
+    threading.Thread(target=_consume_policy_events, daemon=True).start()
     print("🚀 Kafka consumers đã khởi động (chạy nền)")

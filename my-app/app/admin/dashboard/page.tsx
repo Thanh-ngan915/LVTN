@@ -13,6 +13,7 @@ import ProductTable from "../../components/ProductTable";
 import WithdrawalTable from "../../components/WithdrawalTable";
 import ComplaintTable from "../../components/ComplaintTable";
 import RevenueTable from "../../components/RevenueTable";
+import PolicyTable from "../../components/PolicyTable";
 import { AdminActivityProvider, useAdminActivity } from "../../components/AdminActivityContext";
 
 interface UserDTO {
@@ -42,7 +43,7 @@ interface ProductStats {
 }
 
 
-type Section = "dashboard" | "users" | "shops" | "products" | "withdrawals" | "complaints" | "revenue"
+type Section = "dashboard" | "users" | "shops" | "products" | "withdrawals" | "complaints" | "revenue" | "policies";
 
 function AdminDashboardContent() {
     interface AdminUser {
@@ -325,6 +326,10 @@ function AdminDashboardContent() {
 
                 {activeSection === "revenue" && (
                     <RevenueTable authHeader={authHeader} showToast={showToast} />
+                )}
+
+                {activeSection === "policies" && (
+                    <PolicyTable authHeader={authHeader} showToast={showToast} logActivity={logActivity} />
                 )}
             </main>
 

@@ -454,6 +454,7 @@
 }
 
 /* ── MODAL / OVERLAY ── */
+.modalOverlay,
 .overlay {
     position: fixed;
     inset: 0;
@@ -463,6 +464,19 @@
     align-items: center;
     justify-content: center;
     z-index: 1000;
+}
+
+.modalContent {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    max-width: 400px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: var(--shadow);
 }
 
 .confirmBox {
@@ -490,10 +504,12 @@
 }
 .confirmBox p  { font-size: 14px; color: var(--muted); margin: 0; }
 
+.modalActions,
 .confirmActions {
     display: flex;
     gap: 12px;
     margin-top: 8px;
+    justify-content: flex-end;
 }
 
 .btnCancel {

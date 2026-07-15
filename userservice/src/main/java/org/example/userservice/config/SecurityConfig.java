@@ -34,6 +34,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/api/policies/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 //                        .requestMatchers("/api/users/admin/**").hasRole("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/users/*/send-order-email").permitAll()

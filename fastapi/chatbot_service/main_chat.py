@@ -161,6 +161,48 @@ async def consume_store_events():
     finally:
         await consumer.stop()
 
+async def consume_policy_events():
+    global vector_db, rag_chain
+    consumer = AIOKafkaConsumer(
+        "policy-events",
+        bootstrap_servers=os.getenv("KAFKA_BROKER", "localhost:9092"),
+        group_id="chatbot-policy-updater",
+        auto_offset_reset="latest",
+        value_deserializer=lambda x: json.loads(x.decode("utf-8")) if x else None
+    )
+    try:
+        await consumer.start()
+        print("Chatbot Kafka Consumer (Policy) connected!")
+        async for msg in consumer:
+            data = msg.value
+            if not data:
+                continue
+            
+            event_type = data.get("eventType", "CREATED")
+            policy_id = str(data.get("policyId"))
+            
+            print(f"Chatbot nhan policy event: {event_type} - {policy_id}")
+            
+            if not vector_db:
+                continue
+                
+            from shared.vector_db import upsert_policy_in_index, delete_policy_from_index, load_vector_db
+            
+            if event_type == "DELETED":
+                delete_policy_from_index(policy_id)
+            else:
+                upsert_policy_in_index(policy_id)
+                
+            # Cập nhật lại vector_db reference vì FAISS load_local/save_local tạo instance mới
+            vector_db = load_vector_db()
+            if rag_chain and hasattr(rag_chain, 'retriever'):
+                rag_chain.retriever.vectorstore = vector_db
+                
+    except Exception as e:
+        print(f"Chatbot Kafka Consumer (Policy) error: {e}")
+    finally:
+        await consumer.stop()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global vector_db, rag_chain
@@ -168,9 +210,11 @@ async def lifespan(app: FastAPI):
     rag_chain = create_rag_chain(vector_db)
     consumer_task = asyncio.create_task(consume_product_events())
     store_consumer_task = asyncio.create_task(consume_store_events())
+    policy_consumer_task = asyncio.create_task(consume_policy_events())
     yield
     consumer_task.cancel()
     store_consumer_task.cancel()
+    policy_consumer_task.cancel()
 
 app = FastAPI(title="Etsy AI Chatbot API", lifespan=lifespan)
 
