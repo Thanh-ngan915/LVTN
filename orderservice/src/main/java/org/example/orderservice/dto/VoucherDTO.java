@@ -22,6 +22,6 @@ public class VoucherDTO {
     private Integer usedCount;
     private String status;
     // true = voucher sàn (storeId IS NULL), false = voucher của shop
-    private boolean isPlatform;
+    private Boolean isPlatform;
 }
 

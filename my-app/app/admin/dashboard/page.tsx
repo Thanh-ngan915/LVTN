@@ -14,6 +14,7 @@ import WithdrawalTable from "../../components/WithdrawalTable";
 import ComplaintTable from "../../components/ComplaintTable";
 import RevenueTable from "../../components/RevenueTable";
 import PolicyTable from "../../components/PolicyTable";
+import PlatformVoucherTable from "../../components/PlatformVoucherTable";
 import { AdminActivityProvider, useAdminActivity } from "../../components/AdminActivityContext";
 
 interface UserDTO {
@@ -43,7 +44,7 @@ interface ProductStats {
 }
 
 
-type Section = "dashboard" | "users" | "shops" | "products" | "withdrawals" | "complaints" | "revenue" | "policies";
+type Section = "dashboard" | "users" | "shops" | "products" | "withdrawals" | "complaints" | "revenue" | "policies" | "vouchers";
 
 function AdminDashboardContent() {
     interface AdminUser {
@@ -330,6 +331,10 @@ function AdminDashboardContent() {
 
                 {activeSection === "policies" && (
                     <PolicyTable authHeader={authHeader} showToast={showToast} logActivity={logActivity} />
+                )}
+
+                {activeSection === "vouchers" && (
+                    <PlatformVoucherTable authHeader={authHeader} showToast={showToast} logActivity={logActivity} />
                 )}
             </main>
 
