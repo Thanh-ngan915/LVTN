@@ -149,24 +149,32 @@ export default function PlatformVoucherTable({ authHeader, showToast, logActivit
     };
 
     return (
-        <div className={styles.section}>
-            <div className={styles.sectionHeader}>
-                <h2>Quản lý Voucher Sàn</h2>
-                <div className={styles.tableActions}>
-                    <button className={styles.refreshBtn} onClick={fetchVouchers} disabled={loading}>
-                        {loading ? "⏳ Đang tải..." : "🔄 Làm mới"}
-                    </button>
-                    <button className={styles.primaryBtn} onClick={() => handleOpenModal()}>
-                        ➕ Thêm Voucher Mới
-                    </button>
+        <>
+            <div className={styles.pageHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h1 className={styles.pageTitle}>Quản lý Voucher Sàn</h1>
+                    <p className={styles.pageSubtitle}>
+                        Quản lý các mã giảm giá áp dụng trên toàn hệ thống
+                    </p>
                 </div>
+                <button 
+                    className={styles.refreshBtn} 
+                    style={{ background: "var(--accent)", color: "white", padding: "8px 16px", fontWeight: "bold", border: "none" }}
+                    onClick={() => handleOpenModal()}
+                >
+                    + Thêm Voucher Mới
+                </button>
             </div>
 
-            <div className={styles.tableContainer}>
+            <div className={styles.filterBar}>
+                <button className={styles.refreshBtn} onClick={fetchVouchers} disabled={loading}>
+                    {loading ? "⏳ Đang tải..." : "🔄 Làm mới"}
+                </button>
+            </div>
+
+            <div className={styles.tableWrapper}>
                 {loading ? (
-                    <div className={styles.loadingState}>Đang tải dữ liệu...</div>
-                ) : vouchers.length === 0 ? (
-                    <div className={styles.emptyState}>Chưa có voucher sàn nào.</div>
+                    <div className={styles.loading}>Đang tải dữ liệu...</div>
                 ) : (
                     <table className={styles.table}>
                         <thead>
@@ -181,7 +189,9 @@ export default function PlatformVoucherTable({ authHeader, showToast, logActivit
                             </tr>
                         </thead>
                         <tbody>
-                            {vouchers.map(v => (
+                            {vouchers.length === 0 ? (
+                                <tr><td colSpan={7} className={styles.emptyRow}>Chưa có voucher sàn nào.</td></tr>
+                            ) : vouchers.map(v => (
                                 <tr key={v.id}>
                                     <td><strong>{v.code}</strong></td>
                                     <td>{v.name}</td>
@@ -194,11 +204,11 @@ export default function PlatformVoucherTable({ authHeader, showToast, logActivit
                                     <td>{v.usedCount || 0} / {v.quantity}</td>
                                     <td>{getStatusBadge(v.status)}</td>
                                     <td>
-                                        <div className={styles.actionButtons}>
-                                            <button className={styles.actionBtn} onClick={() => handleOpenModal(v)}>
+                                        <div className={styles.actions}>
+                                            <button className={styles.actionBtn} style={{ background: "#4caf50", color: "#fff" }} onClick={() => handleOpenModal(v)}>
                                                 ✏️ Sửa
                                             </button>
-                                            <button className={`${styles.actionBtn} ${styles.dangerBtn}`} onClick={() => setConfirmModal({ id: v.id!, name: v.code })}>
+                                            <button className={`${styles.actionBtn} ${styles.btnBan}`} onClick={() => setConfirmModal({ id: v.id!, name: v.code })}>
                                                 🗑️ Xóa
                                             </button>
                                         </div>
@@ -328,6 +338,6 @@ export default function PlatformVoucherTable({ authHeader, showToast, logActivit
                     onCancel={() => setConfirmModal(null)}
                 />
             )}
-        </div>
+        </>
     );
 }
