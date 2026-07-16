@@ -40,7 +40,11 @@
     animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
 
 .topbar {
     display: flex;
@@ -71,13 +75,15 @@
     transition: color 0.2s;
 }
 
-.backBtn:hover { color: #1a1a2e; }
+.backBtn:hover {
+    color: #e74c3c;
+}
 
 .pageTitle {
     font-family: 'Fraunces', serif;
     font-size: 1.8rem;
     font-weight: 700;
-    color: #1a1a2e;
+    color: #e74c3c;
     margin: 0;
 }
 
@@ -85,9 +91,10 @@
     background: #ffffff;
     border-radius: 16px;
     border: 1px solid #e8e4de;
-    box-shadow: 0 4px 24px rgba(26,26,46,0.08);
+    box-shadow: 0 4px 24px rgba(26, 26, 46, 0.08);
     overflow: hidden;
-    width: 100%; /* Đảm bảo chiếm hết 100% chiều rộng của .main */
+    width: 100%;
+    /* Đảm bảo chiếm hết 100% chiều rộng của .main */
     animation: fadeUp 0.4s 0.1s ease both;
 }
 
@@ -101,7 +108,7 @@
     font-family: 'Fraunces', serif;
     font-size: 1.1rem;
     font-weight: 700;
-    color: #1a1a2e;
+    color: #e74c3c;
     margin: 0;
 }
 
@@ -127,7 +134,9 @@
     gap: 1rem;
 }
 
-.fullWidth { grid-column: 1 / -1; }
+.fullWidth {
+    grid-column: 1 / -1;
+}
 
 .formField {
     display: flex;
@@ -153,7 +162,7 @@
     font-family: 'Sora', sans-serif;
     outline: none;
     background: #f5f3ef;
-    color: #1a1a2e;
+    color: #e74c3c;
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     width: 100%;
     box-sizing: border-box;
@@ -163,7 +172,7 @@
 .formField textarea:focus,
 .formField select:focus {
     border-color: #e8572a;
-    box-shadow: 0 0 0 3px rgba(232,87,42,0.1);
+    box-shadow: 0 0 0 3px rgba(232, 87, 42, 0.1);
     background: #fff;
 }
 
@@ -189,11 +198,14 @@
     -webkit-appearance: none;
 }
 
-.formField input[type="datetime-local"] { cursor: pointer; }
+.formField input[type="datetime-local"] {
+    cursor: pointer;
+}
 
 .modalFooter {
     display: flex;
-    justify-content: flex-end; /* Trên PC, đẩy các nút về bên phải sẽ tự nhiên hơn */
+    justify-content: flex-end;
+    /* Trên PC, đẩy các nút về bên phải sẽ tự nhiên hơn */
     gap: 0.75rem;
     padding: 1.25rem 1.75rem;
     border-top: 1px solid #e8e4de;
@@ -214,9 +226,12 @@
 /*    transition: all 0.2s;*/
 /*}*/
 
-.btnCancel, .btnSave {
-    flex: initial; /* Bỏ tính năng tự giãn đều 50/50 của flex trên PC */
-    min-width: 150px; /* Đặt chiều rộng tối thiểu cho nút bấm đẹp hơn */
+.btnCancel,
+.btnSave {
+    flex: initial;
+    /* Bỏ tính năng tự giãn đều 50/50 của flex trên PC */
+    min-width: 150px;
+    /* Đặt chiều rộng tối thiểu cho nút bấm đẹp hơn */
     padding: 0.75rem 1.5rem;
     border-radius: 12px;
     font-family: 'Sora', sans-serif;
@@ -227,7 +242,8 @@
 
 .btnCancel:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(232,87,42,0.4); }
+    box-shadow: 0 6px 20px rgba(232, 87, 42, 0.4);
+}
 
 /*.btnSave {*/
 /*    flex: 1;*/
@@ -246,18 +262,36 @@
 
 .btnSave:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(232,87,42,0.4);
+    box-shadow: 0 6px 20px rgba(232, 87, 42, 0.4);
 }
 
-.btnSave:disabled { opacity: 0.6; cursor: not-allowed; }
+.btnSave:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 
 @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @media (max-width: 768px) {
-    .page { padding: 1.25rem; }
-    .formGrid { grid-template-columns: 1fr; }
-    .fullWidth { grid-column: 1; }
+    .page {
+        padding: 1.25rem;
+    }
+
+    .formGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .fullWidth {
+        grid-column: 1;
+    }
 }

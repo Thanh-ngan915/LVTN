@@ -35,12 +35,12 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 8081
-            initialDelaySeconds: 30
+            initialDelaySeconds: 120
             periodSeconds: 10
           livenessProbe:
             tcpSocket:
               port: 8081
-            initialDelaySeconds: 45
+            initialDelaySeconds: 180
             periodSeconds: 15
             failureThreshold: 5
           resources:

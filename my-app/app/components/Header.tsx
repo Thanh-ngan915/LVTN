@@ -117,7 +117,6 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
       <div className={styles.main}>
         <div className={styles.mainInner}>
           <Link href="/" className={styles.logo}>
-            <span className={styles.logoIcon}>✦</span>
             <span className={styles.logoText}>ANVI</span>
             <span className={styles.logoSub}>SHOP</span>
           </Link>

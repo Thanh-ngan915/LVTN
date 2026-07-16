@@ -19,7 +19,7 @@
 }
 
 .breadcrumb a {
-  color: #0055aa;
+  color: #ee4d2d;
   text-decoration: none;
   transition: color 0.2s;
 }
@@ -827,7 +827,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1069,11 +1069,13 @@
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
 @media (max-width: 768px) {
   .relatedGrid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
 @media (max-width: 480px) {
   .relatedGrid {
     grid-template-columns: repeat(2, 1fr);

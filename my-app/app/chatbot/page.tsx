@@ -399,7 +399,7 @@ export default function ChatbotPage() {
             <footer className={pageStyles.footer} id="site-footer">
                 <div className={pageStyles.footerInner}>
                     <div className={pageStyles.footerBrand}>
-                        <span className={pageStyles.footerLogo}>✦ ANVI SHOP</span>
+                        <span className={pageStyles.footerLogo}>ANVI SHOP</span>
                         <p className={pageStyles.footerDesc}>
                             Thời trang chất lượng cao, phong cách đa dạng, giá cả hợp lý.
                         </p>
@@ -407,7 +407,7 @@ export default function ChatbotPage() {
                     <div className={pageStyles.footerLinks}>
                         <h4>Hỗ trợ</h4>
                         <a href="#">Chính sách đổi trả</a>
-                        <a href="#">Hướng dẫn mua hàng</a>
+                        <a href="#">Hướng dẫn mua hàng</a>11
                         <a href="#">Liên hệ</a>
                     </div>
                     <div className={pageStyles.footerLinks}>

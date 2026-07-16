@@ -34,14 +34,39 @@
 }
 
 @keyframes bellRing {
-    0%, 100% { transform: rotate(0deg); }
-    10%       { transform: rotate(-18deg); }
-    20%       { transform: rotate(18deg); }
-    30%       { transform: rotate(-12deg); }
-    40%       { transform: rotate(12deg); }
-    50%       { transform: rotate(-6deg); }
-    60%       { transform: rotate(6deg); }
-    70%       { transform: rotate(0deg); }
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    10% {
+        transform: rotate(-18deg);
+    }
+
+    20% {
+        transform: rotate(18deg);
+    }
+
+    30% {
+        transform: rotate(-12deg);
+    }
+
+    40% {
+        transform: rotate(12deg);
+    }
+
+    50% {
+        transform: rotate(-6deg);
+    }
+
+    60% {
+        transform: rotate(6deg);
+    }
+
+    70% {
+        transform: rotate(0deg);
+    }
 }
 
 /* ── Badge số ── */
@@ -66,13 +91,19 @@
 }
 
 @keyframes badgePop {
-    0%   { transform: scale(0); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(0);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* ── Dropdown Panel ── */
 .panel {
-    position: fixed; /* fixed để thoát overflow:hidden của sidebar */
+    position: fixed;
+    /* fixed để thoát overflow:hidden của sidebar */
     width: 360px;
     max-height: 520px;
     background: #ffffff;
@@ -88,8 +119,15 @@
 }
 
 @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-8px) scale(0.97); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* ── Panel Header ── */
@@ -105,7 +143,7 @@
 .panelTitle {
     font-size: 14px;
     font-weight: 700;
-    color: #1a1a2e;
+    color: #e74c3c;
 }
 
 .panelActions {
@@ -164,9 +202,11 @@
 .list::-webkit-scrollbar {
     width: 4px;
 }
+
 .list::-webkit-scrollbar-track {
     background: transparent;
 }
+
 .list::-webkit-scrollbar-thumb {
     background: #e8e4de;
     border-radius: 4px;
@@ -256,7 +296,7 @@
 .itemText {
     font-size: 13px;
     line-height: 1.45;
-    color: #1a1a2e;
+    color: #e74c3c;
     word-break: break-word;
 }
 
@@ -266,12 +306,12 @@
 }
 
 .actionText {
-    color: #1a1a2e;
+    color: #e74c3c;
 }
 
 .targetText {
     font-weight: 600;
-    color: #1a1a2e;
+    color: #e74c3c;
 }
 
 .itemTime {

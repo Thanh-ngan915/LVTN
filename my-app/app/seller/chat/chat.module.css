@@ -4,11 +4,11 @@
     --bg: #f5f3ef;
     --surface: #ffffff;
     --accent: #e8572a;
-    --text: #1a1a2e;
+    --text: #e74c3c;
     --muted: #8a8a9a;
     --border: #e8e4de;
     --radius: 16px;
-    --shadow: 0 4px 24px rgba(26,26,46,0.08);
+    --shadow: 0 4px 24px rgba(26, 26, 46, 0.08);
 }
 
 /* ─── Layout ── */
@@ -104,13 +104,13 @@
 }
 
 .countBadge {
-    background: rgba(232,87,42,0.1);
+    background: rgba(232, 87, 42, 0.1);
     color: var(--accent);
     font-size: 0.72rem;
     font-weight: 600;
     padding: 3px 10px;
     border-radius: 20px;
-    border: 1px solid rgba(232,87,42,0.25);
+    border: 1px solid rgba(232, 87, 42, 0.25);
 }
 
 .emptyList {
@@ -125,7 +125,9 @@
     text-align: center;
 }
 
-.emptyList span { font-size: 1.8rem; }
+.emptyList span {
+    font-size: 1.8rem;
+}
 
 .customerItem {
     display: flex;
@@ -142,10 +144,12 @@
     overflow: hidden;
 }
 
-.customerItem:hover { background: var(--bg); }
+.customerItem:hover {
+    background: var(--bg);
+}
 
 .customerItemActive {
-    background: rgba(232,87,42,0.06) !important;
+    background: rgba(232, 87, 42, 0.06) !important;
     border-left: 3px solid var(--accent);
     padding-left: calc(1.25rem - 3px);
 }
@@ -164,7 +168,10 @@
     flex-shrink: 0;
 }
 
-.customerInfo { flex: 1; min-width: 0; }
+.customerInfo {
+    flex: 1;
+    min-width: 0;
+}
 
 .customerNameRow {
     display: flex;
@@ -278,7 +285,9 @@
     font-size: 0.85rem;
 }
 
-.emptyMessages span { font-size: 2rem; }
+.emptyMessages span {
+    font-size: 2rem;
+}
 
 .msgRow {
     display: flex;
@@ -286,8 +295,13 @@
     gap: 0.5rem;
 }
 
-.rowMe  { justify-content: flex-end; }
-.rowThem { justify-content: flex-start; }
+.rowMe {
+    justify-content: flex-end;
+}
+
+.rowThem {
+    justify-content: flex-start;
+}
 
 .msgAvatar {
     width: 28px;
@@ -364,10 +378,12 @@
 
 .chatInput:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(232,87,42,0.1);
+    box-shadow: 0 0 0 3px rgba(232, 87, 42, 0.1);
 }
 
-.chatInput::placeholder { color: var(--muted); }
+.chatInput::placeholder {
+    color: var(--muted);
+}
 
 .sendBtn {
     padding: 0.65rem 1.5rem;
@@ -380,13 +396,13 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 4px 12px rgba(232,87,42,0.3);
+    box-shadow: 0 4px 12px rgba(232, 87, 42, 0.3);
     white-space: nowrap;
 }
 
 .sendBtn:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(232,87,42,0.4);
+    box-shadow: 0 6px 18px rgba(232, 87, 42, 0.4);
 }
 
 .sendBtn:disabled {
@@ -408,7 +424,9 @@
     font-size: 0.9rem;
 }
 
-.emptyChatIcon { font-size: 2.5rem; }
+.emptyChatIcon {
+    font-size: 2.5rem;
+}
 
 /* ─── Loading & Empty ── */
 .loadingWrap {
@@ -441,31 +459,59 @@
     color: var(--muted);
 }
 
-.emptyIcon { font-size: 3rem; }
+.emptyIcon {
+    font-size: 3rem;
+}
 
 /* ─── Animations ── */
 @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
 
 /* ─── Responsive ── */
 @media (max-width: 1100px) {
-    .chatLayout { grid-template-columns: 260px 1fr; }
+    .chatLayout {
+        grid-template-columns: 260px 1fr;
+    }
 }
 
 @media (max-width: 900px) {
-    .main { padding: 1.5rem; }
+    .main {
+        padding: 1.5rem;
+    }
+
     .chatLayout {
         grid-template-columns: 1fr;
         height: auto;
     }
-    .customerList { max-height: 260px; }
+
+    .customerList {
+        max-height: 260px;
+    }
 }
 
 @media (max-width: 768px) {
-    .main { padding: 1.25rem; }
-    .topbar { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .main {
+        padding: 1.25rem;
+    }
+
+    .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
 }
