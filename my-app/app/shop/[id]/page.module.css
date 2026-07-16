@@ -138,7 +138,7 @@
 /* === Shop Content === */
 .contentArea {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 200px minmax(0, 1fr);
   gap: 20px;
 }
 
