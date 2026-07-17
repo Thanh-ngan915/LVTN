@@ -58,8 +58,13 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
   }, [cartUpdateTrigger]);
 
   const handleSearch = () => {
+    const query = searchQuery.trim();
     if (onSearch) {
-      onSearch(searchQuery.trim());
+      onSearch(query);
+    } else {
+      if (query) {
+        router.push(`/?search=${encodeURIComponent(query)}`);
+      }
     }
   };
 
@@ -73,6 +78,8 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
     setSearchQuery('');
     if (onSearch) {
       onSearch('');
+    } else {
+      router.push(`/`);
     }
   };
 

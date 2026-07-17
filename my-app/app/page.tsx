@@ -93,6 +93,20 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('search');
+      if (q) {
+        setSearchKeyword(q);
+        setTimeout(() => {
+          const el = document.getElementById('products');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }, 500);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     setPage(0);
     fetchProducts(0, activeCategory, searchKeyword, false, selectedLocations, appliedMinPrice, appliedMaxPrice);
   }, [activeCategory, searchKeyword, selectedLocations, appliedMinPrice, appliedMaxPrice, fetchProducts]);
