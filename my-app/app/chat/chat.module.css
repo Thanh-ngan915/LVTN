@@ -4,7 +4,8 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background: #f5f3ef; /* --bg */
+    background: #f5f3ef;
+    /* --bg */
     font-family: 'Sora', sans-serif;
 }
 
@@ -14,11 +15,15 @@
     max-width: 1240px;
     width: 100%;
     margin: 2rem auto;
-    background: #ffffff; /* --surface */
-    border-radius: 16px; /* --radius */
-    box-shadow: 0 4px 24px rgba(26,26,46,0.08); /* --shadow */
+    background: #ffffff;
+    /* --surface */
+    border-radius: 16px;
+    /* --radius */
+    box-shadow: 0 4px 24px rgba(26, 26, 46, 0.08);
+    /* --shadow */
     overflow: hidden;
-    border: 1px solid #e8e4de; /* --border */
+    border: 1px solid #e8e4de;
+    /* --border */
     animation: fadeUp 0.4s ease both;
 }
 
@@ -40,12 +45,14 @@
     font-family: 'Fraunces', serif;
     font-size: 1.4rem;
     font-weight: 700;
-    color: #1a1a2e; /* --text */
+    color: #e74c3c;
+    /* --text */
     margin-bottom: 1rem;
 }
 
 .sidebarTitle span {
-    color: #e8572a; /* --accent */
+    color: #e8572a;
+    /* --accent */
 }
 
 .searchBox .searchInput {
@@ -58,12 +65,12 @@
     outline: none;
     background: #f5f3ef;
     transition: all 0.2s;
-    color: #1a1a2e;
+    color: #e74c3c;
 }
 
 .searchBox .searchInput:focus {
     border-color: #e8572a;
-    box-shadow: 0 0 0 3px rgba(232,87,42,0.1);
+    box-shadow: 0 0 0 3px rgba(232, 87, 42, 0.1);
     background: #ffffff;
 }
 
@@ -77,8 +84,14 @@
 }
 
 /* Custom thanh cuộn sidebar */
-.channelList::-webkit-scrollbar { width: 5px; }
-.channelList::-webkit-scrollbar-thumb { background: #e8e4de; border-radius: 10px; }
+.channelList::-webkit-scrollbar {
+    width: 5px;
+}
+
+.channelList::-webkit-scrollbar-thumb {
+    background: #e8e4de;
+    border-radius: 10px;
+}
 
 .channelItem {
     display: flex;
@@ -96,7 +109,7 @@
 }
 
 .channelActive {
-    background: rgba(232,87,42,0.08) !important;
+    background: rgba(232, 87, 42, 0.08) !important;
 }
 
 .channelActive .channelName {
@@ -132,7 +145,7 @@
 .channelName {
     font-size: 0.92rem;
     font-weight: 500;
-    color: #1a1a2e;
+    color: #e74c3c;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -140,7 +153,8 @@
 
 .channelTime {
     font-size: 0.75rem;
-    color: #8a8a9a; /* --muted */
+    color: #8a8a9a;
+    /* --muted */
 }
 
 .channelMsgRow {
@@ -194,7 +208,7 @@
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: rgba(232,87,42,0.1);
+    background: rgba(232, 87, 42, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -205,7 +219,7 @@
     font-family: 'Fraunces', serif;
     font-size: 1.15rem;
     font-weight: 700;
-    color: #1a1a2e;
+    color: #e74c3c;
 }
 
 .activeShopStatus {
@@ -224,7 +238,7 @@
     font-family: 'Sora', sans-serif;
     font-weight: 500;
     cursor: pointer;
-    color: #1a1a2e;
+    color: #e74c3c;
     transition: all 0.2s;
 }
 
@@ -242,11 +256,18 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    background: #faf9f7; /* Phông xám nhẹ giống table hover */
+    background: #faf9f7;
+    /* Phông xám nhẹ giống table hover */
 }
 
-.messageBox::-webkit-scrollbar { width: 5px; }
-.messageBox::-webkit-scrollbar-thumb { background: #e8e4de; border-radius: 10px; }
+.messageBox::-webkit-scrollbar {
+    width: 5px;
+}
+
+.messageBox::-webkit-scrollbar-thumb {
+    background: #e8e4de;
+    border-radius: 10px;
+}
 
 .msgRow {
     display: flex;
@@ -266,12 +287,12 @@
     padding: 0.8rem 1.1rem;
     border-radius: 14px;
     font-size: 0.88rem;
-    box-shadow: 0 2px 8px rgba(26,26,46,0.02);
+    box-shadow: 0 2px 8px rgba(26, 26, 46, 0.02);
 }
 
 .bubbleShop {
     background: #ffffff;
-    color: #1a1a2e;
+    color: #e74c3c;
     border-top-left-radius: 2px;
     border: 1px solid #e8e4de;
 }
@@ -312,14 +333,14 @@
     font-size: 0.88rem;
     outline: none;
     background: #f5f3ef;
-    color: #1a1a2e;
+    color: #e74c3c;
     transition: all 0.2s;
 }
 
 .chatInput:focus {
     border-color: #e8572a;
     background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(232,87,42,0.06);
+    box-shadow: 0 0 0 3px rgba(232, 87, 42, 0.06);
 }
 
 .sendBtn {
@@ -333,7 +354,7 @@
     font-family: 'Sora', sans-serif;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 4px 12px rgba(232,87,42,0.2);
+    box-shadow: 0 4px 12px rgba(232, 87, 42, 0.2);
 }
 
 .sendBtn:hover:not(:disabled) {
@@ -370,13 +391,30 @@
 }
 
 @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Phản hồi trên màn hình di động nhỏ */
 @media (max-width: 768px) {
-    .sidebar { width: 80px; }
-    .channelInfo, .sidebarHeader h2, .searchBox { display: none; }
-    .avatarPlaceholder { margin: 0 auto; }
+    .sidebar {
+        width: 80px;
+    }
+
+    .channelInfo,
+    .sidebarHeader h2,
+    .searchBox {
+        display: none;
+    }
+
+    .avatarPlaceholder {
+        margin: 0 auto;
+    }
 }

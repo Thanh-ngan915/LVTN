@@ -17,7 +17,7 @@ export default function Footer() {
     <footer className={styles.footer} id="site-footer">
       <div className={styles.footerInner}>
         <div className={styles.footerBrand}>
-          <span className={styles.footerLogo}>✦ ANVI SHOP</span>
+          <span className={styles.footerLogo}>ANVI SHOP</span>
           <p className={styles.footerDesc}>
             Thời trang chất lượng cao, phong cách đa dạng, giá cả hợp lý.
           </p>

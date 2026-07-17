@@ -195,8 +195,7 @@ async def consume_policy_events():
                 
             # Cập nhật lại vector_db reference vì FAISS load_local/save_local tạo instance mới
             vector_db = load_vector_db()
-            if rag_chain and hasattr(rag_chain, 'retriever'):
-                rag_chain.retriever.vectorstore = vector_db
+            rag_chain = create_rag_chain(vector_db)
                 
     except Exception as e:
         print(f"Chatbot Kafka Consumer (Policy) error: {e}")

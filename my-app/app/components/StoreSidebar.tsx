@@ -22,7 +22,7 @@ export default function StoreSidebar() {
     return (
         <aside className={styles.sidebar}>
             <div className={styles.sidebarLogo} onClick={() => router.push("/")}>
-                <span>✦</span> ANVI
+                ANVI
             </div>
             <nav className={styles.sidebarNav}>
                 {NAV.map((item) => (

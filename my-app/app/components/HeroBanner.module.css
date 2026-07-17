@@ -1,7 +1,7 @@
 .hero {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  background: linear-gradient(135deg, 1 0%, #302b63 50%, #24243e 100%);
   padding: 80px 0;
   min-height: 480px;
 }
@@ -10,8 +10,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 20% 50%, rgba(255, 107, 107, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(238, 90, 36, 0.15) 0%, transparent 50%),
     radial-gradient(circle at 60% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 50%);
 }
 
@@ -54,7 +54,7 @@
 }
 
 .highlight {
-  background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
+  background: linear-gradient(135deg, #ff6b6b 0%, #f093fb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -79,19 +79,19 @@
   align-items: center;
   gap: 8px;
   padding: 14px 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
   color: #fff;
   font-size: 15px;
   font-weight: 600;
   border-radius: 50px;
   text-decoration: none;
   transition: all 0.3s;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
 }
 
 .ctaPrimary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 8px 30px rgba(255, 107, 107, 0.5);
 }
 
 .ctaSecondary {
@@ -154,7 +154,7 @@
   width: 300px;
   height: 300px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.3) 0%, rgba(238, 90, 36, 0.3) 100%);
   position: absolute;
   filter: blur(40px);
   animation: breathe 4s ease-in-out infinite;
@@ -173,8 +173,17 @@
 }
 
 @keyframes breathe {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.15); opacity: 1; }
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
 }
 
 .floatingCard {
@@ -191,21 +200,61 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-.floatingCard:nth-child(1) { top: 10%; left: 5%; }
-.floatingCard:nth-child(2) { top: 55%; right: 0; }
-.floatingCard:nth-child(3) { bottom: 5%; left: 15%; }
+.floatingCard:nth-child(1) {
+  top: 10%;
+  left: 5%;
+}
+
+.floatingCard:nth-child(2) {
+  top: 55%;
+  right: 0;
+}
+
+.floatingCard:nth-child(3) {
+  bottom: 5%;
+  left: 15%;
+}
 
 @keyframes floatUp {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-15px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-15px);
+  }
 }
 
 @media (max-width: 768px) {
-  .hero { padding: 48px 0; min-height: auto; }
-  .content { flex-direction: column; gap: 32px; }
-  .title { font-size: 32px; }
-  .visual { display: none; }
-  .cta { flex-direction: column; }
-  .stats { gap: 16px; }
-  .statNumber { font-size: 20px; }
+  .hero {
+    padding: 48px 0;
+    min-height: auto;
+  }
+
+  .content {
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+
+  .visual {
+    display: none;
+  }
+
+  .cta {
+    flex-direction: column;
+  }
+
+  .stats {
+    gap: 16px;
+  }
+
+  .statNumber {
+    font-size: 20px;
+  }
 }

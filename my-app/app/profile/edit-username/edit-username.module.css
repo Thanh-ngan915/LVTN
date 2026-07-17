@@ -3,25 +3,27 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #0f0f17;
+    background: #f8fafc;
     padding: 24px 16px;
     font-family: 'Segoe UI', sans-serif;
 }
 
 .card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(249, 115, 22, 0.15);
     border-radius: 20px;
     padding: 36px;
     width: 100%;
     max-width: 420px;
-    backdrop-filter: blur(20px);
+    box-shadow: 0 25px 50px -12px rgba(249, 115, 22, 0.1);
 }
 
 .back {
     background: none;
     border: none;
-    color: #a5b4fc;
+    color: #f97316;
     cursor: pointer;
     font-size: 14px;
     padding: 0;
@@ -29,10 +31,10 @@
     display: block;
 }
 
-.back:hover { color: #818cf8; }
+.back:hover { color: #ea580c; }
 
 .title {
-    color: #f1f5f9;
+    color: #0f172a;
     font-size: 22px;
     font-weight: 700;
     margin: 0 0 6px;
@@ -62,17 +64,17 @@
 }
 
 .label {
-    color: #94a3b8;
+    color: #64748b;
     font-size: 13px;
     font-weight: 500;
 }
 
 .input {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(249, 115, 22, 0.04);
+    border: 1px solid rgba(249, 115, 22, 0.1);
     border-radius: 10px;
     padding: 12px 14px;
-    color: #f1f5f9;
+    color: #1e293b;
     font-size: 15px;
     outline: none;
     width: 100%;
@@ -80,7 +82,7 @@
     transition: border-color 0.2s;
 }
 
-.input:focus { border-color: #6366f1; }
+.input:focus { border-color: #f97316; }
 
 .actions {
     display: flex;
@@ -89,17 +91,17 @@
 }
 
 .cancelBtn {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(100, 116, 139, 0.05);
+    border: 1px solid rgba(100, 116, 139, 0.2);
     border-radius: 10px;
-    color: #94a3b8;
+    color: #64748b;
     padding: 12px 24px;
     font-size: 15px;
     cursor: pointer;
 }
 
 .saveBtn {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, #fb923c, #ea580c);
     border: none;
     border-radius: 10px;
     color: #fff;

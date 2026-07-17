@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '../../components/Header';
+import ProductGrid from '../../components/ProductGrid';
 import { 
   Product, 
   getProductsByStore, 
@@ -46,7 +47,7 @@ export default function ShopProfilePage() {
   }, [storeId]);
 
   // Load Products
-  const loadProducts = useCallback(async (p = 0) => {
+  const loadProducts = useCallback(async (p = 0, append = false) => {
     if (!storeId) return;
     setProductsLoading(true);
     try {
@@ -60,7 +61,7 @@ export default function ShopProfilePage() {
       }
 
       if (res.success) {
-        setProducts(res.data || []);
+        setProducts(prev => append ? [...prev, ...(res.data || [])] : (res.data || []));
         setPage(res.page);
         setTotalPages(res.totalPages);
         setTotalElements(res.totalElements);
@@ -73,8 +74,12 @@ export default function ShopProfilePage() {
   }, [storeId, selectedCategory, searchKeyword]);
 
   useEffect(() => {
-    loadProducts(0);
+    loadProducts(0, false);
   }, [loadProducts]);
+
+  const handleLoadMore = () => {
+    loadProducts(page + 1, true);
+  };
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -186,50 +191,12 @@ export default function ShopProfilePage() {
               />
             </div>
 
-            <div className={styles.productGrid}>
-              {productsLoading ? (
-                <div className={styles.loading}>Đang tải sản phẩm...</div>
-              ) : products.length === 0 ? (
-                <div className={styles.noProducts}>Không tìm thấy sản phẩm nào.</div>
-              ) : (
-                products.map(prod => (
-                  <div 
-                    key={prod.id} 
-                    className={styles.productCard}
-                    onClick={() => router.push(`/product/${prod.id}`)}
-                  >
-                    <div className={styles.productImage}>
-                      <img src={prod.imageUrls?.[0] || 'https://via.placeholder.com/200'} alt={prod.name} />
-                    </div>
-                    <div className={styles.productInfo}>
-                      <div className={styles.prodName}>{prod.name}</div>
-                      <div className={styles.prodPrice}>{formatPrice(prod.priceAfter)}</div>
-                      <div className={styles.prodFooter}>
-                        <div className={styles.prodRating}>
-                          ★ {prod.rate?.toFixed(1) || '0.0'}
-                        </div>
-                        <div className={styles.prodSold}>Đã bán {prod.sold || 0}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className={styles.pagination}>
-                {Array.from({ length: totalPages }, (_, i) => (
-                  <button 
-                    key={i} 
-                    className={`${styles.pageBtn} ${page === i ? styles.pageBtnActive : ''}`}
-                    onClick={() => loadProducts(i)}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-              </div>
-            )}
+            <ProductGrid 
+              products={products}
+              loading={productsLoading}
+              hasMore={page < totalPages - 1}
+              onLoadMore={handleLoadMore}
+            />
           </div>
         </div>
       </div>

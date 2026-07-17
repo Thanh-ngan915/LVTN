@@ -5,12 +5,12 @@
     --surface: #ffffff;
     --accent: #e8572a;
     --accent-light: #fff5f2;
-    --text: #1a1a2e;
+    --text: #e74c3c;
     --muted: #8a8a9a;
     --border: #e8e4de;
-    --border-md: rgba(0,0,0,0.12);
+    --border-md: rgba(0, 0, 0, 0.12);
     --radius: 16px;
-    --shadow: 0 4px 24px rgba(26,26,46,0.08);
+    --shadow: 0 4px 24px rgba(26, 26, 46, 0.08);
 }
 
 /* ─── Loading ─────────────────────────────────────────────── */
@@ -35,7 +35,11 @@
     animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
 
 /* ─── Layout ──────────────────────────────────────────────── */
 .page {
@@ -104,7 +108,7 @@
     background: var(--accent);
     color: #fff;
     border-color: var(--accent);
-    box-shadow: 0 4px 12px rgba(232,87,42,0.25);
+    box-shadow: 0 4px 12px rgba(232, 87, 42, 0.25);
 }
 
 /* ─── Complaint list ─────────────────────────────────────────── */
@@ -127,7 +131,7 @@
 
 .complaintCard:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(26,26,46,0.12);
+    box-shadow: 0 8px 32px rgba(26, 26, 46, 0.12);
 }
 
 /* ─── Card header ─────────────────────────────────────────── */
@@ -140,7 +144,9 @@
     border-bottom: 1px solid var(--border);
 }
 
-.customerInfo { flex: 1; }
+.customerInfo {
+    flex: 1;
+}
 
 .customerName {
     font-weight: 600;
@@ -157,7 +163,10 @@
     flex-wrap: wrap;
 }
 
-.dot { color: var(--muted); font-size: 0.75rem; }
+.dot {
+    color: var(--muted);
+    font-size: 0.75rem;
+}
 
 .date {
     font-size: 0.8rem;
@@ -286,7 +295,10 @@
     animation: fadeUp 0.4s 0.2s ease both;
 }
 
-.emptyIcon { font-size: 3.5rem; opacity: 0.7; }
+.emptyIcon {
+    font-size: 3.5rem;
+    opacity: 0.7;
+}
 
 /* ─── Toast ───────────────────────────────────────────────── */
 .toast {
@@ -306,13 +318,31 @@
 
 /* ─── Animations ──────────────────────────────────────────── */
 @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ─── Responsive ──────────────────────────────────────────── */
 @media (max-width: 768px) {
-    .main { padding: 1.25rem; margin-left: 0; }
-    .topbar { flex-direction: column; align-items: flex-start; gap: 1rem; }
-    .cardHeader { flex-wrap: wrap; }
+    .main {
+        padding: 1.25rem;
+        margin-left: 0;
+    }
+
+    .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .cardHeader {
+        flex-wrap: wrap;
+    }
 }

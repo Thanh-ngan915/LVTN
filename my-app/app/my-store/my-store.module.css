@@ -3,12 +3,12 @@
 :root {
     --bg: #f5f3ef;
     --surface: #ffffff;
-    --sidebar-bg: #1a1a2e;
-    --sidebar-text: #a8a8c0;
+    --sidebar-bg: #e74c3c;
+    --sidebar-text: #ffffff;
     --sidebar-active: #ffffff;
     --accent: #e8572a;
     --accent-2: #f0a500;
-    --text: #1a1a2e;
+    --text: #e74c3c;
     --muted: #8a8a9a;
     --border: #e8e4de;
     --radius: 16px;
@@ -841,7 +841,7 @@
     border-radius: 8px;
     border: 1px solid #e8e4de;
     background: #fff;
-    color: #1a1a2e;
+    color: #e74c3c;
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
