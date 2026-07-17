@@ -941,4 +941,67 @@ public class OrderService {
         stats.put("totalRevenue", totalRevenue);
         return stats;
     }
+
+    // =========================================================================
+    // ADMIN PLATFORM VOUCHER MANAGEMENT
+    // =========================================================================
+
+    public List<VoucherDTO> getAllPlatformVouchers() {
+        return voucherRepository.findAll().stream()
+                .filter(v -> v.getStoreId() == null)
+                .map(v -> toVoucherDTO(v, true))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public VoucherDTO createPlatformVoucher(VoucherDTO dto) {
+        Voucher voucher = Voucher.builder()
+                .code(dto.getCode())
+                .name(dto.getName())
+                .title(dto.getName() != null ? dto.getName() : "Voucher Sàn")
+                .description(dto.getDescription())
+                .discountType(dto.getDiscountType())
+                .discountValue(dto.getDiscountValue())
+                .minOrderValue(dto.getMinOrderValue() != null ? dto.getMinOrderValue() : 0f)
+                .maxDiscount(dto.getMaxDiscount())
+                .startDate(dto.getStartDate() != null ? LocalDateTime.parse(dto.getStartDate()) : LocalDateTime.now())
+                .endDate(dto.getEndDate() != null ? LocalDateTime.parse(dto.getEndDate()) : LocalDateTime.now().plusMonths(1))
+                .quantity(dto.getQuantity() != null ? dto.getQuantity() : 100)
+                .usedCount(0)
+                .status(dto.getStatus() != null ? dto.getStatus() : "active")
+                .storeId(null)
+                .build();
+        return toVoucherDTO(voucherRepository.save(voucher), true);
+    }
+
+    public VoucherDTO updatePlatformVoucher(Integer id, VoucherDTO dto) {
+        Voucher voucher = voucherRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Voucher không tồn tại"));
+        if (voucher.getStoreId() != null) {
+            throw new RuntimeException("Không thể sửa voucher của shop");
+        }
+        voucher.setCode(dto.getCode());
+        voucher.setName(dto.getName());
+        voucher.setTitle(dto.getName() != null ? dto.getName() : "Voucher Sàn");
+        voucher.setDescription(dto.getDescription());
+        voucher.setDiscountType(dto.getDiscountType());
+        voucher.setDiscountValue(dto.getDiscountValue());
+        voucher.setMinOrderValue(dto.getMinOrderValue());
+        voucher.setMaxDiscount(dto.getMaxDiscount());
+        if (dto.getStartDate() != null) voucher.setStartDate(LocalDateTime.parse(dto.getStartDate()));
+        if (dto.getEndDate() != null) voucher.setEndDate(LocalDateTime.parse(dto.getEndDate()));
+        if (dto.getQuantity() != null) voucher.setQuantity(dto.getQuantity());
+        if (dto.getStatus() != null) voucher.setStatus(dto.getStatus());
+        
+        return toVoucherDTO(voucherRepository.save(voucher), true);
+    }
+
+    public void deletePlatformVoucher(Integer id) {
+        Voucher voucher = voucherRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Voucher không tồn tại"));
+        if (voucher.getStoreId() != null) {
+            throw new RuntimeException("Không thể xóa voucher của shop");
+        }
+        voucher.setStatus("inactive");
+        voucherRepository.save(voucher);
+    }
 }

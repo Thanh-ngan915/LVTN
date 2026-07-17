@@ -31,7 +31,7 @@ export default function RegisterPage() {
   }, []);
 
   const API_REGISTER = "/api/auth/register";
-  const API_SEND_LINK = "/api/auth/send-link";
+  const API_SEND_LINK = "/api/auth/send-verification-link";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
