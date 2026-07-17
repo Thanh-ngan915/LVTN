@@ -3,19 +3,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #0f172a;
-  color: #e2e8f0;
+  background: #fff;
+  color: #333;
   overflow: hidden;
   position: relative;
   font-family: system-ui, -apple-system, sans-serif;
 }
 
 .backgroundShapes {
-  position: absolute;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  z-index: 1;
+  display: none;
 }
 
 .shape {
@@ -68,11 +64,9 @@
 }
 
 .glassmorphism {
-  background: rgba(30, 41, 59, 0.4);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  background: #fff;
+  border: 1px solid #eaeaea;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
   border-radius: 24px;
   padding: 40px;
 }
@@ -85,15 +79,12 @@
 .header h1 {
   font-size: 2rem;
   font-weight: 800;
-  background: linear-gradient(to right, #60a5fa, #c084fc);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #ee4d2d;
   margin-bottom: 8px;
 }
 
 .header p {
-  color: #94a3b8;
+  color: #666;
   font-size: 0.95rem;
 }
 
@@ -107,35 +98,35 @@
   margin-bottom: 8px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #cbd5e1;
+  color: #555;
 }
 
 .inputGroup input {
   width: 100%;
   padding: 14px 16px;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #fff;
+  border: 1.5px solid #eaeaea;
   border-radius: 12px;
-  color: #fff;
+  color: #333;
   font-size: 1rem;
   transition: all 0.3s ease;
   outline: none;
 }
 
 .inputGroup input:focus {
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
-  background: rgba(15, 23, 42, 0.8);
+  border-color: #ee4d2d;
+  box-shadow: 0 0 0 4px rgba(238, 77, 45, 0.1);
+  background: #fff;
 }
 
 .inputGroup input::placeholder {
-  color: #64748b;
+  color: #aaa;
 }
 
 .btnPrimary {
   width: 100%;
   padding: 16px;
-  background: linear-gradient(135deg, #6366f1, #a855f7);
+  background: #ee4d2d;
   border: none;
   border-radius: 12px;
   color: white;
@@ -154,8 +145,8 @@
 
 .btnPrimary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px -10px rgba(168, 85, 247, 0.5);
-  background: linear-gradient(135deg, #4f46e5, #9333ea);
+  box-shadow: 0 10px 20px -10px rgba(238, 77, 45, 0.4);
+  background: #d93c20;
 }
 
 .btnPrimary:disabled {
@@ -168,18 +159,18 @@
   margin-top: 25px;
   text-align: center;
   font-size: 0.9rem;
-  color: #94a3b8;
+  color: #666;
 }
 
 .footerForm a {
-  color: #8b5cf6;
+  color: #ee4d2d;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s ease;
 }
 
 .footerForm a:hover {
-  color: #c084fc;
+  color: #d93c20;
 }
 
 .alert {

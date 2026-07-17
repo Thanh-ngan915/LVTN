@@ -50,27 +50,27 @@ public class EmailServiceImpl implements EmailService {
           <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
           <title>Xác thực đăng ký</title>
         </head>
-        <body style="margin:0;padding:0;background:#0f172a;font-family:system-ui,-apple-system,sans-serif;">
-          <table width="100%%" cellpadding="0" cellspacing="0" style="background:#0f172a;min-height:100vh;">
+        <body style="margin:0;padding:0;background:#fff;font-family:system-ui,-apple-system,sans-serif;">
+          <table width="100%%" cellpadding="0" cellspacing="0" style="background:#fff;min-height:100vh;">
             <tr>
               <td align="center" style="padding:40px 20px;">
-                <table width="560" cellpadding="0" cellspacing="0" style="background:rgba(30,41,59,0.95);border-radius:24px;border:1px solid rgba(255,255,255,0.1);box-shadow:0 25px 50px rgba(0,0,0,0.5);overflow:hidden;">
+                <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:24px;border:1px solid #eaeaea;box-shadow:0 4px 24px rgba(0,0,0,0.04);overflow:hidden;">
                   
                   <!-- Header gradient -->
                   <tr>
-                    <td style="background:linear-gradient(135deg,#3b82f6,#2dd4bf);padding:32px 40px;text-align:center;">
+                    <td style="background:#ee4d2d;padding:32px 40px;text-align:center;">
                       <div style="font-size:40px;margin-bottom:8px;">🚀</div>
                       <h1 style="margin:0;color:#fff;font-size:1.6rem;font-weight:800;letter-spacing:-0.5px;">Xác thực tài khoản</h1>
-                      <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:0.9rem;">Anvi System</p>
+                      <p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:0.9rem;">Anvi System</p>
                     </td>
                   </tr>
                   
                   <!-- Body -->
                   <tr>
                     <td style="padding:36px 40px;">
-                      <p style="margin:0 0 16px;color:#cbd5e1;font-size:1rem;">Xin chào,</p>
-                      <p style="margin:0 0 24px;color:#94a3b8;font-size:0.95rem;line-height:1.6;">
-                        Chúng tôi nhận được yêu cầu đăng ký tài khoản bằng địa chỉ email này trên <strong style="color:#e2e8f0;">Anvi System</strong>. 
+                      <p style="margin:0 0 16px;color:#333;font-size:1rem;">Xin chào,</p>
+                      <p style="margin:0 0 24px;color:#555;font-size:0.95rem;line-height:1.6;">
+                        Chúng tôi nhận được yêu cầu đăng ký tài khoản bằng địa chỉ email này trên <strong style="color:#ee4d2d;">Anvi System</strong>. 
                         Vui lòng nhấn vào nút bên dưới để tiếp tục quá trình đăng ký:
                       </p>
                       
@@ -78,7 +78,7 @@ public class EmailServiceImpl implements EmailService {
                       <table width="100%%" cellpadding="0" cellspacing="0">
                         <tr>
                           <td align="center" style="padding:8px 0 28px;">
-                            <a href="%s" style="display:inline-block;padding:16px 40px;background:linear-gradient(135deg,#3b82f6,#2dd4bf);color:#fff;text-decoration:none;border-radius:12px;font-weight:800;font-size:1rem;letter-spacing:0.5px;box-shadow:0 8px 20px rgba(45,212,191,0.4);">
+                            <a href="%s" style="display:inline-block;padding:16px 40px;background:#ee4d2d;color:#fff;text-decoration:none;border-radius:12px;font-weight:800;font-size:1rem;letter-spacing:0.5px;box-shadow:0 8px 20px rgba(238,77,45,0.4);">
                               TIẾP TỤC ĐĂNG KÝ
                             </a>
                           </td>
@@ -87,24 +87,24 @@ public class EmailServiceImpl implements EmailService {
                       
                       <!-- Warning box -->
                       <div style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:12px;padding:16px 20px;margin-bottom:24px;">
-                        <p style="margin:0;color:#fbbf24;font-size:0.875rem;line-height:1.5;">
+                        <p style="margin:0;color:#d97706;font-size:0.875rem;line-height:1.5;">
                           ⏰ <strong>Lưu ý:</strong> Link này chỉ có hiệu lực trong <strong>15 phút</strong>. 
                           Nếu bạn không yêu cầu đăng ký tài khoản, hãy bỏ qua email này.
                         </p>
                       </div>
                       
                       <!-- Fallback link -->
-                      <p style="margin:0;color:#64748b;font-size:0.8rem;word-break:break-all;">
+                      <p style="margin:0;color:#999;font-size:0.8rem;word-break:break-all;">
                         Nếu nút không hoạt động, copy link sau vào trình duyệt:<br/>
-                        <a href="%s" style="color:#2dd4bf;">%s</a>
+                        <a href="%s" style="color:#ee4d2d;">%s</a>
                       </p>
                     </td>
                   </tr>
                   
                   <!-- Footer -->
                   <tr>
-                    <td style="background:rgba(15,23,42,0.5);padding:20px 40px;text-align:center;border-top:1px solid rgba(255,255,255,0.05);">
-                      <p style="margin:0;color:#475569;font-size:0.8rem;">
+                    <td style="background:#fafafa;padding:20px 40px;text-align:center;border-top:1px solid #eaeaea;">
+                      <p style="margin:0;color:#999;font-size:0.8rem;">
                         © 2025 Anvi System · Nếu cần hỗ trợ, vui lòng liên hệ đội ngũ của chúng tôi.
                       </p>
                     </td>
@@ -148,27 +148,27 @@ public class EmailServiceImpl implements EmailService {
           <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
           <title>Đặt lại mật khẩu</title>
         </head>
-        <body style="margin:0;padding:0;background:#0f172a;font-family:system-ui,-apple-system,sans-serif;">
-          <table width="100%%" cellpadding="0" cellspacing="0" style="background:#0f172a;min-height:100vh;">
+        <body style="margin:0;padding:0;background:#fff;font-family:system-ui,-apple-system,sans-serif;">
+          <table width="100%%" cellpadding="0" cellspacing="0" style="background:#fff;min-height:100vh;">
             <tr>
               <td align="center" style="padding:40px 20px;">
-                <table width="560" cellpadding="0" cellspacing="0" style="background:rgba(30,41,59,0.95);border-radius:24px;border:1px solid rgba(255,255,255,0.1);box-shadow:0 25px 50px rgba(0,0,0,0.5);overflow:hidden;">
+                <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:24px;border:1px solid #eaeaea;box-shadow:0 4px 24px rgba(0,0,0,0.04);overflow:hidden;">
 
                   <!-- Header gradient -->
                   <tr>
-                    <td style="background:linear-gradient(135deg,#6366f1,#a855f7);padding:32px 40px;text-align:center;">
+                    <td style="background:#ee4d2d;padding:32px 40px;text-align:center;">
                       <div style="font-size:40px;margin-bottom:8px;">🔐</div>
                       <h1 style="margin:0;color:#fff;font-size:1.6rem;font-weight:800;letter-spacing:-0.5px;">Đặt lại mật khẩu</h1>
-                      <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:0.9rem;">Anvi System</p>
+                      <p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:0.9rem;">Anvi System</p>
                     </td>
                   </tr>
 
                   <!-- Body -->
                   <tr>
                     <td style="padding:36px 40px;">
-                      <p style="margin:0 0 16px;color:#cbd5e1;font-size:1rem;">Xin chào <strong style="color:#c084fc;">%s</strong>,</p>
-                      <p style="margin:0 0 24px;color:#94a3b8;font-size:0.95rem;line-height:1.6;">
-                        Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn trên <strong style="color:#e2e8f0;">Anvi System</strong>.
+                      <p style="margin:0 0 16px;color:#333;font-size:1rem;">Xin chào <strong style="color:#ee4d2d;">%s</strong>,</p>
+                      <p style="margin:0 0 24px;color:#555;font-size:0.95rem;line-height:1.6;">
+                        Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn trên <strong style="color:#ee4d2d;">Anvi System</strong>.
                         Nhấn vào nút bên dưới để tạo mật khẩu mới.
                       </p>
 
@@ -176,7 +176,7 @@ public class EmailServiceImpl implements EmailService {
                       <table width="100%%" cellpadding="0" cellspacing="0">
                         <tr>
                           <td align="center" style="padding:8px 0 28px;">
-                            <a href="%s" style="display:inline-block;padding:16px 40px;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;text-decoration:none;border-radius:12px;font-weight:800;font-size:1rem;letter-spacing:0.5px;box-shadow:0 8px 20px rgba(168,85,247,0.4);">
+                            <a href="%s" style="display:inline-block;padding:16px 40px;background:#ee4d2d;color:#fff;text-decoration:none;border-radius:12px;font-weight:800;font-size:1rem;letter-spacing:0.5px;box-shadow:0 8px 20px rgba(238,77,45,0.4);">
                               ĐẶT LẠI MẬT KHẨU
                             </a>
                           </td>
@@ -185,24 +185,24 @@ public class EmailServiceImpl implements EmailService {
 
                       <!-- Warning box -->
                       <div style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:12px;padding:16px 20px;margin-bottom:24px;">
-                        <p style="margin:0;color:#fbbf24;font-size:0.875rem;line-height:1.5;">
+                        <p style="margin:0;color:#d97706;font-size:0.875rem;line-height:1.5;">
                           ⏰ <strong>Lưu ý:</strong> Link này chỉ có hiệu lực trong <strong>15 phút</strong>.
                           Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.
                         </p>
                       </div>
 
                       <!-- Fallback link -->
-                      <p style="margin:0;color:#64748b;font-size:0.8rem;word-break:break-all;">
+                      <p style="margin:0;color:#999;font-size:0.8rem;word-break:break-all;">
                         Nếu nút không hoạt động, copy link sau vào trình duyệt:<br/>
-                        <a href="%s" style="color:#8b5cf6;">%s</a>
+                        <a href="%s" style="color:#ee4d2d;">%s</a>
                       </p>
                     </td>
                   </tr>
 
                   <!-- Footer -->
                   <tr>
-                    <td style="background:rgba(15,23,42,0.5);padding:20px 40px;text-align:center;border-top:1px solid rgba(255,255,255,0.05);">
-                      <p style="margin:0;color:#475569;font-size:0.8rem;">
+                    <td style="background:#fafafa;padding:20px 40px;text-align:center;border-top:1px solid #eaeaea;">
+                      <p style="margin:0;color:#999;font-size:0.8rem;">
                         © 2025 Anvi System · Nếu cần hỗ trợ, vui lòng liên hệ đội ngũ của chúng tôi.
                       </p>
                     </td>
