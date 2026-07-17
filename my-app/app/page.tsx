@@ -58,11 +58,11 @@ export default function Home() {
     try {
       let res;
       if (keyword) {
-        res = await searchProducts(keyword, pageNum, 12, minP, maxP, locations);
+        res = await searchProducts(keyword, pageNum, 20, minP, maxP, locations);
       } else if (category) {
-        res = await getProductsByCategory(category, pageNum, 12);
+        res = await getProductsByCategory(category, pageNum, 20);
       } else {
-        res = await getProducts(pageNum, 12);
+        res = await getProducts(pageNum, 20);
       }
 
       if (res.success) {
@@ -140,6 +140,14 @@ export default function Home() {
             <FlashSale />
           )}
 
+          {!searchKeyword && (
+            <CategoryFilter
+              categories={categories}
+              activeCategory={activeCategory}
+              onCategoryChange={handleCategoryChange}
+            />
+          )}
+
           <div className={styles.sectionHeader}>
             {searchKeyword ? (
               <>
@@ -166,13 +174,6 @@ export default function Home() {
               </>
             )}
           </div>
-          {!searchKeyword && (
-            <CategoryFilter
-              categories={categories}
-              activeCategory={activeCategory}
-              onCategoryChange={handleCategoryChange}
-            />
-          )}
 
           {searchKeyword ? (
             <div className={styles.searchLayout}>

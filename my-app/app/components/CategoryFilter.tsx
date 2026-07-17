@@ -11,24 +11,32 @@ interface CategoryFilterProps {
 
 export default function CategoryFilter({ categories, activeCategory, onCategoryChange }: CategoryFilterProps) {
   return (
-    <div className={styles.wrapper} id="category-filter">
-      <button
-        className={`${styles.chip} ${activeCategory === null ? styles.active : ''}`}
-        onClick={() => onCategoryChange(null)}
-      >
-        <span className={styles.chipIcon}>🏷️</span>
-        Tất cả
-      </button>
-      {categories.map((cat) => (
+    <div className={styles.categoryContainer}>
+      <div className={styles.categoryHeader}>
+        <h3>DANH MỤC</h3>
+      </div>
+      <div className={styles.wrapper} id="category-filter">
         <button
-          key={cat.shortname}
-          className={`${styles.chip} ${activeCategory === cat.shortname ? styles.active : ''}`}
-          onClick={() => onCategoryChange(cat.shortname)}
-          id={`category-${cat.shortname}`}
+          className={`${styles.categoryItem} ${activeCategory === null ? styles.active : ''}`}
+          onClick={() => onCategoryChange(null)}
         >
-          {cat.name}
+          <span className={styles.categoryName}>Tất cả</span>
         </button>
-      ))}
+        {categories.map((cat) => {
+          // Generate a deterministic color based on shortname length or characters
+          const hue = (cat.shortname.length * 15 + cat.name.charCodeAt(0) * 10) % 360;
+          return (
+            <button
+              key={cat.shortname}
+              className={`${styles.categoryItem} ${activeCategory === cat.shortname ? styles.active : ''}`}
+              onClick={() => onCategoryChange(cat.shortname)}
+              id={`category-${cat.shortname}`}
+            >
+              <span className={styles.categoryName}>{cat.name}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
