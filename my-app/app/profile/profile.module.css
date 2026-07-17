@@ -4,12 +4,14 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #0f172a; /* Nền tối sâu */
-    color: #e2e8f0;
+    background: #f8fafc;
+    /* Nền sáng */
+    color: #334155;
     position: relative;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     padding: 40px 20px;
-    overflow: hidden; /* Ngăn vỡ nền do các shape trôi nổi */
+    overflow: hidden;
+    /* Ngăn vỡ nền do các shape trôi nổi */
 }
 
 .backgroundShapes {
@@ -21,20 +23,21 @@
     overflow: hidden;
     z-index: 1;
     pointer-events: none;
+    display: none;
 }
 
 .shape {
     position: absolute;
     border-radius: 50%;
     filter: blur(80px);
-    opacity: 0.6;
+    opacity: 0.5;
     animation: float 15s infinite alternate ease-in-out;
 }
 
 .shape1 {
     width: 450px;
     height: 450px;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    background: linear-gradient(135deg, #ffedd5, #fdba74);
     top: -100px;
     left: -100px;
 }
@@ -42,7 +45,7 @@
 .shape2 {
     width: 350px;
     height: 350px;
-    background: linear-gradient(135deg, #10b981, #0ea5e9);
+    background: linear-gradient(135deg, #fed7aa, #fb923c);
     bottom: -50px;
     right: 5%;
     animation-delay: -5s;
@@ -51,15 +54,20 @@
 .shape3 {
     width: 300px;
     height: 300px;
-    background: linear-gradient(135deg, #f43f5e, #a855f7);
+    background: linear-gradient(135deg, #ffc72c, #f97316);
     bottom: 20%;
     left: 15%;
     animation-delay: -10s;
 }
 
 @keyframes float {
-    0% { transform: translateY(0) scale(1) rotate(0deg); }
-    100% { transform: translateY(-60px) scale(1.1) rotate(10deg); }
+    0% {
+        transform: translateY(0) scale(1) rotate(0deg);
+    }
+
+    100% {
+        transform: translateY(-60px) scale(1.1) rotate(10deg);
+    }
 }
 
 /* --- CONTAINER CHÍNH --- */
@@ -71,13 +79,13 @@
 }
 
 .glassmorphism {
-    background: rgba(30, 41, 59, 0.45);
+    background: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(249, 115, 22, 0.15);
     border-radius: 32px;
     padding: 45px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 50px -12px rgba(249, 115, 22, 0.1);
 }
 
 /* Nút quay lại trang chủ */
@@ -85,9 +93,9 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #94a3b8;
+    background: rgba(249, 115, 22, 0.05);
+    border: 1px solid rgba(249, 115, 22, 0.2);
+    color: #f97316;
     padding: 10px 18px;
     border-radius: 14px;
     font-size: 0.9rem;
@@ -98,9 +106,9 @@
 }
 
 .btnBackHome:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(249, 115, 22, 0.1);
+    color: #ea580c;
+    border-color: rgba(249, 115, 22, 0.4);
     transform: translateX(-5px);
 }
 
@@ -110,7 +118,7 @@
     align-items: center;
     gap: 30px;
     margin-bottom: 40px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(249, 115, 22, 0.1);
     padding-bottom: 30px;
 }
 
@@ -120,8 +128,8 @@
     height: 130px;
     border-radius: 50%;
     padding: 4px;
-    background: linear-gradient(135deg, #60a5fa, #c084fc, #f43f5e);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    background: linear-gradient(135deg, #f97316, #ea580c, #ffc72c);
+    box-shadow: 0 10px 20px rgba(249, 115, 22, 0.2);
 }
 
 .avatarOverlay {
@@ -130,19 +138,20 @@
     right: 4px;
     width: 34px;
     height: 34px;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     font-size: 16px;
-    border: 2px solid #1e293b;
+    border: 2px solid #ffffff;
     transition: background 0.2s;
+    color: #f97316;
 }
 
 .avatarOverlay:hover {
-    background: rgba(99, 102, 241, 0.85);
+    background: #ffedd5;
 }
 
 .avatar {
@@ -150,14 +159,14 @@
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    background: #1e293b;
-    border: 4px solid #1e293b;
+    background: #ffffff;
+    border: 4px solid #ffffff;
 }
 
 .titleInfo h1 {
     font-size: 2.2rem;
     font-weight: 800;
-    color: #fff;
+    color: #0f172a;
     margin: 0;
     letter-spacing: -0.5px;
 }
@@ -168,9 +177,9 @@
     border-radius: 12px;
     font-size: 0.8rem;
     font-weight: 700;
-    background: rgba(139, 92, 246, 0.15);
-    color: #c084fc;
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    background: rgba(249, 115, 22, 0.1);
+    color: #ea580c;
+    border: 1px solid rgba(249, 115, 22, 0.2);
     margin-top: 10px;
 }
 
@@ -183,7 +192,7 @@
 
 .infoItem label {
     display: block;
-    color: #94a3b8;
+    color: #64748b;
     font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -194,24 +203,24 @@
 .infoItem p {
     font-size: 1.05rem;
     font-weight: 500;
-    color: #f1f5f9;
-    background: rgba(0, 0, 0, 0.2);
+    color: #1e293b;
+    background: rgba(249, 115, 22, 0.04);
     padding: 12px 16px;
     border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(249, 115, 22, 0.1);
 }
 
 /* --- MỤC GIAO HÀNG & ĐÁNH GIÁ --- */
 .orderSection {
     margin-top: 35px;
     padding: 30px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(249, 115, 22, 0.1);
 }
 
 .sectionTitle {
     font-size: 1.15rem;
     font-weight: 700;
-    color: #fff;
+    color: #0f172a;
     margin-bottom: 20px;
 }
 
@@ -222,8 +231,8 @@
 }
 
 .orderCard {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(249, 115, 22, 0.02);
+    border: 1px solid rgba(249, 115, 22, 0.1);
     border-radius: 20px;
     padding: 20px;
     display: flex;
@@ -234,8 +243,8 @@
 }
 
 .orderCard:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(96, 165, 250, 0.4);
+    background: rgba(249, 115, 22, 0.05);
+    border-color: rgba(249, 115, 22, 0.3);
     transform: translateY(-5px);
 }
 
@@ -245,12 +254,12 @@
 
 .orderInfo strong {
     display: block;
-    color: #fff;
+    color: #1e293b;
     font-size: 1rem;
 }
 
 .orderInfo span {
-    color: #94a3b8;
+    color: #64748b;
     font-size: 0.85rem;
 }
 
@@ -258,35 +267,37 @@
 .actions {
     margin-top: 40px;
     display: flex;
-    flex-wrap: wrap; /* Hỗ trợ tự xuống dòng khi màn hình nhỏ */
+    flex-wrap: wrap;
+    /* Hỗ trợ tự xuống dòng khi màn hình nhỏ */
     gap: 15px;
 }
 
 .btnEdit {
     flex: 1;
-    min-width: 170px; /* Đảm bảo nút không bị quá nhỏ */
+    min-width: 170px;
+    /* Đảm bảo nút không bị quá nhỏ */
     padding: 14px;
-    background: linear-gradient(135deg, #6366f1, #a855f7);
+    background: linear-gradient(135deg, #fb923c, #ea580c);
     border: none;
     border-radius: 14px;
     color: white;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
 }
 
 .btnEdit:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
-    filter: brightness(1.1);
+    box-shadow: 0 8px 25px rgba(249, 115, 22, 0.5);
+    filter: brightness(1.05);
 }
 
 .btnLogout {
     padding: 14px 28px;
-    background: rgba(244, 63, 94, 0.1);
-    border: 1px solid rgba(244, 63, 94, 0.2);
-    color: #fb7185;
+    background: rgba(100, 116, 139, 0.05);
+    border: 1px solid rgba(100, 116, 139, 0.2);
+    color: #64748b;
     border-radius: 14px;
     font-weight: 700;
     cursor: pointer;
@@ -294,16 +305,17 @@
 }
 
 .btnLogout:hover {
-    background: #f43f5e;
-    color: white;
-    border-color: #f43f5e;
-    box-shadow: 0 8px 20px rgba(244, 63, 94, 0.4);
+    background: #e2e8f0;
+    color: #475569;
+    border-color: #cbd5e1;
+    box-shadow: 0 8px 20px rgba(100, 116, 139, 0.1);
 }
+
 .btnShop {
     flex: 1;
     min-width: 170px;
     padding: 14px;
-    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    background: linear-gradient(135deg, #ffc72c, #f97316);
     border: none;
     border-radius: 14px;
     color: white;
@@ -312,6 +324,7 @@
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
 }
+
 .btnShop:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5);
@@ -320,9 +333,9 @@
 .walletSection {
     margin: 20px 0;
     padding: 20px;
-    background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,165,0,0.1));
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.05), rgba(249, 115, 22, 0.1));
     border-radius: 12px;
-    border: 1px solid rgba(255,215,0,0.3);
+    border: 1px solid rgba(249, 115, 22, 0.2);
 }
 
 .walletGrid {
@@ -333,17 +346,17 @@
 }
 
 .walletCard {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.8);
     padding: 15px;
     border-radius: 8px;
-    border: 1px solid rgba(255, 215, 0, 0.2);
+    border: 1px solid rgba(249, 115, 22, 0.15);
     text-align: center;
     backdrop-filter: blur(10px);
 }
 
 .walletLabel {
     font-size: 13px;
-    color: #666;
+    color: #64748b;
     margin-bottom: 8px;
     text-transform: uppercase;
 }
@@ -351,13 +364,26 @@
 .walletAmount {
     font-size: 20px;
     font-weight: bold;
-    color: #ff6b6b;
+    color: #ea580c;
 }
 
 /* --- RESPONSIVE --- */
 @media (max-width: 640px) {
-    .profileHeader { flex-direction: column; text-align: center; }
-    .infoGrid, .orderGrid { grid-template-columns: 1fr; }
-    .actions { flex-direction: column; }
-    .glassmorphism { padding: 30px 20px; }
+    .profileHeader {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .infoGrid,
+    .orderGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .actions {
+        flex-direction: column;
+    }
+
+    .glassmorphism {
+        padding: 30px 20px;
+    }
 }

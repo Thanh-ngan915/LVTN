@@ -7,7 +7,7 @@
 
 .main {
   flex: 1;
-  padding: 48px 0 0;
+  padding: 16px 0 0;
 }
 
 .container {
@@ -24,7 +24,7 @@
 .sectionTitle {
   font-size: 32px;
   font-weight: 800;
-  color: #1a1a2e;
+  color: #e74c3c;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -74,14 +74,14 @@
   background: #fff;
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .filterTitle {
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 20px;
-  color: #1a1a2e;
+  color: #e74c3c;
   border-bottom: 1px solid #eaeaea;
   padding-bottom: 10px;
 }
@@ -116,7 +116,7 @@
   width: 16px;
   height: 16px;
   cursor: pointer;
-  accent-color: #667eea;
+  accent-color: #ff6b6b;
 }
 
 .priceInputs {
@@ -136,13 +136,13 @@
 }
 
 .priceInputs input:focus {
-  border-color: #667eea;
+  border-color: #ff6b6b;
 }
 
 .applyBtn {
   width: 100%;
   padding: 10px;
-  background: #667eea;
+  background: #ff6b6b;
   color: white;
   border: none;
   border-radius: 6px;
@@ -164,6 +164,7 @@
   .searchLayout {
     flex-direction: column;
   }
+
   .filterSidebar {
     width: 100%;
   }
@@ -171,7 +172,7 @@
 
 /* Footer */
 .footer {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: linear-gradient(135deg, #e74c3c 0%, #ee4d2d 100%);
   color: #fff;
   margin-top: 60px;
 }
@@ -193,7 +194,7 @@
   font-size: 22px;
   font-weight: 800;
   letter-spacing: 2px;
-  background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
+  background: linear-gradient(135deg, #ff6b6b 0%, #f093fb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -239,7 +240,17 @@
 }
 
 @media (max-width: 768px) {
-  .main { padding: 32px 0 0; }
-  .sectionTitle { font-size: 24px; }
-  .footerInner { grid-template-columns: 1fr; gap: 32px; padding: 40px 24px 24px; }
+  .main {
+    padding: 32px 0 0;
+  }
+
+  .sectionTitle {
+    font-size: 24px;
+  }
+
+  .footerInner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 40px 24px 24px;
+  }
 }

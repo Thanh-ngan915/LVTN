@@ -3,15 +3,15 @@
 :root {
     --bg: #f5f3ef;
     --surface: #ffffff;
-    --sidebar-bg: #1a1a2e;
+    --sidebar-bg: #e74c3c;
     --sidebar-text: #a8a8c0;
     --accent: #e8572a;
     --accent-2: #f0a500;
-    --text: #1a1a2e;
+    --text: #e74c3c;
     --muted: #8a8a9a;
     --border: #e8e4de;
     --radius: 16px;
-    --shadow: 0 4px 24px rgba(26,26,46,0.08);
+    --shadow: 0 4px 24px rgba(26, 26, 46, 0.08);
 }
 
 /* ─── Loading ─────────────────────────────────────────────── */
@@ -36,7 +36,11 @@
     animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
 
 /* ─── Layout ──────────────────────────────────────────────── */
 .page {
@@ -73,7 +77,9 @@
     gap: 0.5rem;
 }
 
-.sidebarLogo span { color: var(--accent); }
+.sidebarLogo span {
+    color: var(--accent);
+}
 
 .sidebarNav {
     display: flex;
@@ -101,18 +107,18 @@
 }
 
 .navItem:hover {
-    background: rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.06);
     color: #fff;
 }
 
 .navActive {
-    background: rgba(232,87,42,0.15) !important;
+    background: rgba(232, 87, 42, 0.15) !important;
     color: #fff !important;
     border-left: 3px solid var(--accent);
 }
 
 .sidebarFooter {
-    border-top: 1px solid rgba(255,255,255,0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding-top: 1rem;
     margin-top: 1rem;
 }
@@ -158,14 +164,14 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 4px 12px rgba(232,87,42,0.3);
+    box-shadow: 0 4px 12px rgba(232, 87, 42, 0.3);
     white-space: nowrap;
     margin-top: 4px;
 }
 
 .btnWithdraw:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(232,87,42,0.4);
+    box-shadow: 0 6px 18px rgba(232, 87, 42, 0.4);
 }
 
 .btnWithdraw:disabled {
@@ -222,7 +228,7 @@
 
 .balanceCard:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(26,26,46,0.12);
+    box-shadow: 0 8px 32px rgba(26, 26, 46, 0.12);
 }
 
 .balanceIcon {
@@ -236,10 +242,21 @@
     flex-shrink: 0;
 }
 
-.balanceAvailable .balanceIcon { background: #f0fdf4; }
-.balancePending  .balanceIcon  { background: #fffbeb; }
-.balanceReserved .balanceIcon  { background: #f5f3ff; }
-.balanceTotal    .balanceIcon  { background: #eff6ff; }
+.balanceAvailable .balanceIcon {
+    background: #f0fdf4;
+}
+
+.balancePending .balanceIcon {
+    background: #fffbeb;
+}
+
+.balanceReserved .balanceIcon {
+    background: #f5f3ff;
+}
+
+.balanceTotal .balanceIcon {
+    background: #eff6ff;
+}
 
 .balanceLabel {
     font-size: 0.78rem;
@@ -258,10 +275,21 @@
     margin-bottom: 3px;
 }
 
-.balanceAvailable .balanceAmount { color: #16a34a; }
-.balancePending  .balanceAmount  { color: #d97706; }
-.balanceReserved .balanceAmount  { color: #7c3aed; }
-.balanceTotal    .balanceAmount  { color: #1d4ed8; }
+.balanceAvailable .balanceAmount {
+    color: #16a34a;
+}
+
+.balancePending .balanceAmount {
+    color: #d97706;
+}
+
+.balanceReserved .balanceAmount {
+    color: #d97706;
+}
+
+.balanceTotal .balanceAmount {
+    color: #d97706;
+}
 
 .balanceHint {
     font-size: 0.72rem;
@@ -301,11 +329,11 @@
     background: var(--accent);
     color: #fff !important;
     border-color: var(--accent) !important;
-    box-shadow: 0 4px 12px rgba(232,87,42,0.25);
+    box-shadow: 0 4px 12px rgba(232, 87, 42, 0.25);
 }
 
 .tabBadge {
-    background: rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 20px;
     font-size: 0.7rem;
     font-weight: 700;
@@ -329,7 +357,9 @@
     animation: fadeUp 0.4s 0.15s ease both;
 }
 
-.tableWrap { overflow-x: auto; }
+.tableWrap {
+    overflow-x: auto;
+}
 
 .table {
     width: 100%;
@@ -337,7 +367,9 @@
     font-size: 0.87rem;
 }
 
-.table thead tr { background: var(--bg); }
+.table thead tr {
+    background: var(--bg);
+}
 
 .table th {
     padding: 0.9rem 1.1rem;
@@ -358,9 +390,17 @@
     vertical-align: middle;
 }
 
-.table tbody tr:last-child td { border-bottom: none; }
-.table tbody tr { transition: background 0.15s; }
-.table tbody tr:hover { background: #faf9f7; }
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr {
+    transition: background 0.15s;
+}
+
+.table tbody tr:hover {
+    background: #faf9f7;
+}
 
 /* ─── Transaction badges ──────────────────────────────────── */
 .txBadge {
@@ -372,11 +412,25 @@
     white-space: nowrap;
 }
 
-.txIn  { background: #f0fdf4; color: #16a34a; }
-.txOut { background: #fff5f5; color: #e53e3e; }
+.txIn {
+    background: #f0fdf4;
+    color: #16a34a;
+}
 
-.amountIn  { font-weight: 700; color: #16a34a; }
-.amountOut { font-weight: 700; color: #e53e3e; }
+.txOut {
+    background: #fff5f5;
+    color: #e53e3e;
+}
+
+.amountIn {
+    font-weight: 700;
+    color: #16a34a;
+}
+
+.amountOut {
+    font-weight: 700;
+    color: #e53e3e;
+}
 
 .refId {
     font-size: 0.78rem;
@@ -411,11 +465,30 @@
     white-space: nowrap;
 }
 
-.wd_PENDING    { background: #fff8ee; color: #b85d00; }
-.wd_APPROVED   { background: #e8f4fd; color: #1a5fa8; }
-.wd_PROCESSING { background: #edf7f0; color: #1a6a3f; }
-.wd_COMPLETED  { background: #f0fdf4; color: #15803d; }
-.wd_REJECTED   { background: #fff0f0; color: #b91c1c; }
+.wd_PENDING {
+    background: #fff8ee;
+    color: #b85d00;
+}
+
+.wd_APPROVED {
+    background: #e8f4fd;
+    color: #1a5fa8;
+}
+
+.wd_PROCESSING {
+    background: #edf7f0;
+    color: #1a6a3f;
+}
+
+.wd_COMPLETED {
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.wd_REJECTED {
+    background: #fff0f0;
+    color: #b91c1c;
+}
 
 .rejectReason {
     font-size: 0.72rem;
@@ -434,14 +507,23 @@
     color: var(--muted);
 }
 
-.emptyIcon { font-size: 3.5rem; opacity: 0.7; }
-.emptyText { font-size: 0.95rem; color: var(--muted); font-weight: 500; margin: 0; }
+.emptyIcon {
+    font-size: 3.5rem;
+    opacity: 0.7;
+}
+
+.emptyText {
+    font-size: 0.95rem;
+    color: var(--muted);
+    font-weight: 500;
+    margin: 0;
+}
 
 /* ─── Modal ───────────────────────────────────────────────── */
 .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(26,26,46,0.55);
+    background: rgba(26, 26, 46, 0.55);
     backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
@@ -451,7 +533,15 @@
     animation: fadeIn 0.2s ease;
 }
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
 
 .modalBox {
     background: #fff;
@@ -459,13 +549,20 @@
     padding: 2rem;
     width: 100%;
     max-width: 440px;
-    box-shadow: 0 24px 64px rgba(26,26,46,0.2);
-    animation: slideUp 0.3s cubic-bezier(0.22,0.68,0,1.2);
+    box-shadow: 0 24px 64px rgba(26, 26, 46, 0.2);
+    animation: slideUp 0.3s cubic-bezier(0.22, 0.68, 0, 1.2);
 }
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .modalIcon {
@@ -528,7 +625,7 @@
 
 .formInput:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(232,87,42,0.1);
+    box-shadow: 0 0 0 3px rgba(232, 87, 42, 0.1);
 }
 
 /* ─── Confirm actions ─────────────────────────────────────── */
@@ -552,7 +649,9 @@
     transition: all 0.2s;
 }
 
-.btnCancel:hover { background: var(--bg); }
+.btnCancel:hover {
+    background: var(--bg);
+}
 
 .btnSave {
     flex: 1;
@@ -566,31 +665,64 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 4px 12px rgba(232,87,42,0.3);
+    box-shadow: 0 4px 12px rgba(232, 87, 42, 0.3);
 }
 
-.btnSave:hover:not(:disabled) { transform: translateY(-1px); }
-.btnSave:disabled { opacity: 0.6; cursor: not-allowed; }
+.btnSave:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.btnSave:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 
 /* ─── Animations ──────────────────────────────────────────── */
 @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ─── Responsive ──────────────────────────────────────────── */
 @media (max-width: 1200px) {
-    .balanceRow { grid-template-columns: repeat(2, 1fr); }
+    .balanceRow {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-width: 900px) {
-    .main { padding: 1.5rem; }
-    .balanceRow { grid-template-columns: repeat(2, 1fr); }
+    .main {
+        padding: 1.5rem;
+    }
+
+    .balanceRow {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-width: 768px) {
-    .sidebar { display: none; }
-    .main { padding: 1.25rem; }
-    .balanceRow { grid-template-columns: 1fr 1fr; }
-    .topbar { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .sidebar {
+        display: none;
+    }
+
+    .main {
+        padding: 1.25rem;
+    }
+
+    .balanceRow {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
 }
