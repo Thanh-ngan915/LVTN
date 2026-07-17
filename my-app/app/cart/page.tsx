@@ -288,19 +288,14 @@ export default function CartPage() {
                 </div>
               )}
 
-              <div className={styles.summaryRow}>
-                <span>Phí vận chuyển</span>
-                <span className={styles.freeShip}>
-                  {totalPrice >= 500000 ? 'Miễn phí' : formatPrice(30000)}
-                </span>
-              </div>
+
 
               <div className={styles.summaryDivider}></div>
 
               <div className={`${styles.summaryRow} ${styles.summaryTotal}`}>
                 <span>Tổng cộng</span>
                 <span className={styles.totalAmount}>
-                  {formatPrice(totalPrice + (totalPrice >= 500000 ? 0 : 30000))}
+                  {formatPrice(totalPrice)}
                 </span>
               </div>
 

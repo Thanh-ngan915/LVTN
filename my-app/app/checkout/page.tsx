@@ -17,6 +17,10 @@ import styles from './checkout.module.css';
 
 const DEFAULT_SHIPPING_FEE = 30000;
 
+interface Province { code: number; name: string; }
+interface District { code: number; name: string; }
+interface Ward     { code: number; name: string; }
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -59,6 +63,69 @@ function CheckoutContent() {
   const [district, setDistrict] = useState('');
   const [ward, setWard] = useState('');
   const [addressDetail, setAddressDetail] = useState('');
+
+  // Location dropdown states
+  const [provincesList, setProvincesList] = useState<Province[]>([]);
+  const [districtsList, setDistrictsList] = useState<District[]>([]);
+  const [wardsList, setWardsList] = useState<Ward[]>([]);
+  const [selProvince, setSelProvince] = useState('');
+  const [selDistrict, setSelDistrict] = useState('');
+  const [selWard, setSelWard] = useState('');
+
+  useEffect(() => {
+    fetch("https://provinces.open-api.vn/api/p/")
+      .then(r => r.json())
+      .then(setProvincesList)
+      .catch(() => {});
+  }, []);
+
+  const handleProvinceChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    setSelProvince(code);
+    setSelDistrict('');
+    setSelWard('');
+    setDistrictsList([]);
+    setWardsList([]);
+    
+    if (!code) {
+      setProvince(''); setDistrict(''); setWard('');
+      return;
+    }
+    
+    const data = await fetch(`https://provinces.open-api.vn/api/p/${code}?depth=2`).then(r => r.json());
+    setDistrictsList(data.districts ?? []);
+    setProvince(data.name);
+    setDistrict('');
+    setWard('');
+  };
+
+  const handleDistrictChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    setSelDistrict(code);
+    setSelWard('');
+    setWardsList([]);
+    
+    if (!code) {
+      setDistrict(''); setWard('');
+      return;
+    }
+    
+    const data = await fetch(`https://provinces.open-api.vn/api/d/${code}?depth=2`).then(r => r.json());
+    setWardsList(data.wards ?? []);
+    setDistrict(data.name);
+    setWard('');
+  };
+
+  const handleWardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const code = e.target.value;
+    setSelWard(code);
+    if (!code) {
+      setWard('');
+      return;
+    }
+    const w = wardsList.find(x => x.code === Number(code));
+    if (w) setWard(w.name);
+  };
 
   // Vouchers
   const [vouchers, setVouchers] = useState<VoucherDTO[]>([]);
@@ -473,36 +540,30 @@ function CheckoutContent() {
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Tỉnh / Thành phố *</label>
-                <input
-                  className={styles.input}
-                  type="text"
-                  placeholder="TP. Hồ Chí Minh"
-                  value={province}
-                  onChange={(e) => setProvince(e.target.value)}
-                  id="checkout-province"
-                />
+                <select className={styles.select} value={selProvince} onChange={handleProvinceChange} id="checkout-province">
+                  <option value="">-- Tỉnh / Thành phố --</option>
+                  {provincesList.map(p => (
+                    <option key={p.code} value={p.code}>{p.name}</option>
+                  ))}
+                </select>
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Quận / Huyện *</label>
-                <input
-                  className={styles.input}
-                  type="text"
-                  placeholder="Quận 1"
-                  value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
-                  id="checkout-district"
-                />
+                <select className={styles.select} value={selDistrict} onChange={handleDistrictChange} disabled={!selProvince} id="checkout-district">
+                  <option value="">-- Quận / Huyện --</option>
+                  {districtsList.map(d => (
+                    <option key={d.code} value={d.code}>{d.name}</option>
+                  ))}
+                </select>
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Phường / Xã *</label>
-                <input
-                  className={styles.input}
-                  type="text"
-                  placeholder="Phường Bến Nghé"
-                  value={ward}
-                  onChange={(e) => setWard(e.target.value)}
-                  id="checkout-ward"
-                />
+                <select className={styles.select} value={selWard} onChange={handleWardChange} disabled={!selDistrict} id="checkout-ward">
+                  <option value="">-- Phường / Xã --</option>
+                  {wardsList.map(w => (
+                    <option key={w.code} value={w.code}>{w.name}</option>
+                  ))}
+                </select>
               </div>
               <div className={`${styles.formGroup} ${styles.fullWidth}`}>
                 <label className={styles.label}>Địa chỉ chi tiết *</label>
@@ -674,7 +735,6 @@ function CheckoutContent() {
                   )}
                 </span>
               </div>
-
               <div className={styles.summaryDivider} />
 
               <div className={`${styles.summaryRow} ${styles.summaryTotalRow}`}>
