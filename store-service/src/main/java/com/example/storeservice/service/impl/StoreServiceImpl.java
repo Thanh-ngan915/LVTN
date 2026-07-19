@@ -265,6 +265,17 @@ public class StoreServiceImpl implements StoreService {
         if (locations == null || locations.isEmpty()) {
             return java.util.Collections.emptyList();
         }
-        return storeRepository.findStoreIdsByLocations(locations);
+        return storeRepository.findAll().stream()
+                .filter(store -> {
+                    String loc = store.getLocation() != null ? store.getLocation().toLowerCase() : "";
+                    for (String l : locations) {
+                        if (loc.contains(l.toLowerCase())) {
+                            return true;
+                        }
+                    }
+                    return false;
+                })
+                .map(Store::getId)
+                .collect(Collectors.toList());
     }
 }

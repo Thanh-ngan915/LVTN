@@ -1,8 +1,9 @@
+/* RegisterShopModal.module.css */
 .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(6px);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -12,27 +13,23 @@
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 /* ─── Modal ───────────────────────────────────────────────── */
 .modal {
-    background: #ee4d2d;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #fff;
+    border: 1px solid #eaeaea;
     border-radius: 24px;
     width: 100%;
     max-width: 500px;
     max-height: 90vh;
     overflow-y: auto;
     padding: 2rem;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     animation: slideUp 0.3s cubic-bezier(0.22, 0.68, 0, 1.2);
+    color: #333;
 }
 
 @keyframes slideUp {
@@ -40,7 +37,6 @@
         opacity: 0;
         transform: translateY(30px) scale(0.97);
     }
-
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -51,13 +47,11 @@
 .modal::-webkit-scrollbar {
     width: 6px;
 }
-
 .modal::-webkit-scrollbar-track {
     background: transparent;
 }
-
 .modal::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: #ccc;
     border-radius: 3px;
 }
 
@@ -71,8 +65,9 @@
 
 .headerIcon {
     font-size: 2rem;
-    background: rgba(99, 102, 241, 0.15);
-    border: 1px solid rgba(99, 102, 241, 0.3);
+    background: rgba(238, 77, 45, 0.1);
+    border: 1px solid rgba(238, 77, 45, 0.3);
+    color: #ee4d2d;
     border-radius: 14px;
     width: 52px;
     height: 52px;
@@ -85,21 +80,21 @@
 .modalTitle {
     font-size: 1.3rem;
     font-weight: 700;
-    color: #fff;
+    color: #ee4d2d;
     margin: 0 0 0.2rem;
 }
 
 .modalSub {
-    font-size: 0.82rem;
-    color: #64748b;
+    font-size: 0.85rem;
+    color: #666;
     margin: 0;
 }
 
 .closeBtn {
     margin-left: auto;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #94a3b8;
+    background: #f5f5f5;
+    border: 1px solid #eaeaea;
+    color: #888;
     width: 34px;
     height: 34px;
     border-radius: 10px;
@@ -110,9 +105,9 @@
 }
 
 .closeBtn:hover {
-    background: rgba(244, 63, 94, 0.15);
-    border-color: rgba(244, 63, 94, 0.3);
-    color: #fb7185;
+    background: rgba(238, 77, 45, 0.1);
+    border-color: rgba(238, 77, 45, 0.3);
+    color: #ee4d2d;
 }
 
 /* ─── Error alert ─────────────────────────────────────────── */
@@ -120,7 +115,7 @@
     background: rgba(248, 113, 113, 0.1);
     border: 1px solid rgba(248, 113, 113, 0.3);
     border-left: 3px solid #f87171;
-    color: #fca5a5;
+    color: #ef4444;
     border-radius: 10px;
     padding: 0.7rem 1rem;
     font-size: 0.85rem;
@@ -140,16 +135,17 @@
     width: 100px;
     height: 100px;
     border-radius: 20px;
-    border: 2px dashed rgba(99, 102, 241, 0.4);
+    border: 2px dashed rgba(238, 77, 45, 0.4);
     cursor: pointer;
     overflow: hidden;
     transition: all 0.2s;
     display: block;
+    background: #fafafa;
 }
 
 .logoUpload:hover {
-    border-color: rgba(99, 102, 241, 0.8);
-    background: rgba(99, 102, 241, 0.05);
+    border-color: #ee4d2d;
+    background: rgba(238, 77, 45, 0.05);
 }
 
 .logoPreview {
@@ -166,7 +162,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.3rem;
-    color: #64748b;
+    color: #666;
 }
 
 .logoPlaceholder span {
@@ -180,7 +176,7 @@
 
 .logoHint {
     font-size: 0.75rem;
-    color: #475569;
+    color: #888;
     margin: 0.5rem 0 0;
 }
 
@@ -198,23 +194,30 @@
 }
 
 .label {
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
-    color: #64748b;
+    color: #555;
 }
 
 .required {
     color: #f87171;
 }
 
+.locationSelects {
+    display: flex;
+    gap: 0.5rem;
+    flex-direction: column;
+}
+
 .input,
+.select,
 .textarea {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #fff;
+    border: 1.5px solid #eaeaea;
     border-radius: 12px;
-    color: #e2e8f0;
+    color: #333;
     font-size: 0.9rem;
     padding: 0.7rem 0.95rem;
     outline: none;
@@ -224,15 +227,22 @@
     box-sizing: border-box;
 }
 
+.select:disabled {
+    background: #f9f9f9;
+    color: #aaa;
+    cursor: not-allowed;
+}
+
 .input::placeholder,
 .textarea::placeholder {
-    color: #475569;
+    color: #aaa;
 }
 
 .input:focus,
+.select:focus,
 .textarea:focus {
-    border-color: rgba(99, 102, 241, 0.6);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    border-color: #ee4d2d;
+    box-shadow: 0 0 0 3px rgba(238, 77, 45, 0.12);
 }
 
 .textarea {
@@ -242,9 +252,19 @@
 
 .charCount {
     font-size: 0.72rem;
-    color: #475569;
+    color: #888;
     text-align: right;
     margin-top: -0.2rem;
+}
+
+.locationPreview {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.3rem;
+    background: #f9f9f9;
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1px dashed #eaeaea;
 }
 
 /* ─── Actions ─────────────────────────────────────────────── */
@@ -268,36 +288,39 @@
 }
 
 .cancelBtn {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #64748b;
+    background: #fff;
+    border: 1px solid #eaeaea;
+    color: #555;
 }
 
 .cancelBtn:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: #94a3b8;
+    background: #fafafa;
+    color: #333;
+    border-color: #ddd;
 }
 
 .submitBtn {
-    background: linear-gradient(135deg, #6366f1, #a855f7);
+    background: #ee4d2d;
     color: #fff;
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 4px 15px rgba(238, 77, 45, 0.35);
 }
 
 .submitBtn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+    background: #d93c20;
+    box-shadow: 0 8px 25px rgba(238, 77, 45, 0.45);
 }
 
 .submitBtn:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
 }
 
 /* ─── Note ────────────────────────────────────────────────── */
 .note {
     font-size: 0.78rem;
-    color: #475569;
+    color: #888;
     text-align: center;
     margin: 1rem 0 0;
     line-height: 1.5;
@@ -309,7 +332,6 @@
         padding: 1.5rem;
         border-radius: 20px;
     }
-
     .actions {
         flex-direction: column;
     }
