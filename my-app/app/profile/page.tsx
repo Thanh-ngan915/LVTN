@@ -267,206 +267,241 @@ export default function ProfilePage() {
 
             <div className={styles.container}>
                 <div className={styles.glassmorphism}>
-                    <button className={styles.btnBackHome} onClick={() => router.push("/")}>
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M19 12H5M12 19l-7-7 7-7"/>
-                        </svg>
-                        <span>Quay lại trang chủ</span>
-                    </button>
-
-                    <div className={styles.profileHeader}>
-                        <div className={styles.avatarWrapper}>
-                            <img
-                                src={user.image || "https://ui-avatars.com/api/?name=" + user.fullName}
-                                alt="Avatar"
-                                className={styles.avatar}
-                            />
-                            <label htmlFor="avatar-upload" className={styles.avatarOverlay}>
-                                {uploading ? "⏳" : "📷"}
-                            </label>
-                            <input
-                                id="avatar-upload"
-                                type="file"
-                                accept="image/*"
-                                style={{ display: "none" }}
-                                onChange={handleAvatarUpload}
-                            />
-                        </div>
-                        <div className={styles.titleInfo}>
-                            <h1>{user.fullName}</h1>
-                            <span className={styles.badge}>{user.status || "Thành viên"}</span>
-                        </div>
+                    <div className={styles.topHeader}>
+                        <button className={styles.btnBackHome} onClick={() => router.push("/")}>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                            </svg>
+                            <span>Quay lại trang chủ</span>
+                        </button>
+                        <h1 className={styles.headerTitle}>Hồ sơ cá nhân</h1>
                     </div>
 
-                    <div className={styles.infoGrid}>
-                        <div className={styles.infoItem}>
-                            <label>Tên đăng nhập</label>
-                            <p>@{user.username}</p>
-                        </div>
-                        <div className={styles.infoItem}>
-                            <label>Email</label>
-                            <p>{user.email}</p>
-                        </div>
-                        <div className={styles.infoItem}>
-                            <label>Ngày sinh</label>
-                            <p>{user.birthday ? new Date(user.birthday).toLocaleDateString("vi-VN") : "Chưa cập nhật"}</p>
-                        </div>
-                        <div className={styles.infoItem}>
-                            <label>Địa chỉ</label>
-                            <p>{user.address || "Chưa cập nhật"}</p>
-                        </div>
-                    </div>
-
-                    {/* ✅ SECTION VÍ */}
-                    <div className={styles.walletSection}>
-                        <h2 className={styles.sectionTitle}>💰 Ví của tôi</h2>
-                        {walletLoading ? (
-                            <p>Đang tải ví...</p>
-                        ) : wallet ? (
-                            <div className={styles.walletGrid}>
-                                <div className={styles.walletCard}>
-                                    <div className={styles.walletLabel}>Số dư khả dụng</div>
-                                    <div className={styles.walletAmount}>
-                                        {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-                                            wallet.availableBalance || 0
-                                        )}
-                                    </div>
+                    <div className={styles.profileLayout}>
+                        {/* BÊN TRÁI - SIDEBAR */}
+                        <div className={styles.sidebar}>
+                            <div className={styles.profileCard}>
+                                <div className={styles.avatarWrapper}>
+                                    <img
+                                        src={user.image || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.fullName || "User")}
+                                        alt="Avatar"
+                                        className={styles.avatar}
+                                    />
+                                    <label htmlFor="avatar-upload" className={styles.avatarOverlay} title="Đổi ảnh đại diện">
+                                        {uploading ? "⏳" : "📷"}
+                                    </label>
+                                    <input
+                                        id="avatar-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        style={{ display: "none" }}
+                                        onChange={handleAvatarUpload}
+                                    />
                                 </div>
-                                <div className={styles.walletCard}>
-                                    <div className={styles.walletLabel}>Tổng nhận được</div>
-                                    <div className={styles.walletAmount}>
-                                        {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-                                            wallet.totalReceived || 0
+                                <div className={styles.titleInfo}>
+                                    <h2>{user.fullName}</h2>
+                                    <span className={styles.badge}>{user.status || "Thành viên"}</span>
+                                </div>
+                            </div>
+
+                            <nav className={styles.sideNav}>
+                                <button className={styles.navBtn} onClick={() => router.push("/profile/edit")}>
+                                    <span className={styles.navIcon}>✏️</span>
+                                    <span>Chỉnh sửa hồ sơ</span>
+                                </button>
+                                <button className={styles.navBtn} onClick={() => router.push("/profile/edit-username")}>
+                                    <span className={styles.navIcon}>🏷️</span>
+                                    <span>Đổi username</span>
+                                </button>
+                                <button className={styles.navBtn} onClick={() => router.push("/profile/change-password")}>
+                                    <span className={styles.navIcon}>🔑</span>
+                                    <span>Đổi mật khẩu</span>
+                                </button>
+                                
+                                {userRole === "ADMIN" ? (
+                                    <button className={`${styles.navBtn} ${styles.navBtnShop}`} onClick={() => router.push("/admin")}>
+                                        <span className={styles.navIcon}>🛡️</span>
+                                        <span>Trang Admin</span>
+                                    </button>
+                                ) : storeRoleId ? (
+                                    <>
+                                        {shopStatus === "banned" ? (
+                                            <button
+                                                className={`${styles.navBtn} ${styles.navBtnDisabled}`}
+                                                disabled
+                                            >
+                                                <span className={styles.navIcon}>🔒</span>
+                                                <span>Shop đã bị khóa</span>
+                                            </button>
+                                        ) : shopStatus === "active" ? (
+                                            <button
+                                                className={`${styles.navBtn} ${styles.navBtnShop}`}
+                                                onClick={() => router.push("/my-store")}
+                                            >
+                                                <span className={styles.navIcon}>🏪</span>
+                                                <span>Quản lý shop</span>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className={`${styles.navBtn} ${styles.navBtnDisabled}`}
+                                            >
+                                                <span className={styles.navIcon}>⏳</span>
+                                                <span>Shop đang chờ duyệt</span>
+                                            </button>
                                         )}
+                                    </>
+                                ) : hasStore ? (
+                                    <button className={`${styles.navBtn} ${styles.navBtnDisabled}`}>
+                                        <span className={styles.navIcon}>⏳</span>
+                                        <span>Shop đang chờ duyệt</span>
+                                    </button>
+                                ) : (
+                                    <button className={`${styles.navBtn} ${styles.navBtnShop}`} onClick={() => setShowShopModal(true)}>
+                                        <span className={styles.navIcon}>🏪</span>
+                                        <span>Đăng ký bán hàng</span>
+                                    </button>
+                                )}
+                            </nav>
+
+                            <div className={styles.logoutWrapper}>
+                                <button className={styles.btnLogout} onClick={handleLogout}>
+                                    <span className={styles.navIcon}>🚪</span>
+                                    <span>Đăng xuất</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* BÊN PHẢI - NỘI DUNG CHÍNH */}
+                        <div className={styles.mainContent}>
+                            {/* CARD THÔNG TIN CÁ NHÂN */}
+                            <div className={styles.card}>
+                                <div className={styles.cardHeader}>
+                                    <h2 className={styles.cardTitle}>
+                                        <span className={styles.titleIcon}>👤</span> Thông tin cá nhân
+                                    </h2>
+                                </div>
+                                <div className={styles.infoGrid}>
+                                    <div className={styles.infoItem}>
+                                        <label>Tên đăng nhập</label>
+                                        <p>@{user.username}</p>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label>Email</label>
+                                        <p>{user.email}</p>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label>Ngày sinh</label>
+                                        <p>{user.birthday ? new Date(user.birthday).toLocaleDateString("vi-VN") : "Chưa cập nhật"}</p>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label>Địa chỉ</label>
+                                        <p>{user.address || "Chưa cập nhật"}</p>
                                     </div>
                                 </div>
                             </div>
-                        ) : (
-                            <p>Chưa có dữ liệu ví</p>
-                        )}
 
-                        <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-                            <button
-                                className={styles.btnEdit}
-                                onClick={() => router.push("/wallet")}
-                            >
-                                Xem chi tiết ví
-                            </button>
-                            <button
-                                className={styles.btnShop}
-                                onClick={() => router.push("/wallet/withdraw")}
-                                disabled={!wallet || wallet.availableBalance <= 0}
-                                style={{ opacity: (!wallet || wallet.availableBalance <= 0) ? 0.5 : 1 }}
-                            >
-                                💸 Rút tiền
-                            </button>
-                        </div>
-                    </div>
+                            {/* CARD VÍ CỦA TÔI */}
+                            <div className={styles.card}>
+                                <div className={styles.cardHeader}>
+                                    <h2 className={styles.cardTitle}>
+                                        <span className={styles.titleIcon}>💰</span> Ví của tôi
+                                    </h2>
+                                    <div className={styles.walletHeaderBtns}>
+                                        <button
+                                            className={styles.btnWalletDetail}
+                                            onClick={() => router.push("/wallet")}
+                                        >
+                                            Chi tiết ví
+                                        </button>
+                                        <button
+                                            className={styles.btnWithdraw}
+                                            onClick={() => router.push("/wallet/withdraw")}
+                                            disabled={!wallet || wallet.availableBalance <= 0}
+                                        >
+                                            💸 Rút tiền
+                                        </button>
+                                    </div>
+                                </div>
 
-                    {/* ✅ SECTION TRẠNG THÁI SHOP */}
-                    {storeRoleId && (
-                        <div className={styles.shopStatusSection}>
-                            <h2 className={styles.sectionTitle}>📦 Trạng thái Shop</h2>
-                            {shopLoading ? (
-                                <p>Đang tải trạng thái shop...</p>
-                            ) : (
-                                <div style={{
-                                    padding: "12px 16px",
-                                    borderRadius: "8px",
-                                    marginBottom: "16px",
-                                    border: "1px solid var(--border-color)",
-                                }}>
-                                    {shopStatus === "pending" && (
-                                        <p style={{ color: "#f59e0b", margin: 0, fontWeight: 500 }}>
-                                            ⏳ Shop đang chờ duyệt
-                                        </p>
-                                    )}
-                                    {shopStatus === "active" && (
-                                        <p style={{ color: "#10b981", margin: 0, fontWeight: 500 }}>
-                                            ✅ Shop đang hoạt động
-                                        </p>
-                                    )}
-                                    {shopStatus === "banned" && (
-                                        <p style={{ color: "#ef4444", margin: 0, fontWeight: 500 }}>
-                                            🔒 Shop đã bị khóa
-                                        </p>
+                                {walletLoading ? (
+                                    <div className={styles.loadingBox}>Đang tải thông tin ví...</div>
+                                ) : wallet ? (
+                                    <div className={styles.walletGrid}>
+                                        <div className={styles.walletCard}>
+                                            <span className={styles.walletLabel}>Số dư khả dụng</span>
+                                            <span className={styles.walletAmount}>
+                                                {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+                                                    wallet.availableBalance || 0
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div className={styles.walletCard}>
+                                            <span className={styles.walletLabel}>Tổng nhận được</span>
+                                            <span className={styles.walletAmountSecondary}>
+                                                {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+                                                    wallet.totalReceived || 0
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className={styles.emptyText}>Chưa có dữ liệu ví</p>
+                                )}
+                            </div>
+
+                            {/* CARD TRẠNG THÁI SHOP (nếu có) */}
+                            {storeRoleId && (
+                                <div className={styles.card}>
+                                    <h2 className={styles.cardTitle}>
+                                        <span className={styles.titleIcon}>📦</span> Trạng thái Shop
+                                    </h2>
+                                    {shopLoading ? (
+                                        <div className={styles.loadingBox}>Đang tải trạng thái shop...</div>
+                                    ) : (
+                                        <div className={styles.shopStatusBox}>
+                                            {shopStatus === "pending" && (
+                                                <p className={styles.statusPending}>
+                                                    ⏳ Shop đang chờ duyệt
+                                                </p>
+                                            )}
+                                            {shopStatus === "active" && (
+                                                <p className={styles.statusActive}>
+                                                    ✅ Shop đang hoạt động
+                                                </p>
+                                            )}
+                                            {shopStatus === "banned" && (
+                                                <p className={styles.statusBanned}>
+                                                    🔒 Shop đã bị khóa
+                                                </p>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             )}
-                        </div>
-                    )}
 
-                    {/* GIAO HÀNG & ĐÁNH GIÁ */}
-                    <div className={styles.orderSection}>
-                        <h2 className={styles.sectionTitle}>Quản lý mua sắm</h2>
-                        <div className={styles.orderGrid}>
-                            <div className={styles.orderCard} onClick={() => router.push("/order/history")}>
-                                <div className={styles.orderIcon}>🚚</div>
-                                <div className={styles.orderInfo}>
-                                    <strong>Đơn hàng</strong>
-                                    <span>Theo dõi vận chuyển</span>
+                            {/* CARD QUẢN LÝ MUA SẮM */}
+                            <div className={styles.card}>
+                                <h2 className={styles.cardTitle}>
+                                    <span className={styles.titleIcon}>🛒</span> Quản lý mua sắm
+                                </h2>
+                                <div className={styles.orderGrid}>
+                                    <div className={styles.orderCard} onClick={() => router.push("/order/history")}>
+                                        <div className={styles.orderIcon}>🚚</div>
+                                        <div className={styles.orderInfo}>
+                                            <strong>Đơn hàng</strong>
+                                            <span>Theo dõi vận chuyển</span>
+                                        </div>
+                                    </div>
+                                    <div className={styles.orderCard} onClick={() => router.push("/reviews")}>
+                                        <div className={styles.orderIcon}>⭐</div>
+                                        <div className={styles.orderInfo}>
+                                            <strong>Đánh giá</strong>
+                                            <span>Viết nhận xét sản phẩm</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div className={styles.orderCard} onClick={() => router.push("/reviews")}>
-                                <div className={styles.orderIcon}>⭐</div>
-                                <div className={styles.orderInfo}>
-                                    <strong>Đánh giá</strong>
-                                    <span>Viết nhận xét sản phẩm</span>
-                                </div>
-                            </div>
                         </div>
-                    </div>
-
-                    <div className={styles.actions}>
-                        <button className={styles.btnEdit} onClick={() => router.push("/profile/edit")}>
-                            Chỉnh sửa trang cá nhân
-                        </button>
-                        <button className={styles.btnEdit} onClick={() => router.push("/profile/edit-username")}>
-                            Đổi username
-                        </button>
-                        <button className={styles.btnEdit} onClick={() => router.push("/profile/change-password")}>
-                            Đổi mật khẩu
-                        </button>
-                        {userRole === "ADMIN" ? (
-                            <button className={styles.btnShop} onClick={() => router.push("/admin")}>
-                                🛡️ Trang Admin
-                            </button>
-                        ) : storeRoleId ? (
-                            <>
-                                {shopStatus === "banned" ? (
-                                    <button
-                                        className={styles.btnShop}
-                                        disabled
-                                        style={{ opacity: 0.5, cursor: "not-allowed" }}
-                                    >
-                                        🔒 Shop đã bị khóa
-                                    </button>
-                                ) : shopStatus === "active" ? (
-                                    <button
-                                        className={styles.btnShop}
-                                        onClick={() => router.push("/my-store")}
-                                    >
-                                        🏪 Quản lý shop
-                                    </button>
-                                ) : (
-                                    <button
-                                        className={styles.btnShop}
-                                        style={{ opacity: 0.7, cursor: "default" }}
-                                    >
-                                        ⏳ Shop đang chờ duyệt
-                                    </button>
-                                )}
-                            </>
-                        ) : hasStore ? (
-                            <button className={styles.btnShop} style={{ opacity: 0.7, cursor: "default" }}>
-                                ⏳ Shop đang chờ duyệt
-                            </button>
-                        ) : (
-                            <button className={styles.btnShop} onClick={() => setShowShopModal(true)}>
-                                🏪 Đăng ký bán hàng
-                            </button>
-                        )}
-                        <button className={styles.btnLogout} onClick={handleLogout}>Đăng xuất</button>
                     </div>
                 </div>
             </div>

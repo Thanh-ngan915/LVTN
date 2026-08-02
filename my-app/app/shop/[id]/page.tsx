@@ -130,18 +130,6 @@ export default function ShopProfilePage() {
               <span className={styles.statLabel}>Sản phẩm:</span>
               <span className={styles.statValue}>{totalElements}</span>
             </div>
-            <div className={styles.statItem}>
-              <span className={styles.statLabel}>Người theo dõi:</span>
-              <span className={styles.statValue}>2.5k</span>
-            </div>
-            <div className={styles.statItem}>
-              <span className={styles.statLabel}>Đánh giá:</span>
-              <span className={styles.statValue}>4.8 (1.2k đánh giá)</span>
-            </div>
-            <div className={styles.statItem}>
-              <span className={styles.statLabel}>Tỉ lệ phản hồi:</span>
-              <span className={styles.statValue}>98% (Trong vài giờ)</span>
-            </div>
           </div>
         </div>
 

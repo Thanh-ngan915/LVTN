@@ -644,18 +644,6 @@ export default function ProductDetailPage() {
               <span>Sản Phẩm:</span>
               <span className={styles.metaValueColor}>{shopProductsCount}</span>
             </div>
-            <div className={styles.metaItem}>
-              <span>Tỉ Lệ Phản Hồi:</span>
-              <span className={styles.metaValueColor}>98%</span>
-            </div>
-            <div className={styles.metaItem}>
-              <span>Người Theo Dõi:</span>
-              <span className={styles.metaValueColor}>2.5k</span>
-            </div>
-            <div className={styles.metaItem}>
-              <span>Tham Gia:</span>
-              <span className={styles.metaValueColor}>4 năm trước</span>
-            </div>
           </div>
         </div>
 
@@ -670,12 +658,6 @@ export default function ProductDetailPage() {
                 <tr>
                   <td>Danh mục</td>
                   <td>{product.categoryName}</td>
-                </tr>
-              )}
-              {product.storeId && (
-                <tr>
-                  <td>Shop</td>
-                  <td>{product.storeId}</td>
                 </tr>
               )}
               {colors.length > 0 && (
@@ -739,43 +721,7 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* Comment Form */}
-          <div className={styles.commentForm}>
-            <span className={styles.commentFormTitle}>✍️ Viết đánh giá của bạn</span>
 
-            <div className={styles.starSelector}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  className={`${styles.starSelect} ${(hoverRating || commentRating) >= star ? styles.starSelectActive : ''}`}
-                  onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(0)}
-                  onClick={() => setCommentRating(star)}
-                  type="button"
-                  aria-label={`${star} sao`}
-                >
-                  ★
-                </button>
-              ))}
-            </div>
-
-            <textarea
-              className={styles.commentTextarea}
-              placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              maxLength={500}
-              id="comment-textarea"
-            />
-            <button
-              className={styles.commentSubmitBtn}
-              onClick={handleSubmitComment}
-              disabled={!commentText.trim()}
-              id="comment-submit-btn"
-            >
-              Gửi đánh giá
-            </button>
-          </div>
 
           {/* Comment List */}
           <div className={styles.commentList}>

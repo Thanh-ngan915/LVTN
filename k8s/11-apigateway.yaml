@@ -8,7 +8,7 @@ metadata:
   name: apigateway
   namespace: anvi-dev
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: apigateway
@@ -50,11 +50,11 @@ spec:
             failureThreshold: 5
           resources:
             requests:
-              cpu: 150m
+              cpu: 200m
               memory: 256Mi
             limits:
-              cpu: 400m
-              memory: 384Mi
+              cpu: 1000m
+              memory: 512Mi
 ---
 apiVersion: v1
 kind: Service
