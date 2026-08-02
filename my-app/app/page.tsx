@@ -58,11 +58,11 @@ export default function Home() {
     try {
       let res;
       if (keyword) {
-        res = await searchProducts(keyword, pageNum, 12, minP, maxP, locations);
+        res = await searchProducts(keyword, pageNum, 20, minP, maxP, locations);
       } else if (category) {
-        res = await getProductsByCategory(category, pageNum, 12);
+        res = await getProductsByCategory(category, pageNum, 20);
       } else {
-        res = await getProducts(pageNum, 12);
+        res = await getProducts(pageNum, 20);
       }
 
       if (res.success) {
@@ -90,6 +90,20 @@ export default function Home() {
         if (Array.isArray(data)) setPolicies(data);
       })
       .catch(err => console.error('Failed to fetch policies:', err));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('search');
+      if (q) {
+        setSearchKeyword(q);
+        setTimeout(() => {
+          const el = document.getElementById('products');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }, 500);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -140,6 +154,14 @@ export default function Home() {
             <FlashSale />
           )}
 
+          {!searchKeyword && (
+            <CategoryFilter
+              categories={categories}
+              activeCategory={activeCategory}
+              onCategoryChange={handleCategoryChange}
+            />
+          )}
+
           <div className={styles.sectionHeader}>
             {searchKeyword ? (
               <>
@@ -166,13 +188,6 @@ export default function Home() {
               </>
             )}
           </div>
-          {!searchKeyword && (
-            <CategoryFilter
-              categories={categories}
-              activeCategory={activeCategory}
-              onCategoryChange={handleCategoryChange}
-            />
-          )}
 
           {searchKeyword ? (
             <div className={styles.searchLayout}>

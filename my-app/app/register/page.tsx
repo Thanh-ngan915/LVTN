@@ -217,17 +217,7 @@ export default function RegisterPage() {
                 />
               </div>
 
-              <div className={styles.inputGroup}>
-                <label htmlFor="address">Địa chỉ (Tuỳ chọn)</label>
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  placeholder="Nhập nơi bạn đang sống"
-                  value={formData.address}
-                  onChange={handleChange}
-                />
-              </div>
+
 
               <button type="submit" className={`${styles.btnPrimary} ${loading ? styles.btnLoading : ""}`} disabled={loading}>
                 <span className={styles.btnText}>HOÀN TẤT ĐĂNG KÝ</span>

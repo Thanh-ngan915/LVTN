@@ -230,6 +230,25 @@
   color: #bbb;
 }
 
+.select {
+  padding: 11px 14px;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #222;
+  background: #fafafa;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+}
+
+.select:focus {
+  border-color: #ee4d2d;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(238, 77, 45, 0.08);
+}
+
 /* ===== VOUCHER ===== */
 .voucherInputRow {
   display: flex;

@@ -69,11 +69,11 @@ export default function LivestreamPage() {
   const [isVoiceRecording, setIsVoiceRecording] = useState(false);
   const [recognizedNumber, setRecognizedNumber] = useState<string | null>(null);
   const [recognizedText, setRecognizedText] = useState<string | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const selectedProductRef = useRef<Product | null>(null);
+  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const selectedProductsRef = useRef<Product[]>([]);
   useEffect(() => {
-    selectedProductRef.current = selectedProduct;
-  }, [selectedProduct]);
+    selectedProductsRef.current = selectedProducts;
+  }, [selectedProducts]);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -379,8 +379,15 @@ export default function LivestreamPage() {
               text: data.text 
             }]);
           } else if (data.type === 'product') {
-            console.log('✅ Nhận thông tin sản phẩm từ Host:', data.product);
-            setSelectedProduct(data.product);
+            console.log('✅ Nhận sản phẩm mới từ Host:', data.product);
+            setSelectedProducts((prev) => {
+              // Tránh thêm trùng
+              if (prev.find((p) => p.id === data.product.id)) return prev;
+              return [...prev, data.product];
+            });
+          } else if (data.type === 'products') {
+            console.log('✅ Nhận danh sách sản phẩm từ Host:', data.products);
+            setSelectedProducts(data.products || []);
           } else if (data.type === 'room_ended') {
             console.log('✅ Host đã kết thúc phiên live');
             alert('Phiên livestream đã kết thúc!');
@@ -391,6 +398,7 @@ export default function LivestreamPage() {
             setCurrentRoom(null);
             setTokenData(null);
             setIsRoomHost(false);
+            setSelectedProducts([]);
             sessionStorage.removeItem('livestream_room');
             sessionStorage.removeItem('livestream_is_host');
             window.location.href = '/livestream'; // Đảm bảo UI reset về danh sách
@@ -467,17 +475,17 @@ export default function LivestreamPage() {
         console.log('Participant connected:', participant.identity);
         updateParticipantsList();
         
-        // Host broadcast sản phẩm đang bán cho viewer mới vào
-        if (isRoomHost && selectedProductRef.current) {
+        // Host broadcast danh sách sản phẩm đang bán cho viewer mới vào
+        if (isRoomHost && selectedProductsRef.current.length > 0) {
           try {
             const encoder = new TextEncoder();
             const broadcastData = JSON.stringify({
-              type: 'product',
-              product: selectedProductRef.current
+              type: 'products',
+              products: selectedProductsRef.current
             });
             const payload = encoder.encode(broadcastData);
             room.localParticipant.publishData(payload, { reliable: true });
-            console.log(' Đã sync sản phẩm tới viewer mới');
+            console.log('✅ Đã sync danh sách sản phẩm tới viewer mới');
           } catch (err) {
             console.error('Lỗi khi broadcast sản phẩm cho người mới:', err);
           }
@@ -626,6 +634,7 @@ export default function LivestreamPage() {
         setRoomDescription('');
         setIsRoomHost(false);
         setChatMessages([]);
+        setSelectedProducts([]);
         // Xóa session
         sessionStorage.removeItem('livestream_room');
         sessionStorage.removeItem('livestream_is_host');
@@ -676,6 +685,7 @@ export default function LivestreamPage() {
         setIsRoomHost(false);
         setParticipants([]);
         setChatMessages([]);
+        setSelectedProducts([]);
         setError(null);
         // Xóa session
         sessionStorage.removeItem('livestream_room');
@@ -693,8 +703,9 @@ export default function LivestreamPage() {
     }
   };
 
-  const handleBuyNow = () => {
-    if (!selectedProduct) return;
+  const handleBuyNow = (product?: Product) => {
+    const target = product || selectedProducts[0];
+    if (!target) return;
 
     // Kiểm tra đăng nhập
     const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
@@ -704,24 +715,24 @@ export default function LivestreamPage() {
     }
 
     // Mặc định chọn biến thể đầu tiên nếu có để thanh toán
-    const firstVariant = selectedProduct.variants && selectedProduct.variants.length > 0 
-      ? selectedProduct.variants[0] 
+    const firstVariant = target.variants && target.variants.length > 0
+      ? target.variants[0]
       : null;
 
-    const displayOrigPrice = firstVariant ? firstVariant.priceBefore : selectedProduct.priceBefore;
-    const displayPrice = firstVariant ? firstVariant.priceAfter : selectedProduct.priceAfter;
+    const displayOrigPrice = firstVariant ? firstVariant.priceBefore : target.priceBefore;
+    const displayPrice = firstVariant ? firstVariant.priceAfter : target.priceAfter;
     const color = firstVariant ? firstVariant.color : '';
     const size = firstVariant ? firstVariant.size : '';
     const variantId = firstVariant ? String(firstVariant.id) : '';
 
     const params = new URLSearchParams({
-      productId: String(selectedProduct.id),
-      productName: selectedProduct.name,
+      productId: String(target.id),
+      productName: target.name,
       quantity: '1',
-      storeId: selectedProduct.storeId || '',
+      storeId: target.storeId || '',
       priceBefore: String(displayOrigPrice || 0),
       priceAfter: String(displayPrice || 0),
-      image: selectedProduct.imageUrls?.[0] || '',
+      image: target.imageUrls?.[0] || '',
       color: color || '',
       size: size || '',
       variantId: variantId || '',
@@ -813,16 +824,20 @@ export default function LivestreamPage() {
               const product = productRes.data;
 
               // ✅ Kiểm tra sản phẩm có thuộc shop của host không
-              if (myStore && product.storeId !== myStore.id) {
+              // Dùng String() để tránh lỗi so sánh kiểu dữ liệu number vs string
+              if (myStore && String(product.storeId) !== String(myStore.id)) {
                 console.warn(`⚠️ Product storeId (${product.storeId}) != myStore.id (${myStore.id})`);
                 setError(`⚠️ Sản phẩm ID ${id} không thuộc shop của bạn. Chỉ có thể giới thiệu sản phẩm của shop mình.`);
-                setSelectedProduct(null);
                 setRecognizedNumber(null);
               } else {
-                setSelectedProduct(product);
+                // Thêm vào danh sách (tránh trùng)
+                setSelectedProducts((prev) => {
+                  if (prev.find((p) => p.id === product.id)) return prev;
+                  return [...prev, product];
+                });
                 setError(null);
-                console.log('✅ Product set successfully:', product.name);
-                
+                console.log('✅ Product added to list:', product.name);
+
                 // Broadcast product to viewers
                 if (livekitRef.current?.localParticipant) {
                   try {
@@ -838,14 +853,10 @@ export default function LivestreamPage() {
                     console.error('Lỗi khi broadcast sản phẩm:', err);
                   }
                 }
-
-                // Tự động tắt overlay sau 5 giây
-                setTimeout(() => setRecognizedNumber(null), 5000);
               }
             } else {
               console.warn('⚠️ Product not found or success is false');
               setError(`Không tìm thấy sản phẩm có ID: ${id}`);
-              setSelectedProduct(null);
             }
           } catch (fetchErr) {
             console.error('❌ Error fetching product:', fetchErr);
@@ -853,9 +864,7 @@ export default function LivestreamPage() {
           }
         }
 
-        
         setRecognizedText(data.text);
-
       } else {
         console.error('FastAPI error:', response.statusText);
       }
@@ -866,6 +875,27 @@ export default function LivestreamPage() {
     }
   };
 
+  const handleRemoveProduct = (productId: number) => {
+    if (!isRoomHost) return;
+    setSelectedProducts((prev) => {
+      const updated = prev.filter((p) => p.id !== productId);
+      if (livekitRef.current?.localParticipant) {
+        try {
+          const encoder = new TextEncoder();
+          const broadcastData = JSON.stringify({
+            type: 'products',
+            products: updated
+          });
+          const payload = encoder.encode(broadcastData);
+          livekitRef.current.localParticipant.publishData(payload, { reliable: true });
+          console.log('✅ Đã broadcast danh sách sản phẩm sau khi gỡ tới viewers');
+        } catch (err) {
+          console.error('Lỗi khi broadcast gỡ sản phẩm:', err);
+        }
+      }
+      return updated;
+    });
+  };
 
   return (
     <div className={styles.container}>
@@ -1023,22 +1053,6 @@ export default function LivestreamPage() {
                 </div>
               )}
 
-              {recognizedNumber && selectedProduct && (
-                <div className={styles.productFloatingCard}>
-                  <div className={styles.floatingCardLabel}>SẢN PHẨM ĐƯỢC CHỌN</div>
-                  <div className={styles.floatingCardContent}>
-                    <img 
-                      src={selectedProduct.imageUrls?.[0] || 'https://via.placeholder.com/100'} 
-                      alt={selectedProduct.name} 
-                    />
-                    <div className={styles.floatingCardInfo}>
-                      <h4>{selectedProduct.name}</h4>
-                      <p>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedProduct.priceAfter)}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div className={styles.videoOverlay}>
 
 
@@ -1168,26 +1182,37 @@ export default function LivestreamPage() {
 
             {/* Product Showcase */}
             <div className={styles.section} style={{ padding: '20px' }}>
-              <h3 style={{ fontSize: '1rem', marginBottom: '15px' }}>Sản phẩm đang bán</h3>
-              {selectedProduct ? (
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '15px' }}>
-                  <div style={{ width: '60px', height: '60px', background: '#333', borderRadius: '10px', flexShrink: 0, overflow: 'hidden' }}>
-                    {selectedProduct.imageUrls && selectedProduct.imageUrls.length > 0 ? (
-                      <img src={selectedProduct.imageUrls[0]} alt={selectedProduct.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="1" style={{ margin: '15px auto', display: 'block' }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-                    )}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>{selectedProduct.name}</div>
-                    <div style={{ fontSize: '0.9rem', color: '#60a5fa', fontWeight: '800' }}>
-                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedProduct.priceAfter)}
+              <h3 style={{ fontSize: '1rem', marginBottom: '15px', color: '#0f172a' }}>Sản phẩm đang bán</h3>
+              {selectedProducts.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '360px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {selectedProducts.map((product) => (
+                    <div key={product.id} style={{ display: 'flex', gap: '12px', alignItems: 'center', background: '#fff', border: '1px solid rgba(232, 87, 42, 0.2)', padding: '12px', borderRadius: '16px', position: 'relative', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                      {isRoomHost && (
+                        <button
+                          onClick={() => handleRemoveProduct(product.id)}
+                          style={{ position: 'absolute', top: '-6px', right: '-6px', background: '#ef4444', border: 'none', borderRadius: '50%', width: '20px', height: '20px', color: '#fff', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, boxShadow: '0 2px 5px rgba(239,68,68,0.3)', zIndex: 5 }}
+                          title="Gỡ sản phẩm"
+                        >×</button>
+                      )}
+                      <div style={{ width: '60px', height: '60px', background: '#f1f5f9', borderRadius: '12px', flexShrink: 0, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                        {product.imageUrls && product.imageUrls.length > 0 ? (
+                          <img src={product.imageUrls[0]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1" style={{ margin: '16px auto', display: 'block' }}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                        )}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.2' }}>{product.name}</div>
+                        <div style={{ fontSize: '0.92rem', color: '#e8572a', fontWeight: '800', marginTop: '4px' }}>
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.priceAfter)}
+                        </div>
+                      </div>
+                      <button className={styles.primaryBtn} style={{ padding: '6px 14px', fontSize: '0.78rem', flexShrink: 0, borderRadius: '10px' }} onClick={() => handleBuyNow(product)}>MUA</button>
                     </div>
-                  </div>
-                  <button className={styles.primaryBtn} style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={handleBuyNow}>MUA</button>
+                  ))}
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '20px', color: '#64748b', fontSize: '0.85rem', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '15px' }}>
+                <div style={{ textAlign: 'center', padding: '20px', color: '#64748b', fontSize: '0.85rem', border: '1px dashed rgba(232, 87, 42, 0.2)', borderRadius: '15px', background: 'rgba(232, 87, 42, 0.02)' }}>
                    Nói "ID + [Số]" để hiển thị sản phẩm
                 </div>
               )}

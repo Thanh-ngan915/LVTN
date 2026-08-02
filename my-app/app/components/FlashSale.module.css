@@ -100,6 +100,13 @@
   font-family: 'Courier New', Courier, monospace;
 }
 
+.dayLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e272e;
+  margin: 0 2px;
+}
+
 .colon {
   font-size: 16px;
   font-weight: 800;

@@ -7,6 +7,7 @@ import { getActiveProductPromotions } from '../services/salePromotionService';
 import styles from './FlashSale.module.css';
 
 interface TimeLeft {
+  days: number;
   hours: number;
   minutes: number;
   seconds: number;
@@ -16,7 +17,7 @@ export default function FlashSale() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ hours: 0, minutes: 0, seconds: 0 });
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [products, setProducts] = useState<Product[]>([]);
   const [targetEndDate, setTargetEndDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,11 +84,12 @@ export default function FlashSale() {
       const difference = targetEndDate.getTime() - now.getTime();
       
       if (difference <= 0) {
-        return { hours: 0, minutes: 0, seconds: 0 };
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
       }
       
       return {
-        hours: Math.floor(difference / (1000 * 60 * 60)),
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
         minutes: Math.floor((difference / (1000 * 60)) % 60),
         seconds: Math.floor((difference / 1000) % 60)
       };
@@ -155,11 +157,23 @@ export default function FlashSale() {
           <div className={styles.timerContainer}>
             <span className={styles.timerLabel}>KẾT THÚC TRONG</span>
             <div className={styles.countdown}>
-              <span className={styles.timeBox}>{pad(timeLeft.hours)}</span>
-              <span className={styles.colon}>:</span>
-              <span className={styles.timeBox}>{pad(timeLeft.minutes)}</span>
-              <span className={styles.colon}>:</span>
-              <span className={styles.timeBox}>{pad(timeLeft.seconds)}</span>
+              {timeLeft.days > 0 ? (
+                <>
+                  <span className={styles.timeBox}>{pad(timeLeft.days)}</span>
+                  <span className={styles.colon}>:</span>
+                  <span className={styles.timeBox}>{pad(timeLeft.hours)}</span>
+                  <span className={styles.colon}>:</span>
+                  <span className={styles.timeBox}>{pad(timeLeft.minutes)}</span>
+                </>
+              ) : (
+                <>
+                  <span className={styles.timeBox}>{pad(timeLeft.hours)}</span>
+                  <span className={styles.colon}>:</span>
+                  <span className={styles.timeBox}>{pad(timeLeft.minutes)}</span>
+                  <span className={styles.colon}>:</span>
+                  <span className={styles.timeBox}>{pad(timeLeft.seconds)}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
