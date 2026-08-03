@@ -7,6 +7,7 @@ import {
   createOrder,
   getVouchersByStore,
   VoucherDTO,
+  isVoucherExpired,
   OrderRequestDTO,
   OrderItemRequestDTO,
   calculateShippingFee,
@@ -253,7 +254,7 @@ function CheckoutContent() {
 
   const handleApplyVoucherCode = () => {
     const found = vouchers.find((v) => v.code.toLowerCase() === voucherCode.toLowerCase());
-    if (!found) {
+    if (!found || isVoucherExpired(found)) {
       showToast('❌ Mã voucher không hợp lệ hoặc đã hết hạn');
       return;
     }
@@ -270,6 +271,10 @@ function CheckoutContent() {
   };
 
   const handleSelectVoucher = (v: VoucherDTO) => {
+    if (isVoucherExpired(v)) {
+      showToast('❌ Voucher này đã hết hạn sử dụng');
+      return;
+    }
     if (subtotal < (v.minOrderValue || 0)) {
       showToast(`❌ Cần đơn tối thiểu ${formatPrice(v.minOrderValue)} để dùng voucher này`);
       return;
@@ -780,10 +785,10 @@ function CheckoutContent() {
               <button className={styles.modalClose} onClick={() => setShowVoucherModal(null)}>✕</button>
             </div>
             <div className={styles.voucherList}>
-              {vouchers.filter(v => (v.isPlatform ?? (v.storeId === null)) === (showVoucherModal === 'platform')).length === 0 ? (
+              {vouchers.filter(v => !isVoucherExpired(v) && (v.isPlatform ?? (v.storeId === null)) === (showVoucherModal === 'platform')).length === 0 ? (
                 <p className={styles.noVoucher}>Không có voucher nào khả dụng</p>
               ) : (
-                vouchers.filter(v => (v.isPlatform ?? (v.storeId === null)) === (showVoucherModal === 'platform')).map((v) => {
+                vouchers.filter(v => !isVoucherExpired(v) && (v.isPlatform ?? (v.storeId === null)) === (showVoucherModal === 'platform')).map((v) => {
                   const saveable = calcDiscount(v, subtotal);
                   const canApply = subtotal >= (v.minOrderValue || 0);
                   return (

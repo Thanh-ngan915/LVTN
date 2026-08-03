@@ -89,7 +89,7 @@ export default function VouchersPage() {
         ]).then(([storeData, catData]) => {
             setStoreId(storeData.id);
             setCategories(catData.data || []);
-            return fetch(`/api/vouchers/store/${storeData.id}`, {
+            return fetch(`/api/vouchers/store/${storeData.id}?includeExpired=true`, {
                 headers: { Authorization: `Bearer ${token}` },
             }).then(r => r.json());
         }).then(data => {
@@ -100,7 +100,7 @@ export default function VouchersPage() {
 
     const fetchVouchers = async () => {
         const { token } = getAuth();
-        const res = await fetch(`/api/vouchers/store/${storeId}`, {
+        const res = await fetch(`/api/vouchers/store/${storeId}?includeExpired=true`, {
             headers: { Authorization: `Bearer ${token}` },
         });
         setVouchers(await res.json() || []);

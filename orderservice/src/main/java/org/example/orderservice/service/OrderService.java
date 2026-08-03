@@ -258,6 +258,9 @@ public class OrderService {
 
     private float applyPlatformVoucher(Voucher voucher, float orderTotal) {
         if (!"active".equals(voucher.getStatus())) return 0f;
+        if (voucher.getEndDate() != null && voucher.getEndDate().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Voucher sàn '" + voucher.getCode() + "' đã hết hạn sử dụng");
+        }
         float minOrder = voucher.getMinOrderValue() != null ? voucher.getMinOrderValue() : 0f;
         if (orderTotal < minOrder) return 0f;
 
@@ -289,6 +292,16 @@ public class OrderService {
         // Validation logic for API voucher
         // status=1 means active in store-service
         if (voucherDTO.getStatus() == null || voucherDTO.getStatus() != 1) return 0f;
+        if (voucherDTO.getEndDate() != null && !voucherDTO.getEndDate().isBlank()) {
+            try {
+                LocalDateTime endDate = LocalDateTime.parse(voucherDTO.getEndDate());
+                if (endDate.isBefore(LocalDateTime.now())) {
+                    throw new RuntimeException("Voucher shop '" + voucherDTO.getCode() + "' đã hết hạn sử dụng");
+                }
+            } catch (Exception e) {
+                log.warn("Could not parse voucher endDate: {}", voucherDTO.getEndDate());
+            }
+        }
 
         float minOrder = 0f;
         if (voucherDTO.getPriceCondition() != null && voucherDTO.getPriceCondition().getTotalMin() != null) {
@@ -949,6 +962,16 @@ public class OrderService {
     public List<VoucherDTO> getAllPlatformVouchers() {
         return voucherRepository.findAll().stream()
                 .filter(v -> v.getStoreId() == null)
+                .map(v -> toVoucherDTO(v, true))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public List<VoucherDTO> getAllActivePlatformVouchers() {
+        LocalDateTime now = LocalDateTime.now();
+        return voucherRepository.findAll().stream()
+                .filter(v -> v.getStoreId() == null)
+                .filter(v -> "active".equalsIgnoreCase(v.getStatus()))
+                .filter(v -> v.getEndDate() == null || v.getEndDate().isAfter(now))
                 .map(v -> toVoucherDTO(v, true))
                 .collect(java.util.stream.Collectors.toList());
     }

@@ -184,9 +184,19 @@ public class VoucherServiceImpl implements VoucherService {
         voucherRepository.save(voucher);
     }
 
+    @Override
     public List<VoucherDTO> getVouchersByStore(String storeId) {
+        return getVouchersByStore(storeId, false);
+    }
+
+    @Override
+    public List<VoucherDTO> getVouchersByStore(String storeId, boolean includeExpired) {
+        LocalDateTime now = LocalDateTime.now();
         return voucherRepository.findByStoreIdAndStatus(storeId, 1)
-                .stream().map(this::toDTO).collect(Collectors.toList());
+                .stream()
+                .filter(v -> includeExpired || (v.getEndDate() != null && v.getEndDate().isAfter(now)))
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     // Thêm method lấy voucher đã xóa

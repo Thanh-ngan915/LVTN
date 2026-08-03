@@ -79,6 +79,20 @@ public class OrderController {
     }
 
     /**
+     * Lấy tất cả voucher còn hiệu lực (sàn)
+     * GET /api/orders/vouchers/all
+     */
+    @GetMapping("/vouchers/all")
+    public ResponseEntity<ApiResponse<List<VoucherDTO>>> getAllActiveVouchers() {
+        try {
+            List<VoucherDTO> vouchers = orderService.getAllActivePlatformVouchers();
+            return ResponseEntity.ok(ApiResponse.success(vouchers, "Lấy danh sách voucher thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ApiResponse.error("Lỗi lấy voucher: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Lấy voucher theo shop
      * GET /api/orders/vouchers/{storeId}
      */
