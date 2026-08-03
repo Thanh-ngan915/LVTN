@@ -208,8 +208,13 @@ export async function createOrder(
   return data;
 }
 
+export function isVoucherExpired(v: VoucherDTO): boolean {
+  if (!v.endDate) return false;
+  return new Date(v.endDate).getTime() < Date.now();
+}
+
 /**
- * Lấy voucher của shop
+ * Lấy voucher của shop (lọc bỏ hết hạn)
  */
 export async function getVouchersByStore(
   storeId: string
@@ -223,11 +228,14 @@ export async function getVouchersByStore(
       console.error('getVouchersByStore error:', data);
       return { success: false, message: data.message || 'Error', data: [] };
   }
+  if (Array.isArray(data.data)) {
+    data.data = (data.data as VoucherDTO[]).filter((v: VoucherDTO) => !isVoucherExpired(v) && v.status !== 'inactive' && v.status !== '0');
+  }
   return data;
 }
 
 /**
- * Lấy danh sách tất cả vouchers sàn (platform vouchers)
+ * Lấy danh sách tất cả vouchers sàn (platform vouchers, lọc bỏ hết hạn)
  */
 export async function getAllVouchers(): Promise<OrderApiResponse<VoucherDTO[]>> {
   const res = await fetch(`${API_BASE}/api/orders/vouchers/all`, {
@@ -238,6 +246,9 @@ export async function getAllVouchers(): Promise<OrderApiResponse<VoucherDTO[]>> 
   if (!res.ok || !data.success) {
       console.error('getAllVouchers error:', data);
       return { success: false, message: data.message || 'Error', data: [] };
+  }
+  if (Array.isArray(data.data)) {
+    data.data = (data.data as VoucherDTO[]).filter((v: VoucherDTO) => !isVoucherExpired(v) && v.status !== 'inactive' && v.status !== '0');
   }
   return data;
 }

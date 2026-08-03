@@ -8,6 +8,7 @@ import java.util.List;
 public interface VoucherService {
     VoucherDTO createVoucher(String userId, String storeId, VoucherRequestDTO request);
     List<VoucherDTO> getVouchersByStore(String storeId);
+    List<VoucherDTO> getVouchersByStore(String storeId, boolean includeExpired);
     VoucherDTO getVoucherById(String voucherId);
     VoucherDTO updateVoucher(String userId, String storeId, String voucherId, VoucherRequestDTO request);
     List<VoucherDTO> getDeletedVouchers(String storeId);

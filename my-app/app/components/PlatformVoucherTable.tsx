@@ -137,11 +137,13 @@ export default function PlatformVoucherTable({ authHeader, showToast, logActivit
         }
     };
 
-    const getStatusBadge = (status: string) => {
-        if (status === "active") return <span className={`${styles.badge} ${styles.badgeSuccess}`}>Đang phát hành</span>;
-        if (status === "inactive") return <span className={`${styles.badge} ${styles.badgeDanger}`}>Tạm dừng/Đã ẩn</span>;
-        if (status === "expired") return <span className={`${styles.badge} ${styles.badgeWarning}`}>Đã hết hạn</span>;
-        return <span className={`${styles.badge}`}>{status}</span>;
+    const getStatusBadge = (v: VoucherDTO) => {
+        if (v.endDate && new Date(v.endDate).getTime() < Date.now()) {
+            return <span className={`${styles.badge} ${styles.badgeWarning}`}>⏳ Đã hết hạn</span>;
+        }
+        if (v.status === "active") return <span className={`${styles.badge} ${styles.badgeSuccess}`}>✅ Đang phát hành</span>;
+        if (v.status === "inactive") return <span className={`${styles.badge} ${styles.badgeDanger}`}>🚫 Tạm dừng/Đã ẩn</span>;
+        return <span className={`${styles.badge}`}>{v.status}</span>;
     };
 
     const formatCurrency = (amount: number) => {
@@ -202,7 +204,7 @@ export default function PlatformVoucherTable({ authHeader, showToast, logActivit
                                     </td>
                                     <td>{formatCurrency(v.minOrderValue)}</td>
                                     <td>{v.usedCount || 0} / {v.quantity}</td>
-                                    <td>{getStatusBadge(v.status)}</td>
+                                    <td>{getStatusBadge(v)}</td>
                                     <td>
                                         <div className={styles.actions}>
                                             <button className={styles.actionBtn} style={{ background: "#4caf50", color: "#fff" }} onClick={() => handleOpenModal(v)}>

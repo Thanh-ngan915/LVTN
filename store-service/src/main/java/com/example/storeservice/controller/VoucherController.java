@@ -24,8 +24,10 @@ public class VoucherController {
     }
 
     @GetMapping("/store/{storeId}")
-    public ResponseEntity<List<VoucherDTO>> getByStore(@PathVariable String storeId) {
-        return ResponseEntity.ok(voucherService.getVouchersByStore(storeId));
+    public ResponseEntity<List<VoucherDTO>> getByStore(
+            @PathVariable String storeId,
+            @RequestParam(required = false, defaultValue = "false") boolean includeExpired) {
+        return ResponseEntity.ok(voucherService.getVouchersByStore(storeId, includeExpired));
     }
 
     @GetMapping("/{voucherId}")
