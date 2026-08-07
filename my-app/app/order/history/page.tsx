@@ -217,7 +217,7 @@ export default function OrderHistoryPage() {
                                                 <>
                                                     {order.status === 'completed' && (
                                                         <button
-                                                            className={styles.btnCancel}
+                                                            className={styles.btnComplaint}
                                                             onClick={() => setComplaintOrderId(Number(order.id))}
                                                         >
                                                             🚨 Khiếu nại
@@ -225,7 +225,7 @@ export default function OrderHistoryPage() {
                                                     )}
                                                     {order.status === 'complaint_rejected' && (
                                                         <button
-                                                            className={styles.btnCancel}
+                                                            className={styles.btnComplaint}
                                                             onClick={() => handleViewComplaint(Number(order.id))}
                                                         >
                                                             ❌ Xem lý do từ chối
