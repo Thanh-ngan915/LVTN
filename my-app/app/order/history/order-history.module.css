@@ -236,6 +236,24 @@
     background: #fef2f2;
 }
 
+.btnComplaint {
+    padding: 8px 16px;
+    border: 1.5px solid #ff7a45;
+    background: #fff;
+    color: #ee4d2d;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.btnComplaint:hover {
+    background: #fff5f2;
+    border-color: #ee4d2d;
+    box-shadow: 0 2px 6px rgba(238, 77, 45, 0.15);
+}
+
 .btnReview {
     padding: 8px 16px;
     background: #ee4d2d;
