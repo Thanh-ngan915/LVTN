@@ -77,7 +77,7 @@ def _load_docs_from_mysql() -> list[Document]:
                     p.category AS category_short
                 FROM product p
                 LEFT JOIN category c ON c.shortname = p.category
-                WHERE p.is_delete = 0 OR p.is_delete IS NULL
+                WHERE (p.is_delete = 0 OR p.is_delete IS NULL) AND p.status = 'active'
                 ORDER BY p.id
             """)
             products = cur.fetchall()

@@ -325,6 +325,7 @@ public class ProductController {
                         .name(created.getName())
                         .description(created.getDescription())
                         .categoryName(created.getCategoryName())
+                        .status(created.getStatus())
                         .imageUrls(created.getImageUrls())
                         .build();
                 productEventProducer.sendProductCreatedEvent(event);
@@ -352,6 +353,7 @@ public class ProductController {
                         .name(updated.getName())
                         .description(updated.getDescription())
                         .categoryName(updated.getCategoryName())
+                        .status(updated.getStatus())
                         .imageUrls(updated.getImageUrls())
                         .build();
                 productEventProducer.sendProductUpdatedEvent(event);
