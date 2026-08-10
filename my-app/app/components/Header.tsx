@@ -3,18 +3,21 @@
 import { useState, useEffect } from 'react';
 import styles from './Header.module.css';
 import { getCartCount } from '../services/cartService';
-import {useRouter} from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from 'next/link';
 interface HeaderProps {
   onSearch?: (keyword: string) => void;
   cartUpdateTrigger?: number; // Increment this to trigger cart count refresh
 }
 
-export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
+import { Suspense } from 'react';
+
+function HeaderInner({ onSearch, cartUpdateTrigger }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const [activeLang, setActiveLang] = useState('vi');
@@ -56,6 +59,18 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
   useEffect(() => {
     getCartCount().then(setCartCount).catch(() => setCartCount(0));
   }, [cartUpdateTrigger]);
+
+  // Sync search input with URL
+  useEffect(() => {
+    if (searchParams) {
+      const q = searchParams.get('search');
+      if (q !== null) {
+        setSearchQuery(q);
+      } else {
+        setSearchQuery('');
+      }
+    }
+  }, [searchParams]);
 
   const handleSearch = () => {
     const query = searchQuery.trim();
@@ -204,6 +219,14 @@ export default function Header({ onSearch, cartUpdateTrigger }: HeaderProps) {
         </div>
       </nav>
     </header>
+  );
+}
+
+export default function Header(props: HeaderProps) {
+  return (
+    <Suspense fallback={null}>
+      <HeaderInner {...props} />
+    </Suspense>
   );
 }
 

@@ -81,6 +81,20 @@ export default function ShopProfilePage() {
     loadProducts(page + 1, true);
   };
 
+  const handleOpenChat = () => {
+    const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    if (!userStr) {
+      alert('Vui lòng đăng nhập để chat với Shop');
+      return;
+    }
+    const storeName = shopInfo?.store?.name || storeId;
+    const chatParams = new URLSearchParams({
+      storeId: String(storeId),
+      storeName: String(storeName)
+    });
+    router.push(`/chat?${chatParams.toString()}`);
+  };
+
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
@@ -113,10 +127,7 @@ export default function ShopProfilePage() {
               <h1 className={styles.shopName}>{shopInfo?.store?.name || storeId}</h1>
               <div className={styles.shopStatus}>Online 2 phút trước</div>
               <div className={styles.headerActions}>
-                <button className={`${styles.actionBtn} ${styles.followBtn}`}>
-                  <span>+</span> Theo Dõi
-                </button>
-                <button className={`${styles.actionBtn} ${styles.chatBtn}`}>
+                <button className={`${styles.actionBtn} ${styles.chatBtn}`} onClick={handleOpenChat}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>

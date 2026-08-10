@@ -177,10 +177,6 @@ export default function FlashSale() {
             </div>
           </div>
         </div>
-        
-        <span className={styles.headerRight}>
-          Xem tất cả <span className={styles.arrowIcon}>&gt;</span>
-        </span>
       </div>
 
       <div className={styles.sliderWrapper}>
