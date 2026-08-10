@@ -273,7 +273,7 @@ export default function VouchersPage() {
                         className={`${styles.tabBtn} ${voucherTab === "active" ? styles.tabActive : ""}`}
                         onClick={() => setVoucherTab("active")}
                     >
-                        🎟️ Đang dùng
+                        🎟️ Tất cả
                         <span className={styles.tabBadge}>{vouchers.length}</span>
                     </button>
                     <button
@@ -326,11 +326,16 @@ export default function VouchersPage() {
                                                 {new Date(v.startDate).toLocaleDateString("vi-VN")}
                                                 <br />→ {new Date(v.endDate).toLocaleDateString("vi-VN")}
                                                 {new Date(v.endDate) < new Date() && <div style={{ color: "red", fontSize: "0.85em", marginTop: "4px", fontWeight: 600 }}>⏳ Hết hạn</div>}
+                                                {new Date(v.startDate) > new Date() && new Date(v.endDate) >= new Date() && <div style={{ color: "#f59e0b", fontSize: "0.85em", marginTop: "4px", fontWeight: 600 }}>⏰ Chưa bắt đầu</div>}
                                             </td>
                                             <td>
                                                 {new Date(v.endDate) < new Date() ? (
                                                     <span className={`${styles.statusBadge} ${styles.statusInactive}`}>
                                                         ⏳ Hết hạn
+                                                    </span>
+                                                ) : new Date(v.startDate) > new Date() ? (
+                                                    <span className={`${styles.statusBadge}`} style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d' }}>
+                                                        ⏰ Chưa bắt đầu
                                                     </span>
                                                 ) : (
                                                     <span className={`${styles.statusBadge} ${v.status === 1 ? styles.statusActive : styles.statusInactive}`}>

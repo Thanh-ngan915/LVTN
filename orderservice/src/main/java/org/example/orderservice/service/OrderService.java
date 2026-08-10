@@ -361,10 +361,11 @@ public class OrderService {
     }
 
     private VoucherDTO convertStoreVoucherToVoucherDTO(StoreVoucherDTO v) {
-        String discountType = (v.getType() != null && v.getType() == 2) ? "PERCENT" : "FIXED";
-        Float discountValue = (v.getType() != null && v.getType() == 2)
-            ? (v.getPercent() != null ? v.getPercent().floatValue() : 0f)
-            : (v.getMaximum() != null ? v.getMaximum().floatValue() : 0f);
+        // type=1 → FIXED (tiền cố định), type=2 → PERCENT (phần trăm)
+        boolean isPercent = (v.getType() != null && v.getType() == 2);
+        String discountType = isPercent ? "PERCENT" : "FIXED";
+        // Cả FIXED và PERCENT đều lưu giá trị giảm trong field "percent"
+        Float discountValue = (v.getPercent() != null ? v.getPercent().floatValue() : 0f);
 
         Float minOrder = (v.getPriceCondition() != null && v.getPriceCondition().getTotalMin() != null)
             ? v.getPriceCondition().getTotalMin() : 0f;
@@ -377,7 +378,7 @@ public class OrderService {
                 .discountType(discountType)
                 .discountValue(discountValue)
                 .minOrderValue(minOrder)
-                .maxDiscount(v.getMaximum() != null ? v.getMaximum().floatValue() : null)
+                .maxDiscount(isPercent && v.getMaximum() != null ? v.getMaximum().floatValue() : null)
                 .storeId(v.getStoreId())
                 .startDate(v.getStartDate())
                 .endDate(v.getEndDate())
