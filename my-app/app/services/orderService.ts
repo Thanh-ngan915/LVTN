@@ -213,6 +213,11 @@ export function isVoucherExpired(v: VoucherDTO): boolean {
   return new Date(v.endDate).getTime() < Date.now();
 }
 
+export function isVoucherNotStarted(v: VoucherDTO): boolean {
+  if (!v.startDate) return false;
+  return new Date(v.startDate).getTime() > Date.now();
+}
+
 /**
  * Lấy voucher của shop (lọc bỏ hết hạn)
  */
@@ -229,7 +234,7 @@ export async function getVouchersByStore(
       return { success: false, message: data.message || 'Error', data: [] };
   }
   if (Array.isArray(data.data)) {
-    data.data = (data.data as VoucherDTO[]).filter((v: VoucherDTO) => !isVoucherExpired(v) && v.status !== 'inactive' && v.status !== '0');
+    data.data = (data.data as VoucherDTO[]).filter((v: VoucherDTO) => !isVoucherExpired(v) && !isVoucherNotStarted(v) && v.status !== 'inactive' && v.status !== '0');
   }
   return data;
 }
@@ -248,7 +253,7 @@ export async function getAllVouchers(): Promise<OrderApiResponse<VoucherDTO[]>> 
       return { success: false, message: data.message || 'Error', data: [] };
   }
   if (Array.isArray(data.data)) {
-    data.data = (data.data as VoucherDTO[]).filter((v: VoucherDTO) => !isVoucherExpired(v) && v.status !== 'inactive' && v.status !== '0');
+    data.data = (data.data as VoucherDTO[]).filter((v: VoucherDTO) => !isVoucherExpired(v) && !isVoucherNotStarted(v) && v.status !== 'inactive' && v.status !== '0');
   }
   return data;
 }

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import CategoryFilter from './components/CategoryFilter';
@@ -16,7 +17,7 @@ import {
 } from './services/productService';
 import styles from './page.module.css';
 
-export default function Home() {
+function HomeInner() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -25,6 +26,8 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [totalResults, setTotalResults] = useState(0);
+  const latestRequestId = useRef(0);
+  const searchParams = useSearchParams();
 
   const [policies, setPolicies] = useState<any[]>([]);
 
@@ -54,6 +57,7 @@ export default function Home() {
     minP?: number,
     maxP?: number
   ) => {
+    const currentRequestId = ++latestRequestId.current;
     setLoading(true);
     try {
       let res;
@@ -65,7 +69,7 @@ export default function Home() {
         res = await getProducts(pageNum, 20);
       }
 
-      if (res.success) {
+      if (currentRequestId === latestRequestId.current && res.success) {
         setProducts(prev => append ? [...prev, ...res.data] : res.data);
         setHasMore(pageNum < res.totalPages - 1);
         setTotalResults(res.totalElements);
@@ -73,7 +77,9 @@ export default function Home() {
     } catch (err) {
       console.error('Failed to fetch products:', err);
     } finally {
-      setLoading(false);
+      if (currentRequestId === latestRequestId.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -93,18 +99,19 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const q = params.get('search');
-      if (q) {
+    if (searchParams) {
+      const q = searchParams.get('search');
+      if (q !== null && q !== searchKeyword) {
         setSearchKeyword(q);
         setTimeout(() => {
           const el = document.getElementById('products');
           if (el) el.scrollIntoView({ behavior: 'smooth' });
         }, 500);
+      } else if (q === null && searchKeyword !== '') {
+        setSearchKeyword('');
       }
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     setPage(0);
@@ -150,7 +157,7 @@ export default function Home() {
       <Header onSearch={handleSearch} />
       <main className={styles.main} id="products">
         <div className={styles.container}>
-          {!searchKeyword && !activeCategory && (
+          {!searchKeyword && (
             <FlashSale />
           )}
 
@@ -253,5 +260,13 @@ export default function Home() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeInner />
+    </Suspense>
   );
 }

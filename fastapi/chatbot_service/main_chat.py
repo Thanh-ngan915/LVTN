@@ -34,6 +34,7 @@ async def consume_product_events():
             name = data.get("name", "")
             desc = data.get("description", "")
             cat = data.get("categoryName", "")
+            status = data.get("status", "active")
             image_urls = data.get("imageUrls") or []
             thumb = image_urls[0] if image_urls else ""
             
@@ -49,7 +50,7 @@ async def consume_product_events():
                         return internal_id
                 return None
 
-            if action in ["UPDATE", "DELETE"]:
+            if action in ["UPDATE", "DELETE"] or status != "active":
                 # Xóa khỏi FAISS
                 internal_id = get_internal_id(pid)
                 if internal_id:
@@ -59,7 +60,7 @@ async def consume_product_events():
                 if rag_chain and hasattr(rag_chain, 'delete_product'):
                     rag_chain.delete_product(pid)
 
-            if action in ["CREATE", "UPDATE"]:
+            if action in ["CREATE", "UPDATE"] and status == "active":
                 clean_text = (
                     f"passage: Mã sản phẩm (ID): {pid}. "
                     f"Tên sản phẩm: {name}. "
@@ -70,7 +71,7 @@ async def consume_product_events():
                     "product_id": pid,
                     "name": name,
                     "category": cat,
-                    "status": "active",
+                    "status": status,
                     "images_url": thumb,
                     "images_all": image_urls,
                     "shop_id": "",

@@ -58,10 +58,9 @@ public class StoreClient {
         try {
             String locationsParam = String.join(",", locations);
             List<String> storeIds = webClient.get()
-                    .uri(storeServiceUrl + "/api/stores/locations?locations=" + locationsParam)
+                    .uri(storeServiceUrl + "/api/stores/locations?locations={locations}", locationsParam)
                     .retrieve()
-                    .bodyToFlux(String.class)
-                    .collectList()
+                    .bodyToMono(new org.springframework.core.ParameterizedTypeReference<List<String>>() {})
                     .block();
             return storeIds;
         } catch (Exception e) {

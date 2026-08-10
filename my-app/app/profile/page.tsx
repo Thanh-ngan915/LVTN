@@ -81,7 +81,7 @@ export default function ProfilePage() {
             formData.append("file", compressed);
             formData.append("upload_preset", "kltn_user_avatar");
 
-            const cloudRes = await fetch("https://api.anthropic.com/v1_1/dqghfi8be/image/upload",
+            const cloudRes = await fetch("https://api.cloudinary.com/v1_1/dqghfi8be/image/upload",
                 { method: "POST", body: formData });
             const cloudData = await cloudRes.json();
             if (!cloudRes.ok) throw new Error("Upload Cloudinary thất bại");

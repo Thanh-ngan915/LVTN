@@ -15,5 +15,6 @@ public class ProductEvent {
     private String name;
     private String description;
     private String categoryName;
+    private String status;
     private java.util.List<String> imageUrls;
 }
