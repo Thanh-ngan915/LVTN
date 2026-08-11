@@ -313,11 +313,11 @@ export default function VouchersPage() {
                                             <td>{v.title}</td>
                                             <td>
                                                     <span className={styles.typeBadge}>
-                                                        {v.type === 1 ? "%" : "Tiền cố định"}
+                                                        {v.type === 2 ? "%" : "Tiền cố định"}
                                                     </span>
                                             </td>
                                             <td className={styles.discountCell}>
-                                                {v.type === 1
+                                                {v.type === 2
                                                     ? `${v.percent}%${v.maximum ? ` (tối đa ${v.maximum.toLocaleString("vi-VN")}đ)` : ""}`
                                                     : `${v.percent.toLocaleString("vi-VN")}đ`}
                                             </td>
@@ -428,15 +428,15 @@ export default function VouchersPage() {
                                     <label>Loại giảm</label>
                                     <select value={voucherForm.type}
                                             onChange={e => setVoucherForm({ ...voucherForm, type: e.target.value })}>
-                                        <option value="1">% Phần trăm</option>
-                                        <option value="2">Tiền cố định</option>
+                                        <option value="1">Tiền cố định</option>
+                                        <option value="2">% Phần trăm</option>
                                     </select>
                                 </div>
                                 <div className={styles.formField}>
-                                    <label>{voucherForm.type === "1" ? "% Giảm *" : "Số tiền giảm (đ) *"}</label>
+                                    <label>{voucherForm.type === "2" ? "% Giảm *" : "Số tiền giảm (đ) *"}</label>
                                     <input type="number" value={voucherForm.percent}
                                            onChange={e => setVoucherForm({ ...voucherForm, percent: e.target.value })}
-                                           placeholder={voucherForm.type === "1" ? "10" : "50000"} />
+                                           placeholder={voucherForm.type === "2" ? "10" : "50000"} />
                                 </div>
                                 <div className={styles.formField}>
                                     <label>Số lượng *</label>

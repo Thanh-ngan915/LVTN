@@ -333,9 +333,11 @@ public class OrderService {
     }
 
     public List<VoucherDTO> getVouchersByStore(String storeId) {
-        // Platform vouchers from local DB
+        LocalDateTime now = LocalDateTime.now();
         List<Voucher> platformVouchers = voucherRepository
-                .findByStoreIdIsNullAndStatusAndEndDateAfter("active", LocalDateTime.now());
+                .findByStoreIdIsNullAndStatusAndEndDateAfter("active", now).stream()
+                .filter(v -> v.getStartDate() == null || !v.getStartDate().isAfter(now))
+                .collect(Collectors.toList());
 
         List<VoucherDTO> result = new ArrayList<>();
         platformVouchers.stream().map(v -> toVoucherDTO(v, true)).forEach(result::add);
@@ -973,6 +975,7 @@ public class OrderService {
                 .filter(v -> v.getStoreId() == null)
                 .filter(v -> "active".equalsIgnoreCase(v.getStatus()))
                 .filter(v -> v.getEndDate() == null || v.getEndDate().isAfter(now))
+                .filter(v -> v.getStartDate() == null || !v.getStartDate().isAfter(now))
                 .map(v -> toVoucherDTO(v, true))
                 .collect(java.util.stream.Collectors.toList());
     }

@@ -141,6 +141,9 @@ export default function PlatformVoucherTable({ authHeader, showToast, logActivit
         if (v.endDate && new Date(v.endDate).getTime() < Date.now()) {
             return <span className={`${styles.badge} ${styles.badgeWarning}`}>⏳ Đã hết hạn</span>;
         }
+        if (v.startDate && new Date(v.startDate).getTime() > Date.now()) {
+            return <span className={`${styles.badge}`} style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d' }}>⏰ Chưa bắt đầu</span>;
+        }
         if (v.status === "active") return <span className={`${styles.badge} ${styles.badgeSuccess}`}>✅ Đang phát hành</span>;
         if (v.status === "inactive") return <span className={`${styles.badge} ${styles.badgeDanger}`}>🚫 Tạm dừng/Đã ẩn</span>;
         return <span className={`${styles.badge}`}>{v.status}</span>;
@@ -203,7 +206,7 @@ export default function PlatformVoucherTable({ authHeader, showToast, logActivit
                                             : formatCurrency(v.discountValue)}
                                     </td>
                                     <td>{formatCurrency(v.minOrderValue)}</td>
-                                    <td>{v.usedCount || 0} / {v.quantity}</td>
+                                    <td>{(v.quantity || 0) - (v.usedCount || 0)} / {v.quantity}</td>
                                     <td>{getStatusBadge(v)}</td>
                                     <td>
                                         <div className={styles.actions}>
