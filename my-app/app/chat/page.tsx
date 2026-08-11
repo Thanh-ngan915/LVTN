@@ -84,7 +84,8 @@ function ChatContent() {
     useEffect(() => {
         if (!activeChannel || !username) return;
 
-        const roomId = `${username}|${activeChannel.storeId}`;
+        const safeUsername = username.replace(/[.#$\[\]]/g, '_');
+        const roomId = `${safeUsername}|${activeChannel.storeId}`;
         const messagesRef = ref(db, `chats/${roomId}/messages`);
 
         const unsubscribe = onValue(messagesRef, (snapshot) => {
@@ -117,7 +118,8 @@ function ChatContent() {
         e.preventDefault();
         if (!newMessage.trim() || !activeChannel || !username) return;
 
-        const roomId = `${username}|${activeChannel.storeId}`;
+        const safeUsername = username.replace(/[.#$\[\]]/g, '_');
+        const roomId = `${safeUsername}|${activeChannel.storeId}`;
         const currentText = newMessage.trim();
         const now = Date.now();
         setNewMessage('');
@@ -132,7 +134,7 @@ function ChatContent() {
             });
 
             // Ghi index để seller nhận biết room — đây là fix chính
-            const indexRef = ref(db, `chatIndex/${activeChannel.storeId}/${username}`);
+            const indexRef = ref(db, `chatIndex/${activeChannel.storeId}/${safeUsername}`);
             await set(indexRef, {
                 lastMessage: currentText,
                 updatedAt: now,

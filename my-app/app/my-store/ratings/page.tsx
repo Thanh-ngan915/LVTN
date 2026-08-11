@@ -69,7 +69,7 @@ export default function ShopRatingsPage() {
 
     const loadRatingsAndSummary = (token: string, sid: string) => {
         Promise.all([
-            fetch(`/api/ratings/store/${sid}`, {
+            fetch(`/api/ratings/store/${sid}?size=1000`, {
                 headers: { Authorization: authHeader(token) },
             }).then(r => r.json()),
             fetch(`/api/ratings/store/${sid}/summary`, {
@@ -199,9 +199,9 @@ export default function ShopRatingsPage() {
 
                 <div className={styles.tabs}>
                     {[
-                        { key: "all",     label: `Tất cả (${ratings.length})` },
-                        { key: "pending", label: `Chưa phản hồi (${pending})` },
-                        { key: "replied", label: `Đã phản hồi (${ratings.length - pending})` },
+                        { key: "all",     label: `Tất cả (${summary?.totalRatings ?? ratings.length})` },
+                        { key: "pending", label: `Chưa phản hồi (${summary?.pendingCount ?? pending})` },
+                        { key: "replied", label: `Đã phản hồi (${summary?.repliedCount ?? (ratings.length - pending)})` },
                     ].map(tab => (
                         <button
                             key={tab.key}
