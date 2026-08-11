@@ -282,6 +282,9 @@ export default function OrderHistoryPage() {
                     orderId={complaintOrderId}
                     onClose={() => setComplaintOrderId(null)}
                     onSuccess={() => {
+                        setOrders(prev => prev.map(o => 
+                            Number(o.id) === complaintOrderId ? { ...o, status: 'complained' } : o
+                        ));
                         setComplaintOrderId(null);
                         setToast('✅ Gửi khiếu nại thành công! Chúng tôi sẽ xem xét trong 24h.');
                         setTimeout(() => setToast(null), 4000);

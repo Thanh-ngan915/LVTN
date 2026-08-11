@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import org.springframework.cache.annotation.CacheEvict;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,6 +50,7 @@ public class ComplaintService {
     private static final float PENALTY_RATE     = 0.05f; // 5% giá trị đơn
 
     // ── Buyer: tạo khiếu nại ──────────────────────────────────────────────
+    @CacheEvict(value = "user_orders", key = "#buyerId")
     public ComplaintResponseDTO createComplaint(String buyerId, ComplaintRequestDTO req) {
         var order = orderRepo.findById(req.getOrderId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
@@ -124,6 +127,7 @@ public class ComplaintService {
 
     // ── Admin: APPROVE ────────────────────────────────────────────────────
     @Transactional
+    @CacheEvict(value = "user_orders", key = "#result.buyerId")
     public ComplaintResponseDTO approveComplaint(String complaintId,
                                                  String adminId,
                                                  AdminResolveDTO req) {
@@ -242,6 +246,7 @@ public class ComplaintService {
 
     // ── Admin: REJECT → shop giữ tiền, không làm gì thêm ─────────────────
     @Transactional
+    @CacheEvict(value = "user_orders", key = "#result.buyerId")
     public ComplaintResponseDTO rejectComplaint(String complaintId,
                                                 String adminId,
                                                 AdminResolveDTO req) {

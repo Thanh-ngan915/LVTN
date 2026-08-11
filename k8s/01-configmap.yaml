@@ -7,6 +7,9 @@ metadata:
   name: anvi-config
   namespace: anvi-dev
 data:
+  # ---- Global Timezone ----
+  TZ: "Asia/Ho_Chi_Minh"
+
   # ---- MySQL driver ----
   SPRING_DATASOURCE_DRIVER_CLASS_NAME: "com.mysql.cj.jdbc.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
