@@ -50,43 +50,46 @@ async def consume_product_events():
                         return internal_id
                 return None
 
-            if action in ["UPDATE", "DELETE"] or status != "active":
-                # Xóa khỏi FAISS
-                internal_id = get_internal_id(pid)
-                if internal_id:
-                    vector_db.delete([internal_id])
-                    print(f"Da xoa doc cu cua san pham {pid} khoi FAISS")
-                # Xóa khỏi bảng tra cứu nhanh
-                if rag_chain and hasattr(rag_chain, 'delete_product'):
-                    rag_chain.delete_product(pid)
+            def process_product():
+                if action in ["UPDATE", "DELETE"] or status != "active":
+                    # Xóa khỏi FAISS
+                    internal_id = get_internal_id(pid)
+                    if internal_id:
+                        vector_db.delete([internal_id])
+                        print(f"Da xoa doc cu cua san pham {pid} khoi FAISS")
+                    # Xóa khỏi bảng tra cứu nhanh
+                    if rag_chain and hasattr(rag_chain, 'delete_product'):
+                        rag_chain.delete_product(pid)
 
-            if action in ["CREATE", "UPDATE"] and status == "active":
-                clean_text = (
-                    f"passage: Mã sản phẩm (ID): {pid}. "
-                    f"Tên sản phẩm: {name}. "
-                    f"Danh mục: {cat}. "
-                    f"Mô tả: {desc}."
-                )
-                meta_data = {
-                    "product_id": pid,
-                    "name": name,
-                    "category": cat,
-                    "status": status,
-                    "images_url": thumb,
-                    "images_all": image_urls,
-                    "shop_id": "",
-                    "shop_name": "Không rõ",
-                }
-                doc = Document(page_content=clean_text, metadata=meta_data)
-                vector_db.add_documents([doc])
-                if rag_chain and hasattr(rag_chain, 'add_product'):
-                    rag_chain.add_product(doc)
-                print(f"Da them san pham {pid} vao FAISS index trong bo nho!")
-            
-            # LƯU XUỐNG Ổ CỨNG ẢO
-            from shared.vector_db import INDEX_PATH
-            vector_db.save_local(INDEX_PATH)
-            print(f"Da save_local xuong Persistent Volume: {INDEX_PATH}")
+                if action in ["CREATE", "UPDATE"] and status == "active":
+                    clean_text = (
+                        f"passage: Mã sản phẩm (ID): {pid}. "
+                        f"Tên sản phẩm: {name}. "
+                        f"Danh mục: {cat}. "
+                        f"Mô tả: {desc}."
+                    )
+                    meta_data = {
+                        "product_id": pid,
+                        "name": name,
+                        "category": cat,
+                        "status": status,
+                        "images_url": thumb,
+                        "images_all": image_urls,
+                        "shop_id": "",
+                        "shop_name": "Không rõ",
+                    }
+                    doc = Document(page_content=clean_text, metadata=meta_data)
+                    vector_db.add_documents([doc])
+                    if rag_chain and hasattr(rag_chain, 'add_product'):
+                        rag_chain.add_product(doc)
+                    print(f"Da them san pham {pid} vao FAISS index trong bo nho!")
+                
+                # LƯU XUỐNG Ổ CỨNG ẢO
+                from shared.vector_db import INDEX_PATH
+                vector_db.save_local(INDEX_PATH)
+                print(f"Da save_local xuong Persistent Volume: {INDEX_PATH}")
+                
+            await asyncio.to_thread(process_product)
     except Exception as e:
         print(f"Chatbot Kafka Consumer error: {e}")
     finally:
@@ -122,41 +125,69 @@ async def consume_store_events():
             if not vector_db:
                 continue
                 
-            def get_internal_store_id(sid):
+            def get_internal_store_ids(sid):
+                ids = []
                 for internal_id, document in vector_db.docstore._dict.items():
                     if document.metadata.get("type") == "store" and document.metadata.get("store_id") == sid:
-                        return internal_id
-                return None
+                        ids.append(internal_id)
+                return ids
 
-            if action in ["UPDATE", "DELETE"] or status != "active":
-                internal_id = get_internal_store_id(store_id)
-                if internal_id:
-                    vector_db.delete([internal_id])
-                    print(f"Da xoa doc cu cua store {store_id} khoi FAISS")
+            def process_store():
+                if action in ["UPDATE", "DELETE"] or status != "active":
+                    internal_ids = get_internal_store_ids(store_id)
+                    if internal_ids:
+                        vector_db.delete(internal_ids)
+                        print(f"Da xoa {len(internal_ids)} doc cu cua store {store_id} khoi FAISS")
+                    
+                    # Delete all products of this store (chỉ khi store bị DELETE hoặc status != active)
+                    if action == "DELETE" or status != "active":
+                        product_internal_ids = []
+                        for internal_pid, document in vector_db.docstore._dict.items():
+                            if document.metadata.get("shop_id") == str(store_id):
+                                product_internal_ids.append(internal_pid)
+                                if rag_chain and hasattr(rag_chain, 'delete_product'):
+                                    rag_chain.delete_product(document.metadata.get("product_id"))
+                        if product_internal_ids:
+                            vector_db.delete(product_internal_ids)
+                            print(f"Da xoa {len(product_internal_ids)} san pham cua store {store_id} khoi FAISS")
 
-            if action in ["CREATE", "UPDATE"] and status == "active":
-                clean_text = (
-                    f"Thông tin cửa hàng. "
-                    f"Mã cửa hàng (ID): {store_id}. "
-                    f"Tên cửa hàng: {name}. "
-                    f"Địa chỉ: {location}. "
-                    f"Mô tả: {desc}."
-                )
-                meta_data = {
-                    "type": "store",
-                    "store_id": store_id,
-                    "name": name,
-                    "location": location,
-                    "status": status,
-                    "images_url": image,
-                    "images_all": [image] if image else [],
-                }
-                doc = Document(page_content=clean_text, metadata=meta_data)
-                vector_db.add_documents([doc])
-                print(f"Da them store {store_id} vao FAISS index trong bo nho!")
-            
-            from shared.vector_db import INDEX_PATH
-            vector_db.save_local(INDEX_PATH)
+                if action in ["CREATE", "UPDATE"] and status == "active":
+                    clean_text = (
+                        f"Thông tin cửa hàng. "
+                        f"Mã cửa hàng (ID): {store_id}. "
+                        f"Tên cửa hàng: {name}. "
+                        f"Địa chỉ: {location}. "
+                        f"Mô tả: {desc}."
+                    )
+                    meta_data = {
+                        "type": "store",
+                        "store_id": store_id,
+                        "name": name,
+                        "location": location,
+                        "status": status,
+                        "images_url": image,
+                        "images_all": [image] if image else [],
+                    }
+                    doc = Document(page_content=clean_text, metadata=meta_data)
+                    vector_db.add_documents([doc])
+                    print(f"Da them store {store_id} vao FAISS index trong bo nho!")
+                    
+                    # Mới: Tự động kéo tất cả sản phẩm của Shop đó vào FAISS
+                    # Theo yêu cầu: Chỉ kéo lại sản phẩm nếu Shop tạo mới (hoặc mở lại sau khi bị khóa). Không kéo lại nếu chỉ UPDATE thông tin (tên, địa chỉ).
+                    if action == "CREATE" or (action == "UPDATE" and data.get("old_status") == "inactive"):
+                        from shared.vector_db import get_products_for_store
+                        new_product_docs = get_products_for_store(store_id)
+                        if new_product_docs:
+                            vector_db.add_documents(new_product_docs)
+                            if rag_chain and hasattr(rag_chain, 'add_product'):
+                                for d in new_product_docs:
+                                    rag_chain.add_product(d)
+                            print(f"Da them tu dong {len(new_product_docs)} san pham cua store {store_id} vao FAISS!")
+                
+                from shared.vector_db import INDEX_PATH
+                vector_db.save_local(INDEX_PATH)
+                
+            await asyncio.to_thread(process_store)
     except Exception as e:
         print(f"Chatbot Kafka Consumer (Store) error: {e}")
     finally:
@@ -189,13 +220,20 @@ async def consume_policy_events():
                 
             from shared.vector_db import upsert_policy_in_index, delete_policy_from_index, load_vector_db
             
-            if event_type == "DELETED":
-                delete_policy_from_index(policy_id)
-            else:
-                upsert_policy_in_index(policy_id)
-                
-            # Cập nhật lại vector_db reference vì FAISS load_local/save_local tạo instance mới
-            vector_db = load_vector_db()
+            def process_policy():
+                global vector_db
+                if event_type == "DELETED":
+                    delete_policy_from_index(policy_id)
+                else:
+                    upsert_policy_in_index(policy_id)
+                    
+                # Cập nhật lại vector_db reference vì FAISS load_local/save_local tạo instance mới
+                vector_db = load_vector_db()
+            
+            # Đợi 1.5s để đảm bảo userservice đã commit transaction vào database 
+            # tránh lỗi race condition khi Chatbot query DB mà status vẫn là INACTIVE
+            await asyncio.sleep(1.5)
+            await asyncio.to_thread(process_policy)
             rag_chain = create_rag_chain(vector_db)
                 
     except Exception as e:
@@ -219,7 +257,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Etsy AI Chatbot API", lifespan=lifespan)
 
 @app.post("/api/ai/chat")
-async def chat_endpoint(payload: dict = Body(...)):
+def chat_endpoint(payload: dict = Body(...)):
     message = payload.get("message", "")
     history_data = payload.get("history", [])
     last_product_ids = payload.get("last_product_ids", [])

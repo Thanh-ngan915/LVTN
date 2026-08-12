@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 export default function GoogleCallbackPage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "#0f172a", color: "#e2e8f0" }}>
+      <div style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "#f8fafc", color: "#f97316" }}>
         <p>Đang tải...</p>
       </div>
     }>
@@ -89,22 +89,21 @@ function GoogleCallbackContent() {
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        background: "#0f172a",
-        color: "#e2e8f0",
+        background: "#f8fafc",
+        color: "#1e293b",
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
       <div
         style={{
-          background: "rgba(30, 41, 59, 0.6)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255,255,255,0.1)",
+          background: "#ffffff",
+          border: "1px solid #e2e8f0",
           borderRadius: "24px",
           padding: "48px 40px",
           textAlign: "center",
           maxWidth: "400px",
           width: "90%",
-          boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
+          boxShadow: "0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01)",
         }}
       >
         {/* Google Icon */}
@@ -135,8 +134,8 @@ function GoogleCallbackContent() {
             style={{
               width: "40px",
               height: "40px",
-              border: "4px solid rgba(99, 102, 241, 0.3)",
-              borderTopColor: "#6366f1",
+              border: "4px solid rgba(249, 115, 22, 0.2)",
+              borderTopColor: "#f97316",
               borderRadius: "50%",
               animation: "spin 1s linear infinite",
               margin: "0 auto 24px auto",
@@ -187,7 +186,7 @@ function GoogleCallbackContent() {
             fontSize: "1.4rem",
             fontWeight: "700",
             marginBottom: "12px",
-            background: "linear-gradient(to right, #60a5fa, #c084fc)",
+            background: "linear-gradient(to right, #ea580c, #f97316)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
           }}
@@ -199,7 +198,7 @@ function GoogleCallbackContent() {
 
         <p
           style={{
-            color: "#94a3b8",
+            color: "#475569",
             fontSize: "0.95rem",
             lineHeight: "1.6",
           }}
@@ -208,7 +207,7 @@ function GoogleCallbackContent() {
         </p>
 
         {status !== "loading" && (
-          <p style={{ color: "#64748b", fontSize: "0.8rem", marginTop: "16px" }}>
+          <p style={{ color: "#94a3b8", fontSize: "0.8rem", marginTop: "16px" }}>
             Đang chuyển hướng...
           </p>
         )}

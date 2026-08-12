@@ -40,13 +40,25 @@ public interface ProductRepository extends JpaRepository<Product, Integer>, JpaS
     @EntityGraph(attributePaths = {"images", "variants"})
     Page<Product> findAllActiveByStore(@Param("storeId") String storeId, Pageable pageable);
 
+    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.storeId = :storeId")
+    @EntityGraph(attributePaths = {"images", "variants"})
+    Page<Product> findAllNotDeletedByStore(@Param("storeId") String storeId, Pageable pageable);
+
     @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.status = 'active' AND p.storeId = :storeId AND p.categoryShortname = :category")
     @EntityGraph(attributePaths = {"images", "variants"})
     Page<Product> findAllActiveByStoreAndCategory(@Param("storeId") String storeId, @Param("category") String category, Pageable pageable);
 
+    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.storeId = :storeId AND p.categoryShortname = :category")
+    @EntityGraph(attributePaths = {"images", "variants"})
+    Page<Product> findAllNotDeletedByStoreAndCategory(@Param("storeId") String storeId, @Param("category") String category, Pageable pageable);
+
     @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.status = 'active' AND p.storeId = :storeId AND LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     @EntityGraph(attributePaths = {"images", "variants"})
     Page<Product> searchByStoreAndName(@Param("storeId") String storeId, @Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE (p.isDelete = false OR p.isDelete IS NULL) AND p.storeId = :storeId AND LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    @EntityGraph(attributePaths = {"images", "variants"})
+    Page<Product> searchNotDeletedByStoreAndName(@Param("storeId") String storeId, @Param("keyword") String keyword, Pageable pageable);
 
     @Query("SELECT p FROM Product p WHERE p.isDelete = true AND p.storeId = :storeId")
     @EntityGraph(attributePaths = {"images", "variants"})

@@ -183,6 +183,18 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    private boolean isStoreOwner(String storeId, HttpServletRequest request) {
+        String userId = (String) request.getAttribute("userId");
+        if (userId != null) {
+            String bearerToken = request.getHeader("Authorization");
+            try {
+                String userStoreId = storeClient.getStoreIdByUserId(userId, bearerToken);
+                return storeId.equals(userStoreId);
+            } catch (Exception e) {}
+        }
+        return false;
+    }
+
     /**
      * Lấy sản phẩm theo shop
      * GET /api/products/store/{storeId}?page=0&size=12
@@ -193,13 +205,20 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir
+            @RequestParam(defaultValue = "desc") String sortDir,
+            HttpServletRequest request
     ) {
         Sort sort = sortDir.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<ProductDTO> productPage = productService.getProductsByStore(storeId, pageable);
+        
+        Page<ProductDTO> productPage;
+        if (isStoreOwner(storeId, request)) {
+            productPage = productService.getProductsByStore(storeId, pageable);
+        } else {
+            productPage = productService.getActiveProductsByStore(storeId, pageable);
+        }
 
         ApiResponse<List<ProductDTO>> response = ApiResponse.<List<ProductDTO>>builder()
                 .success(true)
@@ -225,13 +244,20 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir
+            @RequestParam(defaultValue = "desc") String sortDir,
+            HttpServletRequest request
     ) {
         Sort sort = sortDir.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<ProductDTO> productPage = productService.getProductsByStoreAndCategory(storeId, category, pageable);
+        
+        Page<ProductDTO> productPage;
+        if (isStoreOwner(storeId, request)) {
+            productPage = productService.getProductsByStoreAndCategory(storeId, category, pageable);
+        } else {
+            productPage = productService.getActiveProductsByStoreAndCategory(storeId, category, pageable);
+        }
 
         ApiResponse<List<ProductDTO>> response = ApiResponse.<List<ProductDTO>>builder()
                 .success(true)
@@ -255,10 +281,17 @@ public class ProductController {
             @PathVariable String storeId,
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size
+            @RequestParam(defaultValue = "12") int size,
+            HttpServletRequest request
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<ProductDTO> productPage = productService.searchProductsByStore(storeId, keyword, pageable);
+        
+        Page<ProductDTO> productPage;
+        if (isStoreOwner(storeId, request)) {
+            productPage = productService.searchProductsByStore(storeId, keyword, pageable);
+        } else {
+            productPage = productService.searchActiveProductsByStore(storeId, keyword, pageable);
+        }
 
         ApiResponse<List<ProductDTO>> response = ApiResponse.<List<ProductDTO>>builder()
                 .success(true)
@@ -403,6 +436,19 @@ public class ProductController {
     public ResponseEntity<ApiResponse<ProductDTO>> restoreProduct(@PathVariable Integer id) {
         try {
             ProductDTO restored = productService.restoreProduct(id);
+            try {
+                ProductEvent event = ProductEvent.builder()
+                        .id(restored.getId())
+                        .name(restored.getName())
+                        .description(restored.getDescription())
+                        .categoryName(restored.getCategoryName())
+                        .status(restored.getStatus())
+                        .imageUrls(restored.getImageUrls())
+                        .build();
+                productEventProducer.sendProductUpdatedEvent(event);
+            } catch (Exception ex) {
+                System.err.println("Kafka event failed (product restored OK): " + ex.getMessage());
+            }
             return ResponseEntity.ok(ApiResponse.success(restored, "Product restored successfully"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
@@ -452,6 +498,19 @@ public class ProductController {
             }
 
             ProductDTO approved = productService.approveProduct(id);
+            try {
+                ProductEvent event = ProductEvent.builder()
+                        .id(approved.getId())
+                        .name(approved.getName())
+                        .description(approved.getDescription())
+                        .categoryName(approved.getCategoryName())
+                        .status(approved.getStatus())
+                        .imageUrls(approved.getImageUrls())
+                        .build();
+                productEventProducer.sendProductUpdatedEvent(event);
+            } catch (Exception ex) {
+                System.err.println("Kafka event failed (product approved OK): " + ex.getMessage());
+            }
             return ResponseEntity.ok(ApiResponse.success(approved, "Sản phẩm được duyệt"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
@@ -472,6 +531,19 @@ public class ProductController {
             }
 
             ProductDTO rejected = productService.rejectProduct(id, reason);
+            try {
+                ProductEvent event = ProductEvent.builder()
+                        .id(rejected.getId())
+                        .name(rejected.getName())
+                        .description(rejected.getDescription())
+                        .categoryName(rejected.getCategoryName())
+                        .status(rejected.getStatus())
+                        .imageUrls(rejected.getImageUrls())
+                        .build();
+                productEventProducer.sendProductUpdatedEvent(event);
+            } catch (Exception ex) {
+                System.err.println("Kafka event failed (product rejected OK): " + ex.getMessage());
+            }
             return ResponseEntity.ok(ApiResponse.success(rejected, "Sản phẩm bị từ chối"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
@@ -491,6 +563,19 @@ public class ProductController {
             }
 
             ProductDTO hidden = productService.hideProduct(id);
+            try {
+                ProductEvent event = ProductEvent.builder()
+                        .id(hidden.getId())
+                        .name(hidden.getName())
+                        .description(hidden.getDescription())
+                        .categoryName(hidden.getCategoryName())
+                        .status(hidden.getStatus())
+                        .imageUrls(hidden.getImageUrls())
+                        .build();
+                productEventProducer.sendProductUpdatedEvent(event);
+            } catch (Exception ex) {
+                System.err.println("Kafka event failed (product hidden OK): " + ex.getMessage());
+            }
             return ResponseEntity.ok(ApiResponse.success(hidden, "Sản phẩm được ẩn"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
