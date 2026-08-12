@@ -76,7 +76,7 @@ Câu hỏi hiện tại: {question}
     name_to_doc = {
         doc.metadata.get("name", "").strip().lower(): doc
         for doc in vectorstore.docstore._dict.values()
-        if doc.metadata.get("name")
+        if doc.metadata.get("name") and doc.metadata.get("type") not in ["store", "system_policy"]
     }
 
     IMAGE_INTENT_KEYWORDS = ["ảnh", "hình", "photo", "image"]
@@ -177,12 +177,11 @@ Câu hỏi hiện tại: {question}
         shop_match = re.search(r'(?:shop|cửa hàng)\s+([a-zA-Z0-9À-ỹ_\-\s]+?)(?:\s+bán|\?|$)', question, re.IGNORECASE)
         if shop_match:
             shop_target = shop_match.group(1).strip().lower()
-            candidate_docs = vectorstore.similarity_search(query=query_for_faiss, k=30)
             
             matched = []
             store_info_docs = []
             
-            for d in candidate_docs:
+            for d in vectorstore.docstore._dict.values():
                 is_store_doc = d.metadata.get("type") == "store"
                 
                 # Cửa hàng (doc loại store)
@@ -196,7 +195,7 @@ Câu hỏi hiện tại: {question}
             # Ưu tiên trả về thông tin cửa hàng kèm theo vài sản phẩm
             final_docs = store_info_docs + matched
             if final_docs:
-                return final_docs[:1] if narrow else final_docs[:5]
+                return final_docs[:1] if narrow else final_docs[:6]
 
         # 2. Category filter
         category_keyword_found = False
@@ -241,10 +240,13 @@ Câu hỏi hiện tại: {question}
     # )
 
     def invoke_with_retry(inputs: dict, retries=3, delay=5) -> dict:
+        print(">>> BẮT ĐẦU XỬ LÝ YÊU CẦU:", inputs.get("question"))
         question = inputs["question"]
         last_product_ids = inputs.get("last_product_ids", [])
 
+        print(">>> ĐANG GET DOCS...")
         docs = _get_docs(question, last_product_ids)
+        print(">>> XONG GET DOCS, TÌM THẤY:", len(docs), "docs")
         context = "\n\n".join(doc.page_content.replace("passage: ", "") for doc in docs)
 
         is_single = len(docs) == 1
@@ -268,7 +270,9 @@ Câu hỏi hiện tại: {question}
 
         for attempt in range(retries):
             try:
+                print(f">>> GỌI GEMINI (LẦN {attempt+1})...")
                 reply = chain.invoke(payload)
+                print(">>> XONG GEMINI! REPLY:", reply[:50])
                 
                 # Xử lý thông minh: Nếu lúc đầu lấy 3 sản phẩm (is_single=False),
                 # nhưng AI chỉ quyết định tư vấn về 1 sản phẩm duy nhất

@@ -62,16 +62,31 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductDTO> getProductsByStore(String storeId, Pageable pageable) {
-        return productRepository.findAllActiveByStore(storeId, pageable).map(this::toDTO);
+        return productRepository.findAllNotDeletedByStore(storeId, pageable).map(this::toDTO);
     }
 
     @Override
     public Page<ProductDTO> getProductsByStoreAndCategory(String storeId, String category, Pageable pageable) {
-        return productRepository.findAllActiveByStoreAndCategory(storeId, category, pageable).map(this::toDTO);
+        return productRepository.findAllNotDeletedByStoreAndCategory(storeId, category, pageable).map(this::toDTO);
     }
 
     @Override
     public Page<ProductDTO> searchProductsByStore(String storeId, String keyword, Pageable pageable) {
+        return productRepository.searchNotDeletedByStoreAndName(storeId, keyword, pageable).map(this::toDTO);
+    }
+
+    @Override
+    public Page<ProductDTO> getActiveProductsByStore(String storeId, Pageable pageable) {
+        return productRepository.findAllActiveByStore(storeId, pageable).map(this::toDTO);
+    }
+
+    @Override
+    public Page<ProductDTO> getActiveProductsByStoreAndCategory(String storeId, String category, Pageable pageable) {
+        return productRepository.findAllActiveByStoreAndCategory(storeId, category, pageable).map(this::toDTO);
+    }
+
+    @Override
+    public Page<ProductDTO> searchActiveProductsByStore(String storeId, String keyword, Pageable pageable) {
         return productRepository.searchByStoreAndName(storeId, keyword, pageable).map(this::toDTO);
     }
 
