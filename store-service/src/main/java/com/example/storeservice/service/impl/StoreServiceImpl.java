@@ -23,6 +23,11 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
+import com.example.storeservice.dto.StoreEvent;
+import com.example.storeservice.service.StoreEventProducer;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import com.example.storeservice.service.StoreEventProducer;
@@ -160,6 +165,7 @@ public class StoreServiceImpl implements StoreService {
     public StoreDTO updateStoreStatus(String storeId, String status) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new RuntimeException("Shop không tồn tại"));
+        String oldStatus = store.getStatus();
         store.setStatus(status.toLowerCase());
         store.setUpdatedBy("ADMIN");
         store.setUpdateAt(LocalDateTime.now());
@@ -172,12 +178,14 @@ public class StoreServiceImpl implements StoreService {
                 .description(saved.getDescription())
                 .image(saved.getImage())
                 .status(saved.getStatus())
+                .old_status(oldStatus)
                 .build();
-        if ("active".equalsIgnoreCase(status) || "pending".equalsIgnoreCase(status)) {
-            storeEventProducer.sendStoreUpdatedEvent(event);
-        } else {
-            storeEventProducer.sendStoreDeletedEvent(saved.getId());
-        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                storeEventProducer.sendStoreUpdatedEvent(event);
+            }
+        });
 
         return toDTO(saved);
     }

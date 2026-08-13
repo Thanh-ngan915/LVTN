@@ -24,3 +24,9 @@ export async function getStoreById(storeId: string): Promise<StoreProfileRespons
     if (!res.ok) throw new Error('Failed to fetch store');
     return res.json();
 }
+
+export async function getAllStores(): Promise<StoreDTO[]> {
+    const res = await fetch(`${API_BASE}/api/stores`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch stores');
+    return res.json();
+}

@@ -174,9 +174,9 @@ async def consume_store_events():
                     
                     # Mới: Tự động kéo tất cả sản phẩm của Shop đó vào FAISS
                     # Theo yêu cầu: Chỉ kéo lại sản phẩm nếu Shop tạo mới (hoặc mở lại sau khi bị khóa). Không kéo lại nếu chỉ UPDATE thông tin (tên, địa chỉ).
-                    if action == "CREATE" or (action == "UPDATE" and data.get("old_status") == "inactive"):
+                    if action == "CREATE" or (action == "UPDATE" and data.get("old_status") in ["inactive", "banned"]):
                         from shared.vector_db import get_products_for_store
-                        new_product_docs = get_products_for_store(store_id)
+                        new_product_docs = get_products_for_store(store_id, store_name=name)
                         if new_product_docs:
                             vector_db.add_documents(new_product_docs)
                             if rag_chain and hasattr(rag_chain, 'add_product'):

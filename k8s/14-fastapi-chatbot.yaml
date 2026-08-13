@@ -22,6 +22,8 @@ spec:
           imagePullPolicy: Never
           command: ["python", "chatbot_service/main_chat.py"]
           env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
             - name: PYTHONPATH
               value: "/app"
             - name: DB_HOST
@@ -30,6 +32,10 @@ spec:
               value: "3306"
             - name: FRONTEND_BASE_URL
               value: "http://localhost:30000"
+            - name: OMP_NUM_THREADS
+              value: "2"
+            - name: MKL_NUM_THREADS
+              value: "2"
           envFrom:
             - configMapRef:
                 name: anvi-config
