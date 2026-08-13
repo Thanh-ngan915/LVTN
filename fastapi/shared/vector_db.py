@@ -308,10 +308,12 @@ def delete_policy_from_index(policy_id):
     except Exception as e:
         print(f"Lỗi khi xóa policy_id={policy_id} khỏi FAISS: {e}")
 
-def get_products_for_store(target_store_id: str):
+def get_products_for_store(target_store_id: str, store_name: str = None):
     store_map = _load_store_map()
-    if target_store_id not in store_map:
+    if target_store_id not in store_map and not store_name:
         return []
+    if store_name:
+        store_map[target_store_id] = store_name
 
     conn = pymysql.connect(**DB_CONFIG)
     products = []
