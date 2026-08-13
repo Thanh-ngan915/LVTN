@@ -17,4 +17,5 @@ public class StoreEvent {
     private String description;
     private String image;
     private String status;
+    private String old_status;
 }

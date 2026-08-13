@@ -15,6 +15,7 @@ import {
   getCategories,
   searchProducts,
 } from './services/productService';
+import { getAllStores } from './services/storeService';
 import styles from './page.module.css';
 
 function HomeInner() {
@@ -30,6 +31,7 @@ function HomeInner() {
   const searchParams = useSearchParams();
 
   const [policies, setPolicies] = useState<any[]>([]);
+  const [lockedStoreIds, setLockedStoreIds] = useState<string[]>([]);
 
   // Filters (from testbranch)
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
@@ -96,7 +98,16 @@ function HomeInner() {
         if (Array.isArray(data)) setPolicies(data);
       })
       .catch(err => console.error('Failed to fetch policies:', err));
+
+    getAllStores()
+      .then(res => {
+        if (Array.isArray(res)) {
+          setLockedStoreIds(res.filter(s => s.status !== 'active' && s.status !== 'pending').map(s => s.id));
+        }
+      })
+      .catch(err => console.error('Failed to fetch stores:', err));
   }, []);
+
 
   useEffect(() => {
     if (searchParams) {
@@ -151,6 +162,10 @@ function HomeInner() {
     setAppliedMinPrice(minPriceInput ? Number(minPriceInput) : undefined);
     setAppliedMaxPrice(maxPriceInput ? Number(maxPriceInput) : undefined);
   };
+
+  const filteredProducts = lockedStoreIds.length > 0 
+    ? products.filter(p => !lockedStoreIds.includes(p.storeId))
+    : products;
 
   return (
     <div className={styles.page}>
@@ -241,7 +256,7 @@ function HomeInner() {
               </aside>
               <div className={styles.searchResults}>
                 <ProductGrid
-                  products={products}
+                  products={filteredProducts}
                   loading={loading}
                   hasMore={hasMore}
                   onLoadMore={handleLoadMore}
@@ -250,7 +265,7 @@ function HomeInner() {
             </div>
           ) : (
             <ProductGrid
-              products={products}
+              products={filteredProducts}
               loading={loading}
               hasMore={hasMore}
               onLoadMore={handleLoadMore}
