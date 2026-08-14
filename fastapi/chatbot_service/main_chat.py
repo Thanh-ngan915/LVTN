@@ -62,27 +62,15 @@ async def consume_product_events():
                         rag_chain.delete_product(pid)
 
                 if action in ["CREATE", "UPDATE"] and status == "active":
-                    clean_text = (
-                        f"passage: Mã sản phẩm (ID): {pid}. "
-                        f"Tên sản phẩm: {name}. "
-                        f"Danh mục: {cat}. "
-                        f"Mô tả: {desc}."
-                    )
-                    meta_data = {
-                        "product_id": pid,
-                        "name": name,
-                        "category": cat,
-                        "status": status,
-                        "images_url": thumb,
-                        "images_all": image_urls,
-                        "shop_id": "",
-                        "shop_name": "Không rõ",
-                    }
-                    doc = Document(page_content=clean_text, metadata=meta_data)
-                    vector_db.add_documents([doc])
-                    if rag_chain and hasattr(rag_chain, 'add_product'):
-                        rag_chain.add_product(doc)
-                    print(f"Da them san pham {pid} vao FAISS index trong bo nho!")
+                    from shared.vector_db import get_single_product_doc
+                    doc = get_single_product_doc(pid)
+                    if doc:
+                        vector_db.add_documents([doc])
+                        if rag_chain and hasattr(rag_chain, 'add_product'):
+                            rag_chain.add_product(doc)
+                        print(f"Da them san pham {pid} vao FAISS index trong bo nho (Full details)!")
+                    else:
+                        print(f"Khong tim thay san pham {pid} trong DB de them vao FAISS!")
                 
                 # LƯU XUỐNG Ổ CỨNG ẢO
                 from shared.vector_db import INDEX_PATH

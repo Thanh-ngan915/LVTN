@@ -400,3 +400,93 @@ def get_products_for_store(target_store_id: str, store_name: str = None):
         }
         docs.append(Document(page_content=clean_text, metadata=meta_data))
     return docs
+
+def get_single_product_doc(product_id: str) -> Document | None:
+    store_map = _load_store_map()
+    
+    conn = pymysql.connect(**DB_CONFIG)
+    products = []
+    images_map = {}
+    variants_map = {}
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+            cur.execute("""
+                SELECT
+                    p.id, p.name, p.price_before, p.price_after, p.description, p.status, p.rate, p.sold, p.store_id,
+                    c.name AS category_name, p.category AS category_short
+                FROM product p
+                LEFT JOIN category c ON c.shortname = p.category
+                WHERE p.id = %s
+            """, (product_id,))
+            products = cur.fetchall()
+            
+            if products:
+                cur.execute("SELECT product_id, url FROM product_image WHERE product_id = %s ORDER BY product_id", (product_id,))
+                image_rows = cur.fetchall()
+                for row in image_rows:
+                    images_map.setdefault(row["product_id"], []).append(row["url"] or "")
+                    
+                cur.execute("SELECT product_id, color, size, price_before, price_after FROM product_variant WHERE product_id = %s", (product_id,))
+                variant_rows = cur.fetchall()
+                for row in variant_rows:
+                    variants_map.setdefault(row["product_id"], []).append(row)
+    except Exception as e:
+        print(f"Error loading single product {product_id}: {e}")
+        return None
+    finally:
+        conn.close()
+
+    if not products:
+        return None
+        
+    p = products[0]
+    pid = p["id"]
+    name = (p["name"] or "").strip()
+    desc_raw = (p["description"] or "")[:400].strip()
+    category_display = p["category_name"] or p["category_short"] or "Không rõ"
+    category_shortname = p["category_short"] or "khong_ro"
+    price_b = p["price_before"] or 0
+    price_a = p["price_after"] or price_b
+    rate = p["rate"] or 0
+    sold = p["sold"] or 0
+    status = p["status"] or "active"
+    store_id = str(p.get("store_id") or "")
+    shop_name = store_map.get(store_id, "Không rõ")
+
+    imgs = images_map.get(pid, [])
+    thumb = imgs[0] if imgs else ""
+
+    variants = variants_map.get(pid, [])
+    variant_summary = ""
+    if variants:
+        colors = sorted({v["color"] for v in variants if v["color"]})
+        sizes = sorted({v["size"] for v in variants if v["size"]})
+        if colors: variant_summary += f"Màu sắc: {', '.join(colors)}. "
+        if sizes: variant_summary += f"Kích thước: {', '.join(sizes)}. "
+        prices = [v["price_after"] or v["price_before"] for v in variants if (v["price_after"] or v["price_before"])]
+        if prices:
+            variant_summary += f"Giá biến thể: {min(prices):,.0f}đ" + (f" - {max(prices):,.0f}đ" if max(prices) != min(prices) else "") + ". "
+
+    discount = ""
+    if price_b and price_a and price_a < price_b:
+        pct = round((1 - price_a / price_b) * 100)
+        discount = f"Giảm {pct}% (từ {price_b:,.0f}đ còn {price_a:,.0f}đ). "
+    else:
+        discount = f"Giá: {price_a:,.0f}đ. "
+
+    clean_text = (
+        f"passage: Mã sản phẩm (ID): {pid}. Tên sản phẩm: {name}. Tên cửa hàng (Shop): {shop_name}. "
+        f"Danh mục: {category_display}. {discount}Đánh giá: {rate}/5 ({sold} đã bán). {variant_summary}Mô tả: {desc_raw}."
+    )
+
+    meta_data = {
+        "product_id": str(pid),
+        "name": name,
+        "category": category_shortname,
+        "status": status,
+        "images_url": thumb,
+        "images_all": imgs,
+        "shop_id": store_id,
+        "shop_name": shop_name,
+    }
+    return Document(page_content=clean_text, metadata=meta_data)
