@@ -234,7 +234,13 @@ export async function getVouchersByStore(
       return { success: false, message: data.message || 'Error', data: [] };
   }
   if (Array.isArray(data.data)) {
-    data.data = (data.data as VoucherDTO[]).filter((v: VoucherDTO) => !isVoucherExpired(v) && !isVoucherNotStarted(v) && v.status !== 'inactive' && v.status !== '0');
+    data.data = (data.data as VoucherDTO[]).filter((v: VoucherDTO) => 
+        !isVoucherExpired(v) && 
+        !isVoucherNotStarted(v) && 
+        v.status !== 'inactive' && 
+        v.status !== '0' &&
+        (v.quantity === null || v.usedCount < v.quantity)
+    );
   }
   return data;
 }
@@ -253,7 +259,13 @@ export async function getAllVouchers(): Promise<OrderApiResponse<VoucherDTO[]>> 
       return { success: false, message: data.message || 'Error', data: [] };
   }
   if (Array.isArray(data.data)) {
-    data.data = (data.data as VoucherDTO[]).filter((v: VoucherDTO) => !isVoucherExpired(v) && !isVoucherNotStarted(v) && v.status !== 'inactive' && v.status !== '0');
+    data.data = (data.data as VoucherDTO[]).filter((v: VoucherDTO) => 
+        !isVoucherExpired(v) && 
+        !isVoucherNotStarted(v) && 
+        v.status !== 'inactive' && 
+        v.status !== '0' &&
+        (v.quantity === null || v.usedCount < v.quantity)
+    );
   }
   return data;
 }
