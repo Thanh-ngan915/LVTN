@@ -194,6 +194,23 @@ public class ProductServiceImpl implements ProductService {
             product.setImages(images);
         }
 
+        if (productDTO.getVariants() != null) {
+            java.util.Set<ProductVariant> variants = productDTO.getVariants().stream()
+                    .map(v -> ProductVariant.builder()
+                            .size(v.getSize())
+                            .color(v.getColor())
+                            .priceBefore(v.getPriceBefore())
+                            .priceAfter(v.getPriceAfter())
+                            .initQuantity(v.getCurrentQuantity())
+                            .currentQuantity(v.getCurrentQuantity())
+                            .sold(v.getSold() != null ? v.getSold() : 0)
+                            .sku(v.getSku())
+                            .product(product)
+                            .build())
+                    .collect(Collectors.toSet());
+            product.setVariants(variants);
+        }
+
         Product savedProduct = productRepository.save(product);
 
         return toDTO(savedProduct);
@@ -242,6 +259,29 @@ public class ProductServiceImpl implements ProductService {
                     .collect(Collectors.toSet());
 
             product.getImages().addAll(images);
+        }
+
+        if (dto.getVariants() != null) {
+            if (product.getVariants() == null) {
+                product.setVariants(new java.util.HashSet<>());
+            } else {
+                product.getVariants().clear();
+            }
+
+            java.util.Set<ProductVariant> variants = dto.getVariants().stream()
+                    .map(v -> ProductVariant.builder()
+                            .size(v.getSize())
+                            .color(v.getColor())
+                            .priceBefore(v.getPriceBefore())
+                            .priceAfter(v.getPriceAfter())
+                            .initQuantity(v.getCurrentQuantity())
+                            .currentQuantity(v.getCurrentQuantity())
+                            .sold(v.getSold() != null ? v.getSold() : 0)
+                            .sku(v.getSku())
+                            .product(product)
+                            .build())
+                    .collect(Collectors.toSet());
+            product.getVariants().addAll(variants);
         }
 
         return toDTO(productRepository.save(product));

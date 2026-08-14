@@ -29,6 +29,16 @@ interface Product {
     rate: number;
     imageUrls: string[];
     updatedBy: string;
+    variants?: any[];
+}
+
+interface VariantForm {
+    id?: number;
+    color: string;
+    size: string;
+    priceBefore: string;
+    priceAfter: string;
+    currentQuantity: string;
 }
 
 interface ProductForm {
@@ -43,13 +53,14 @@ interface ProductForm {
     status: string;
     updatedBy: string;
     imageUrls: string[];
+    variants: VariantForm[];
 }
 
 const EMPTY_FORM: ProductForm = {
     name: "", priceBefore: "", priceAfter: "",
     initQuantity: "", description: "", categoryShortname: "",
     storeId: "", createdBy: "", status: "pending", updatedBy: "",
-    imageUrls: [],
+    imageUrls: [], variants: [],
 };
 
 const PAGE_SIZE = 1000;
@@ -208,6 +219,14 @@ export default function MyStorePage() {
             status: p.status === "inactive" ? "inactive" : "pending",
             updatedBy: userId || "",
             imageUrls: p.imageUrls || [],
+            variants: (p.variants || []).map(v => ({
+                id: v.id,
+                color: v.color || "",
+                size: v.size || "",
+                priceBefore: String(v.priceBefore || ""),
+                priceAfter: String(v.priceAfter || ""),
+                currentQuantity: String(v.currentQuantity || "")
+            }))
         });
         setError(null);
         setShowModal(true);
@@ -220,11 +239,21 @@ export default function MyStorePage() {
 
         setSaving(true); setError(null);
         const { token } = getAuth();
+        
+        const mappedVariants = form.variants.map(v => ({
+            id: v.id,
+            color: v.color, size: v.size,
+            priceBefore: parseFloat(v.priceBefore || "0"),
+            priceAfter: parseFloat(v.priceAfter || v.priceBefore || "0"),
+            currentQuantity: parseInt(v.currentQuantity || "0")
+        }));
+
         const body = {
             ...form,
             priceBefore:  parseFloat(form.priceBefore),
             priceAfter:   parseFloat(form.priceAfter || form.priceBefore),
             initQuantity: parseInt(form.initQuantity || "0"),
+            variants: mappedVariants
         };
 
         try {
@@ -235,6 +264,7 @@ export default function MyStorePage() {
                 priceAfter: body.priceAfter, initQuantity: body.initQuantity,
                 description: body.description, categoryShortname: body.categoryShortname,
                 status: body.status, imageUrls: body.imageUrls,
+                variants: body.variants
             };
 
             const res = await fetch(url, {
@@ -498,6 +528,56 @@ export default function MyStorePage() {
                                 <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
                                     <label>Mô tả</label>
                                     <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Mô tả chi tiết sản phẩm..." rows={3} />
+                                </div>
+
+                                {/* ── Phân loại hàng ── */}
+                                <div className={styles.formField} style={{ gridColumn: "1 / -1" }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                        <label style={{ marginBottom: 0 }}>Phân loại hàng (Màu sắc, Kích thước)</label>
+                                        <button type="button" onClick={() => setForm({...form, variants: [...form.variants, { color: "", size: "", priceBefore: "", priceAfter: "", currentQuantity: "" }]})} style={{ padding: '6px 12px', background: '#e0e7ff', color: '#4f46e5', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>+ Thêm phân loại</button>
+                                    </div>
+                                    {form.variants.map((v, i) => (
+                                        <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '12px', alignItems: 'center', background: '#f9fafb', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#6b7280', fontWeight: 500 }}>Màu sắc</span>
+                                                <input placeholder="VD: Đỏ, Xanh..." value={v.color} onChange={e => {
+                                                    const newV = [...form.variants]; newV[i].color = e.target.value; setForm({...form, variants: newV});
+                                                }} />
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#6b7280', fontWeight: 500 }}>Kích thước</span>
+                                                <input placeholder="VD: S, M, XL..." value={v.size} onChange={e => {
+                                                    const newV = [...form.variants]; newV[i].size = e.target.value; setForm({...form, variants: newV});
+                                                }} />
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#6b7280', fontWeight: 500 }}>Giá gốc (đ)</span>
+                                                <input type="number" placeholder="VD: 150000" value={v.priceBefore} onChange={e => {
+                                                    const newV = [...form.variants]; newV[i].priceBefore = e.target.value; setForm({...form, variants: newV});
+                                                }} />
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#6b7280', fontWeight: 500 }}>Giá bán (đ)</span>
+                                                <input type="number" placeholder="VD: 120000" value={v.priceAfter} onChange={e => {
+                                                    const newV = [...form.variants]; newV[i].priceAfter = e.target.value; setForm({...form, variants: newV});
+                                                }} />
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#6b7280', fontWeight: 500 }}>Tồn kho</span>
+                                                <input type="number" placeholder="VD: 50" value={v.currentQuantity} onChange={e => {
+                                                    const newV = [...form.variants]; newV[i].currentQuantity = e.target.value; setForm({...form, variants: newV});
+                                                }} />
+                                            </div>
+                                            <button type="button" onClick={() => {
+                                                const newV = [...form.variants]; newV.splice(i, 1); setForm({...form, variants: newV});
+                                            }} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', marginTop: '22px' }}>✕</button>
+                                        </div>
+                                    ))}
+                                    {form.variants.length === 0 && (
+                                        <div style={{ padding: '16px', textAlign: 'center', background: '#f9fafb', borderRadius: '8px', border: '1px dashed #d1d5db', color: '#6b7280', fontSize: '0.9rem' }}>
+                                            Sản phẩm không có phân loại (màu sắc, kích thước).<br />Hệ thống sẽ dùng giá và số lượng mặc định ở trên.
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* ── Ảnh sản phẩm ── */}
